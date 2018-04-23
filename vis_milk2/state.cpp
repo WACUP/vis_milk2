@@ -50,10 +50,9 @@ extern CPlugin g_plugin;		// declared in main.cpp
 //  the next line doesn't have the expected token - we rescan from the top.  If the line
 //  is never found, we use the default value, and leave MyGetPos untouched.
 
-#include "../nu/Vector.h"
-#include "gstring.h"
+#include <nu/Vector.h>
 
-typedef Vector<GStringA> VarNameList;
+typedef Vector<std::string> VarNameList;
 typedef Vector<int    > IntList;
 
 
@@ -89,7 +88,7 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
             int pos = 0;
             do 
             {
-                ch = fgetc(f);
+                ch = (char)fgetc(f);
                 if (pos < MAX_VARNAME_LEN-3)
                     szThisLineVarName[pos++] = ch;
             } 
@@ -126,7 +125,7 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
             // eat any extra linefeed chars. 
             do 
             {
-                ch = fgetc(f);
+                ch = (char)fgetc(f);
             } 
             while ((ch == '\r' || ch == '\n') && ch != EOF);
             if (ch == EOF)
@@ -143,7 +142,8 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
     if (MyLineNum < 0 || (size_t)MyLineNum >= line_varName.size() || strcmp(line_varName[MyLineNum].c_str(), szVarName) != 0)
     {
         int N = line_varName.size();
-        for (int i=0; i<N; i++)
+		int i=0;
+        for (; i<N; i++)
             if (strcmp(line_varName[i].c_str(), szVarName) == 0)
             {
                 MyLineNum = i;
@@ -158,11 +158,10 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
     fseek(f, line_value_bytepos[MyLineNum], SEEK_SET);
 
     // now we know that we found and ate the '=' sign; return rest of the line.
-    int nChars = 0;
     int pos = 0;
     while (pos < nMaxRetChars-3)
     {
-        char ch = fgetc(f);
+        char ch = (char)fgetc(f);
         if (ch == '\r' || ch == '\n' || ch==EOF)
             break;
         szRet[pos++] = ch;
@@ -171,7 +170,7 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
     //fgets(szRet, nMaxRetChars-3, f);  // reads chars up til the next linefeed.  NAH - it also copies in the linefeed char...
 
     // move to next line
-    MyLineNum++;
+    ++MyLineNum;
     //fseek(f, line_value_bytepos[MyLineNum], SEEK_SET);
 
     return true;
@@ -208,10 +207,10 @@ void GetFastString(const char* szVarName, const char* szDef, char* szRetLine, in
     // otherwise, copy the default string, being careful not to overflow dest buf.  
     // (avoid strncpy because it pads with zeroes all the way out to the max size.)
     int x = 0;
-    while (szDef[x] && x < nMaxChars)
+    while (x < nMaxChars && szDef[x])
     {
         szRetLine[x] = szDef[x];
-        x++;
+        ++x;
     }
     szRetLine[x] = 0;
 }
@@ -230,13 +229,13 @@ CState::CState()
     {
         m_wave[i].m_pf_codehandle = NULL;
         m_wave[i].m_pp_codehandle = NULL;
-				m_wave[i].m_pf_eel=NSEEL_VM_alloc();
-				m_wave[i].m_pp_eel=NSEEL_VM_alloc();
+		m_wave[i].m_pf_eel=NSEEL_VM_alloc();
+		m_wave[i].m_pp_eel=NSEEL_VM_alloc();
     }
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
     {
         m_shape[i].m_pf_codehandle = NULL;
-				m_shape[i].m_pf_eel=NSEEL_VM_alloc();
+		m_shape[i].m_pf_eel=NSEEL_VM_alloc();
         //m_shape[i].m_pp_codehandle = NULL;
     }
 	//RegisterBuiltInVariables();
@@ -252,7 +251,7 @@ CState::~CState()
 		NSEEL_VM_free(m_wave[i].m_pf_eel);
 		NSEEL_VM_free(m_wave[i].m_pp_eel);
 	}
-	for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+	for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
 	{
 		NSEEL_VM_free(m_shape[i].m_pf_eel);
 	}
@@ -376,7 +375,7 @@ void CState::RegisterBuiltInVariables(int flags)
 	    var_pv_y		= NSEEL_VM_regvar(m_pv_eel, "y");			// i
 	    var_pv_rad		= NSEEL_VM_regvar(m_pv_eel, "rad");		// i
 	    var_pv_ang		= NSEEL_VM_regvar(m_pv_eel, "ang");		// i
-        for (vi=0; vi<NUM_Q_VAR; vi++)
+        for (int vi=0; vi<NUM_Q_VAR; vi++)
         {
             char buf[16];
             sprintf(buf, "q%d", vi+1);
@@ -406,7 +405,7 @@ void CState::RegisterBuiltInVariables(int flags)
                 sprintf(buf, "q%d", vi+1);
                 m_wave[i].var_pf_q[vi] = NSEEL_VM_regvar(m_wave[i].m_pf_eel, buf);
             }
-            for (vi=0; vi<NUM_T_VAR; vi++)
+            for (int vi=0; vi<NUM_T_VAR; vi++)
             {
                 char buf[16];
                 sprintf(buf, "t%d", vi+1);
@@ -429,13 +428,13 @@ void CState::RegisterBuiltInVariables(int flags)
 	        m_wave[i].var_pp_fps 		= NSEEL_VM_regvar(m_wave[i].m_pp_eel, "fps");		// i
 	        m_wave[i].var_pp_frame      = NSEEL_VM_regvar(m_wave[i].m_pp_eel, "frame");     // i
 	        m_wave[i].var_pp_progress   = NSEEL_VM_regvar(m_wave[i].m_pp_eel, "progress");  // i
-            for (vi=0; vi<NUM_Q_VAR; vi++)
+            for (int vi=0; vi<NUM_Q_VAR; vi++)
             {
                 char buf[16];
                 sprintf(buf, "q%d", vi+1);
                 m_wave[i].var_pp_q[vi] = NSEEL_VM_regvar(m_wave[i].m_pp_eel, buf);
             }
-            for (vi=0; vi<NUM_T_VAR; vi++)
+            for (int vi=0; vi<NUM_T_VAR; vi++)
             {
                 char buf[16];
                 sprintf(buf, "t%d", vi+1);
@@ -474,7 +473,7 @@ void CState::RegisterBuiltInVariables(int flags)
                 sprintf(buf, "q%d", vi+1);
                 m_shape[i].var_pf_q[vi] = NSEEL_VM_regvar(m_shape[i].m_pf_eel, buf);
             }
-            for (vi=0; vi<NUM_T_VAR; vi++)
+            for (int vi=0; vi<NUM_T_VAR; vi++)
             {
                 char buf[16];
                 sprintf(buf, "t%d", vi+1);
@@ -607,7 +606,7 @@ void CState::Default(DWORD ApplyFlags)
             m_wave[i].bDrawThick = 0;
             m_wave[i].bAdditive = 0;
         }
-        for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+        for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
         {
             m_shape[i].enabled = 0;
             m_shape[i].sides   = 4;
@@ -634,13 +633,13 @@ void CState::Default(DWORD ApplyFlags)
             m_shape[i].border_b = 1.0f;
             m_shape[i].border_a = 0.1f;
         }
-        for (i=0; i<MAX_CUSTOM_WAVES; i++)
+        for (int i=0; i<MAX_CUSTOM_WAVES; i++)
         {
             m_wave[i].m_szInit[0] = 0;
             m_wave[i].m_szPerFrame[0] = 0;
             m_wave[i].m_szPerPoint[0] = 0;
         }
-        for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+        for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
         {
             m_shape[i].m_szInit[0] = 0;
             m_shape[i].m_szPerFrame[0] = 0;
@@ -860,7 +859,7 @@ void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostro
 	{
 		while (	pStr[char_pos] != 0 &&
 				pStr[char_pos] != LINEFEED_CONTROL_CHAR)
-			char_pos++;
+			++char_pos;
 
 		sprintf(szLineName, "%s%d", prefix, line);
 
@@ -870,15 +869,15 @@ void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostro
         fprintf(fOut, "%s=%s%s\n", szLineName, bPrependApostrophe ? "`" : "", &pStr[start_pos]);
 		pStr[char_pos] = ch;
 
-		if (pStr[char_pos] != 0) char_pos++;
+		if (pStr[char_pos] != 0) ++char_pos;
 		start_pos = char_pos;
-		line++;
+		++line;
 	}
 }
 
-bool CState::Export(const wchar_t *szIniFile)
+bool CState::Export(const wchar_t *szFile)
 {
-	FILE *fOut = _wfopen(szIniFile, L"w");
+	FILE *fOut = _wfopen(szFile, L"w");
 	if (!fOut) return false;
 
     // IMPORTANT: THESE MUST BE THE FIRST TWO LINES.  Otherwise it is assumed to be a MilkDrop 1-era preset.
@@ -968,7 +967,8 @@ bool CState::Export(const wchar_t *szIniFile)
 	fprintf(fOut, "%s=%.3f\n", "b3x",                 m_fBlur3Max.eval(-1));       
 	fprintf(fOut, "%s=%.3f\n", "b1ed",                m_fBlur1EdgeDarken.eval(-1));       
 
-    for (int i=0; i<MAX_CUSTOM_WAVES; i++)
+	int i=0;
+    for (; i<MAX_CUSTOM_WAVES; i++)
         m_wave[i].Export(fOut, L"dummy_filename", i);
 
     for (i=0; i<MAX_CUSTOM_SHAPES; i++)
@@ -988,10 +988,10 @@ bool CState::Export(const wchar_t *szIniFile)
 	return true;
 }
 
-int  CWave::Export(FILE* fOut, const wchar_t *szFile, int i)
+int  CWave::Export(FILE* f, const wchar_t *szFile, int i)
 {
-    FILE* f2 = fOut;
-    if (!fOut)
+    FILE* f2 = f;
+    if (!f)
     {
 	    f2 = _wfopen(szFile, L"w");
         if (!f2) return 0;
@@ -1017,7 +1017,7 @@ int  CWave::Export(FILE* fOut, const wchar_t *szFile, int i)
     sprintf(prefix, "wave_%d_per_frame", i); WriteCode(f2, i, m_szPerFrame, prefix);
     sprintf(prefix, "wave_%d_per_point", i); WriteCode(f2, i, m_szPerPoint, prefix);
 
-    if (!fOut)
+    if (!f)
 	    fclose(f2); // [sic]
 
     return 1;
@@ -1076,9 +1076,8 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
     pStr[0] = 0;
 
 	// read in & compile arbitrary expressions
-	char szLineName[32];
-	char szLine[MAX_BIGSTRING_LEN];
-	int len;
+	char szLineName[32] = {0};
+	char szLine[MAX_BIGSTRING_LEN] = {0};
 
 	int line = 1;
 	int char_pos = 0;
@@ -1089,7 +1088,7 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
 		sprintf(szLineName, "%s%d", prefix, line); 
 
 		GetFastString(szLineName, "~!@#$", szLine, MAX_BIGSTRING_LEN, f);	// fixme
-		len = strlen(szLine);
+		int len = strlen(szLine);
 
 		if ((strcmp(szLine, "~!@#$")==0) ||		// if the key was missing,
 			(len >= MAX_BIGSTRING_LEN-1-char_pos-1))			// or if we're out of space
@@ -1100,11 +1099,11 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
 		{
             sprintf(&pStr[char_pos], "%s%c", (szLine[0]=='`') ? &szLine[1] : szLine, LINEFEED_CONTROL_CHAR);
             if (szLine[0] == '`')
-                len--;
+                --len;
 		}
 	
 		char_pos += len + 1;
-		line++;
+		++line;
 	}
 	pStr[char_pos++] = 0;	// null-terminate
 
@@ -1170,7 +1169,7 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
 			}
 		
 			char_pos += len + 1;
-			line++;
+			++line;
 		}
 		pStr[char_pos++] = 0;	// null-terminate
 	}
@@ -1385,7 +1384,7 @@ bool CState::Import(const wchar_t *szIniFile, float fTime, CState* pOldState, DW
         {
             m_wave[i].Import(f, L"dummy_filename", i);
         }
-        for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+        for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
         {
             m_shape[i].Import(f, L"dummy_filename", i);
         }
@@ -1500,7 +1499,7 @@ void CState::FreeVarsAndCode(bool bFree)
         }
     }
 
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
     {
 	    if (m_shape[i].m_pf_codehandle)
         {
@@ -1618,7 +1617,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
     int n2 = 3 + MAX_CUSTOM_WAVES*3 + MAX_CUSTOM_SHAPES*2; 
 	for (int n=0; n<n2; n++)
 	{
-		char *pOrig;
+		char *pOrig = 0;
 		switch(n)
 		{
 		case 0: pOrig = m_szPerFrameExpr; break;
@@ -1648,7 +1647,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
             }
 		}
 		char *p = pOrig;
-		while (*p==' ' || *p==LINEFEED_CONTROL_CHAR) p++;
+		while (*p==' ' || *p==LINEFEED_CONTROL_CHAR) ++p;
 		if (*p == 0) pOrig[0] = 0;
 	}
 
@@ -1670,9 +1669,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
 
 			    if ( ! (pf_codehandle_init = NSEEL_code_compile(m_pf_eel, buf)))
 			    {
-                    wchar_t buf[1024];
-				    swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PRESET_INIT_CODE), m_szDesc);
-                    g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+					wchar_t buffer[1024] = {0};
+				    _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PRESET_INIT_CODE), m_szDesc);
+                    g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 
                     for (int vi=0; vi<NUM_Q_VAR; vi++)
 				        q_values_after_init_code[vi] = 0;
@@ -1701,9 +1700,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
 	        {
 			    if ( ! (m_pf_codehandle = NSEEL_code_compile(m_pf_eel, buf)))
 			    {
-                    wchar_t buf[1024];
-				    swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PER_FRAME_CODE), m_szDesc);
-                    g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+					wchar_t buffer[1024] = {0};
+				    _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PER_FRAME_CODE), m_szDesc);
+                    g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			    }
 	        }
 
@@ -1713,9 +1712,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
 	        {
 			    if ( ! (m_pp_codehandle = NSEEL_code_compile(m_pv_eel, buf)))
 			    {
-                    wchar_t buf[1024];
-				    swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PER_VERTEX_CODE), m_szDesc);
-                    g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+					wchar_t buffer[1024] = {0};
+				    _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_PER_VERTEX_CODE), m_szDesc);
+                    g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			    }
 	        }
 	        
@@ -1735,13 +1734,13 @@ void CState::RecompileExpressions(int flags, int bReInit)
 		                NSEEL_CODEHANDLE	codehandle_temp;	
 			            if ( ! (codehandle_temp = NSEEL_code_compile(m_wave[i].m_pf_eel, buf)))
 			            {
-                            wchar_t buf[1024];
-				            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_INIT_CODE), m_szDesc, i);
-                            g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+							wchar_t buffer[1024] = {0};
+				            _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_INIT_CODE), m_szDesc, i);
+                            g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 
                             for (int vi=0; vi<NUM_Q_VAR; vi++)
                                 *m_wave[i].var_pf_q[vi] = q_values_after_init_code[vi];
-                            for (vi=0; vi<NUM_T_VAR; vi++)
+                            for (int vi=0; vi<NUM_T_VAR; vi++)
 				                m_wave[i].t_values_after_init_code[vi] = 0;
 			            }
 			            else
@@ -1772,9 +1771,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
 		            #ifndef _NO_EXPR_
 			            if ( ! (m_wave[i].m_pf_codehandle = NSEEL_code_compile(m_wave[i].m_pf_eel, buf)))
 			            {
-                            wchar_t buf[1024];
-				            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_FRAME_CODE), m_szDesc, i);
-                            g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+							wchar_t buffer[1024] = {0};
+				            _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_FRAME_CODE), m_szDesc, i);
+                            g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			            }
                     #endif
                 }
@@ -1785,9 +1784,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
                 {
 			        if ( ! (m_wave[i].m_pp_codehandle = NSEEL_code_compile(m_wave[i].m_pp_eel, buf)))
 			        {
-                        wchar_t buf[1024];
-				        swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_POINT_CODE), m_szDesc, i);
-                        g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+                        wchar_t buffer[1024];
+				        swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_POINT_CODE), m_szDesc, i);
+                        g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			        }
                 }
             }
@@ -1806,13 +1805,13 @@ void CState::RecompileExpressions(int flags, int bReInit)
 		                NSEEL_CODEHANDLE	codehandle_temp;	
 			            if ( ! (codehandle_temp = NSEEL_code_compile(m_shape[i].m_pf_eel, buf)))
 			            {
-                            wchar_t buf[1024];
-				            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_INIT_CODE), m_szDesc, i);
-                            g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+							wchar_t buffer[1024] = {0};
+				            swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_INIT_CODE), m_szDesc, i);
+                            g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 
                             for (int vi=0; vi<NUM_Q_VAR; vi++)
                                 *m_shape[i].var_pf_q[vi] = q_values_after_init_code[vi];
-                            for (vi=0; vi<NUM_T_VAR; vi++)
+                            for (int vi=0; vi<NUM_T_VAR; vi++)
 				                m_shape[i].t_values_after_init_code[vi] = 0;
 			            }
 			            else
@@ -1843,9 +1842,9 @@ void CState::RecompileExpressions(int flags, int bReInit)
 		            #ifndef _NO_EXPR_
 			            if ( ! (m_shape[i].m_pf_codehandle = NSEEL_code_compile(m_shape[i].m_pf_eel, buf)))
 			            {
-                            wchar_t buf[1024];
-				            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_PER_FRAME_CODE), m_szDesc, i);
-                            g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
+							wchar_t buffer[1024] = {0};
+				            swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_PER_FRAME_CODE), m_szDesc, i);
+                            g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			            }
 		            #endif
                 }
@@ -1893,7 +1892,7 @@ void CState::RandomizePresetVars()
             m_rot_speed[k].x = (FRAND*2-1)*rot_mult;
             m_rot_speed[k].y = (FRAND*2-1)*rot_mult;
             m_rot_speed[k].z = (FRAND*2-1)*rot_mult;
-            k++;
+            ++k;
         }
     }
     while (k < sizeof(m_xlate)/sizeof(m_xlate[0]));

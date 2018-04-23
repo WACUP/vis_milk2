@@ -21,6 +21,44 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
 
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
@@ -396,32 +434,6 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
@@ -456,7 +468,13 @@ IDI_PLUGIN_ICON         ICON                    "plugin_icon.ico"
 // TEXT
 //
 
+#if defined(APSTUDIO_INVOKED) || defined(DISABLED)
+#if defined(APSTUDIO_INVOKED)
+IDR_TEXT1$(DISABLED)    TEXT                    "text1.bin"
+#else
 IDR_TEXT1               TEXT                    "text1.bin"
+#endif
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -464,50 +482,45 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,25,3,0
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 2,26,0,0
+ PRODUCTVERSION 2,26,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
 #else
  FILEFLAGS 0x0L
 #endif
- FILEOS 0x4L
+ FILEOS 0x40004L
  FILETYPE 0x2L
  FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904b0"
+        BLOCK "080004b0"
         BEGIN
-            VALUE "CompanyName", "Nullsoft, Inc."
+            VALUE "CompanyName", "WACUP (WinAmp Community Update Pack)"
             VALUE "FileDescription", "Winamp Visualization Plug-in"
-            VALUE "FileVersion", "2, 25, 3, 0"
+            VALUE "FileVersion", "2, 26, 0, 0"
             VALUE "InternalName", "Nullsoft Milkdrop v2"
-            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc."
+            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2018"
             VALUE "OriginalFilename", "vis_milk2.dll"
-            VALUE "ProductName", "Winamp"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "ProductName", "Nullsoft Milkdrop v2"
+            VALUE "ProductVersion", "2, 26, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x409, 1200
+        VALUE "Translation", 0x800, 1200
     END
 END
 
-#endif    // English (U.S.) resources
-/////////////////////////////////////////////////////////////////////////////
-
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.K.) resources
+//
+// GZ
+//
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-#pragma code_page(1252)
-#endif //_WIN32
+IDR_TEXT_GZ             GZ                      "text1.bin.gz"
 
 /////////////////////////////////////////////////////////////////////////////
 //

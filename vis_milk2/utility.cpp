@@ -157,7 +157,7 @@ static void ShiftDown(wchar_t *str)
 	while (*str)
 	{
 		str[0] = str[1];
-		str++;
+		++str;
 	}
 }
 
@@ -168,7 +168,7 @@ void RemoveSingleAmpersands(wchar_t *str)
 		if (str[0] == L'&')
 		{
 			if (str[1] == L'&') // two in a row: replace with single ampersand, move on
-				str++;
+				++str;
 
 			ShiftDown(str);
 		}
@@ -184,8 +184,8 @@ void TextToGuid(char *str, GUID *pGUID)
 
     DWORD d[11];
     
-    sscanf(str, "%X %X %X %X %X %X %X %X %X %X %X", 
-        &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7], &d[8], &d[9], &d[10]);
+    (void)sscanf(str, "%X %X %X %X %X %X %X %X %X %X %X", &d[0], &d[1],
+				 &d[2], &d[3], &d[4], &d[5], &d[6], &d[7], &d[8], &d[9], &d[10]);
 
     pGUID->Data1 = (DWORD)d[0];
     pGUID->Data2 = (WORD)d[1];
@@ -316,247 +316,247 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
     
             switch(msg)
             {
-            case 0x0001: lstrcat(buf, "CREATE"); break;                      
-            case 0x0002: lstrcat(buf, "DESTROY"); break;
-            case 0x0003: lstrcat(buf, "MOVE"); break;
-            case 0x0005: lstrcat(buf, "SIZE"); break;
-            case 0x0006: lstrcat(buf, "ACTIVATE"); break;
-            case 0x0007: lstrcat(buf, "SETFOCUS"); break;
-            case 0x0008: lstrcat(buf, "KILLFOCUS"); break;
-            case 0x000A: lstrcat(buf, "ENABLE"); break;
-            case 0x000B: lstrcat(buf, "SETREDRAW"); break;
-            case 0x000C: lstrcat(buf, "SETTEXT"); break;
-            case 0x000D: lstrcat(buf, "GETTEXT"); break;
-            case 0x000E: lstrcat(buf, "GETTEXTLENGTH"); break;
-            case 0x000F: lstrcat(buf, "PAINT"); break;
-            case 0x0010: lstrcat(buf, "CLOSE"); break;
-            case 0x0011: lstrcat(buf, "QUERYENDSESSION"); break;
-            case 0x0012: lstrcat(buf, "QUIT"); break;
-            case 0x0013: lstrcat(buf, "QUERYOPEN"); break;
-            case 0x0014: lstrcat(buf, "ERASEBKGND"); break;
-            case 0x0015: lstrcat(buf, "SYSCOLORCHANGE"); break;
-            case 0x0016: lstrcat(buf, "ENDSESSION"); break;
-            case 0x0018: lstrcat(buf, "SHOWWINDOW"); break;
-            case 0x001A: lstrcat(buf, "WININICHANGE"); break;
-            case 0x001B: lstrcat(buf, "DEVMODECHANGE"); break;
-            case 0x001C: lstrcat(buf, "ACTIVATEAPP"); break;
-            case 0x001D: lstrcat(buf, "FONTCHANGE"); break;
-            case 0x001E: lstrcat(buf, "TIMECHANGE"); break;
-            case 0x001F: lstrcat(buf, "CANCELMODE"); break;
-            case 0x0020: lstrcat(buf, "SETCURSOR"); break;
-            case 0x0021: lstrcat(buf, "MOUSEACTIVATE"); break;
-            case 0x0022: lstrcat(buf, "CHILDACTIVATE"); break;
-            case 0x0023: lstrcat(buf, "QUEUESYNC"); break;
-            case 0x0024: lstrcat(buf, "GETMINMAXINFO"); break;
-            case 0x0026: lstrcat(buf, "PAINTICON"); break;
-            case 0x0027: lstrcat(buf, "ICONERASEBKGND"); break;
-            case 0x0028: lstrcat(buf, "NEXTDLGCTL"); break;
-            case 0x002A: lstrcat(buf, "SPOOLERSTATUS"); break;
-            case 0x002B: lstrcat(buf, "DRAWITEM"); break;
-            case 0x002C: lstrcat(buf, "MEASUREITEM"); break;
-            case 0x002D: lstrcat(buf, "DELETEITEM"); break;
-            case 0x002E: lstrcat(buf, "VKEYTOITEM"); break;
-            case 0x002F: lstrcat(buf, "CHARTOITEM"); break;
-            case 0x0030: lstrcat(buf, "SETFONT"); break;
-            case 0x0031: lstrcat(buf, "GETFONT"); break;
-            case 0x0032: lstrcat(buf, "SETHOTKEY"); break;
-            case 0x0033: lstrcat(buf, "GETHOTKEY"); break;
-            case 0x0037: lstrcat(buf, "QUERYDRAGICON"); break;
-            case 0x0039: lstrcat(buf, "COMPAREITEM"); break;
-            case 0x0041: lstrcat(buf, "COMPACTING"); break;
-            case 0x0044: lstrcat(buf, "COMMNOTIFY"); break;
-            case 0x0046: lstrcat(buf, "WINDOWPOSCHANGING"); break;
-            case 0x0047: lstrcat(buf, "WINDOWPOSCHANGED"); break;
-            case 0x0048: lstrcat(buf, "POWER"); break;
-            case 0x004A: lstrcat(buf, "COPYDATA"); break;
-            case 0x004B: lstrcat(buf, "CANCELJOURNAL"); break;
+            case 0x0001: strcat(buf, "CREATE"); break;                      
+            case 0x0002: strcat(buf, "DESTROY"); break;
+            case 0x0003: strcat(buf, "MOVE"); break;
+            case 0x0005: strcat(buf, "SIZE"); break;
+            case 0x0006: strcat(buf, "ACTIVATE"); break;
+            case 0x0007: strcat(buf, "SETFOCUS"); break;
+            case 0x0008: strcat(buf, "KILLFOCUS"); break;
+            case 0x000A: strcat(buf, "ENABLE"); break;
+            case 0x000B: strcat(buf, "SETREDRAW"); break;
+            case 0x000C: strcat(buf, "SETTEXT"); break;
+            case 0x000D: strcat(buf, "GETTEXT"); break;
+            case 0x000E: strcat(buf, "GETTEXTLENGTH"); break;
+            case 0x000F: strcat(buf, "PAINT"); break;
+            case 0x0010: strcat(buf, "CLOSE"); break;
+            case 0x0011: strcat(buf, "QUERYENDSESSION"); break;
+            case 0x0012: strcat(buf, "QUIT"); break;
+            case 0x0013: strcat(buf, "QUERYOPEN"); break;
+            case 0x0014: strcat(buf, "ERASEBKGND"); break;
+            case 0x0015: strcat(buf, "SYSCOLORCHANGE"); break;
+            case 0x0016: strcat(buf, "ENDSESSION"); break;
+            case 0x0018: strcat(buf, "SHOWWINDOW"); break;
+            case 0x001A: strcat(buf, "WININICHANGE"); break;
+            case 0x001B: strcat(buf, "DEVMODECHANGE"); break;
+            case 0x001C: strcat(buf, "ACTIVATEAPP"); break;
+            case 0x001D: strcat(buf, "FONTCHANGE"); break;
+            case 0x001E: strcat(buf, "TIMECHANGE"); break;
+            case 0x001F: strcat(buf, "CANCELMODE"); break;
+            case 0x0020: strcat(buf, "SETCURSOR"); break;
+            case 0x0021: strcat(buf, "MOUSEACTIVATE"); break;
+            case 0x0022: strcat(buf, "CHILDACTIVATE"); break;
+            case 0x0023: strcat(buf, "QUEUESYNC"); break;
+            case 0x0024: strcat(buf, "GETMINMAXINFO"); break;
+            case 0x0026: strcat(buf, "PAINTICON"); break;
+            case 0x0027: strcat(buf, "ICONERASEBKGND"); break;
+            case 0x0028: strcat(buf, "NEXTDLGCTL"); break;
+            case 0x002A: strcat(buf, "SPOOLERSTATUS"); break;
+            case 0x002B: strcat(buf, "DRAWITEM"); break;
+            case 0x002C: strcat(buf, "MEASUREITEM"); break;
+            case 0x002D: strcat(buf, "DELETEITEM"); break;
+            case 0x002E: strcat(buf, "VKEYTOITEM"); break;
+            case 0x002F: strcat(buf, "CHARTOITEM"); break;
+            case 0x0030: strcat(buf, "SETFONT"); break;
+            case 0x0031: strcat(buf, "GETFONT"); break;
+            case 0x0032: strcat(buf, "SETHOTKEY"); break;
+            case 0x0033: strcat(buf, "GETHOTKEY"); break;
+            case 0x0037: strcat(buf, "QUERYDRAGICON"); break;
+            case 0x0039: strcat(buf, "COMPAREITEM"); break;
+            case 0x0041: strcat(buf, "COMPACTING"); break;
+            case 0x0044: strcat(buf, "COMMNOTIFY"); break;
+            case 0x0046: strcat(buf, "WINDOWPOSCHANGING"); break;
+            case 0x0047: strcat(buf, "WINDOWPOSCHANGED"); break;
+            case 0x0048: strcat(buf, "POWER"); break;
+            case 0x004A: strcat(buf, "COPYDATA"); break;
+            case 0x004B: strcat(buf, "CANCELJOURNAL"); break;
 
             #if(WINVER >= 0x0400)
-            case 0x004E: lstrcat(buf, "NOTIFY"); break;
-            case 0x0050: lstrcat(buf, "INPUTLANGCHANGEREQUEST"); break;
-            case 0x0051: lstrcat(buf, "INPUTLANGCHANGE"); break;
-            case 0x0052: lstrcat(buf, "TCARD"); break;
-            case 0x0053: lstrcat(buf, "HELP"); break;
-            case 0x0054: lstrcat(buf, "USERCHANGED"); break;
-            case 0x0055: lstrcat(buf, "NOTIFYFORMAT"); break;
-            case 0x007B: lstrcat(buf, "CONTEXTMENU"); break;
-            case 0x007C: lstrcat(buf, "STYLECHANGING"); break;
-            case 0x007D: lstrcat(buf, "STYLECHANGED"); break;
-            case 0x007E: lstrcat(buf, "DISPLAYCHANGE"); break;
-            case 0x007F: lstrcat(buf, "GETICON"); break;
-            case 0x0080: lstrcat(buf, "SETICON"); break;
+            case 0x004E: strcat(buf, "NOTIFY"); break;
+            case 0x0050: strcat(buf, "INPUTLANGCHANGEREQUEST"); break;
+            case 0x0051: strcat(buf, "INPUTLANGCHANGE"); break;
+            case 0x0052: strcat(buf, "TCARD"); break;
+            case 0x0053: strcat(buf, "HELP"); break;
+            case 0x0054: strcat(buf, "USERCHANGED"); break;
+            case 0x0055: strcat(buf, "NOTIFYFORMAT"); break;
+            case 0x007B: strcat(buf, "CONTEXTMENU"); break;
+            case 0x007C: strcat(buf, "STYLECHANGING"); break;
+            case 0x007D: strcat(buf, "STYLECHANGED"); break;
+            case 0x007E: strcat(buf, "DISPLAYCHANGE"); break;
+            case 0x007F: strcat(buf, "GETICON"); break;
+            case 0x0080: strcat(buf, "SETICON"); break;
             #endif 
 
-            case 0x0081: lstrcat(buf, "NCCREATE"); break;
-            case 0x0082: lstrcat(buf, "NCDESTROY"); break;
-            case 0x0083: lstrcat(buf, "NCCALCSIZE"); break;
-            case 0x0084: lstrcat(buf, "NCHITTEST"); break;
-            case 0x0085: lstrcat(buf, "NCPAINT"); break;
-            case 0x0086: lstrcat(buf, "NCACTIVATE"); break;
-            case 0x0087: lstrcat(buf, "GETDLGCODE"); break;
-            case 0x0088: lstrcat(buf, "SYNCPAINT"); break;
-            case 0x00A0: lstrcat(buf, "NCMOUSEMOVE"); break;
-            case 0x00A1: lstrcat(buf, "NCLBUTTONDOWN"); break;
-            case 0x00A2: lstrcat(buf, "NCLBUTTONUP"); break;
-            case 0x00A3: lstrcat(buf, "NCLBUTTONDBLCLK"); break;
-            case 0x00A4: lstrcat(buf, "NCRBUTTONDOWN"); break;
-            case 0x00A5: lstrcat(buf, "NCRBUTTONUP"); break;
-            case 0x00A6: lstrcat(buf, "NCRBUTTONDBLCLK"); break;
-            case 0x00A7: lstrcat(buf, "NCMBUTTONDOWN"); break;
-            case 0x00A8: lstrcat(buf, "NCMBUTTONUP"); break;
-            case 0x00A9: lstrcat(buf, "NCMBUTTONDBLCLK"); break;
-            case 0x0100: lstrcat(buf, "KEYDOWN"); break;
-            case 0x0101: lstrcat(buf, "KEYUP"); break;
-            case 0x0102: lstrcat(buf, "CHAR"); break;
-            case 0x0103: lstrcat(buf, "DEADCHAR"); break;
-            case 0x0104: lstrcat(buf, "SYSKEYDOWN"); break;
-            case 0x0105: lstrcat(buf, "SYSKEYUP"); break;
-            case 0x0106: lstrcat(buf, "SYSCHAR"); break;
-            case 0x0107: lstrcat(buf, "SYSDEADCHAR"); break;
-            case 0x0108: lstrcat(buf, "KEYLAST"); break;
+            case 0x0081: strcat(buf, "NCCREATE"); break;
+            case 0x0082: strcat(buf, "NCDESTROY"); break;
+            case 0x0083: strcat(buf, "NCCALCSIZE"); break;
+            case 0x0084: strcat(buf, "NCHITTEST"); break;
+            case 0x0085: strcat(buf, "NCPAINT"); break;
+            case 0x0086: strcat(buf, "NCACTIVATE"); break;
+            case 0x0087: strcat(buf, "GETDLGCODE"); break;
+            case 0x0088: strcat(buf, "SYNCPAINT"); break;
+            case 0x00A0: strcat(buf, "NCMOUSEMOVE"); break;
+            case 0x00A1: strcat(buf, "NCLBUTTONDOWN"); break;
+            case 0x00A2: strcat(buf, "NCLBUTTONUP"); break;
+            case 0x00A3: strcat(buf, "NCLBUTTONDBLCLK"); break;
+            case 0x00A4: strcat(buf, "NCRBUTTONDOWN"); break;
+            case 0x00A5: strcat(buf, "NCRBUTTONUP"); break;
+            case 0x00A6: strcat(buf, "NCRBUTTONDBLCLK"); break;
+            case 0x00A7: strcat(buf, "NCMBUTTONDOWN"); break;
+            case 0x00A8: strcat(buf, "NCMBUTTONUP"); break;
+            case 0x00A9: strcat(buf, "NCMBUTTONDBLCLK"); break;
+            case 0x0100: strcat(buf, "KEYDOWN"); break;
+            case 0x0101: strcat(buf, "KEYUP"); break;
+            case 0x0102: strcat(buf, "CHAR"); break;
+            case 0x0103: strcat(buf, "DEADCHAR"); break;
+            case 0x0104: strcat(buf, "SYSKEYDOWN"); break;
+            case 0x0105: strcat(buf, "SYSKEYUP"); break;
+            case 0x0106: strcat(buf, "SYSCHAR"); break;
+            case 0x0107: strcat(buf, "SYSDEADCHAR"); break;
+            case 0x0108: strcat(buf, "KEYLAST"); break;
 
             #if(WINVER >= 0x0400)
-            case 0x010D: lstrcat(buf, "IME_STARTCOMPOSITION"); break;
-            case 0x010E: lstrcat(buf, "IME_ENDCOMPOSITION"); break;
-            case 0x010F: lstrcat(buf, "IME_COMPOSITION"); break;
-            //case 0x010F: lstrcat(buf, "IME_KEYLAST"); break;
+            case 0x010D: strcat(buf, "IME_STARTCOMPOSITION"); break;
+            case 0x010E: strcat(buf, "IME_ENDCOMPOSITION"); break;
+            case 0x010F: strcat(buf, "IME_COMPOSITION"); break;
+            //case 0x010F: strcat(buf, "IME_KEYLAST"); break;
             #endif 
 
-            case 0x0110: lstrcat(buf, "INITDIALOG"); break;
-            case 0x0111: lstrcat(buf, "COMMAND"); break;
-            case 0x0112: lstrcat(buf, "SYSCOMMAND"); break;
-            case 0x0113: lstrcat(buf, "TIMER"); break;
-            case 0x0114: lstrcat(buf, "HSCROLL"); break;
-            case 0x0115: lstrcat(buf, "VSCROLL"); break;
-            case 0x0116: lstrcat(buf, "INITMENU"); break;
-            case 0x0117: lstrcat(buf, "INITMENUPOPUP"); break;
-            case 0x011F: lstrcat(buf, "MENUSELECT"); break;
-            case 0x0120: lstrcat(buf, "MENUCHAR"); break;
-            case 0x0121: lstrcat(buf, "ENTERIDLE"); break;
+            case 0x0110: strcat(buf, "INITDIALOG"); break;
+            case 0x0111: strcat(buf, "COMMAND"); break;
+            case 0x0112: strcat(buf, "SYSCOMMAND"); break;
+            case 0x0113: strcat(buf, "TIMER"); break;
+            case 0x0114: strcat(buf, "HSCROLL"); break;
+            case 0x0115: strcat(buf, "VSCROLL"); break;
+            case 0x0116: strcat(buf, "INITMENU"); break;
+            case 0x0117: strcat(buf, "INITMENUPOPUP"); break;
+            case 0x011F: strcat(buf, "MENUSELECT"); break;
+            case 0x0120: strcat(buf, "MENUCHAR"); break;
+            case 0x0121: strcat(buf, "ENTERIDLE"); break;
             #if(WINVER >= 0x0500)
-            case 0x0122: lstrcat(buf, "MENURBUTTONUP"); break;
-            case 0x0123: lstrcat(buf, "MENUDRAG"); break;
-            case 0x0124: lstrcat(buf, "MENUGETOBJECT"); break;
-            case 0x0125: lstrcat(buf, "UNINITMENUPOPUP"); break;
-            case 0x0126: lstrcat(buf, "MENUCOMMAND"); break;
+            case 0x0122: strcat(buf, "MENURBUTTONUP"); break;
+            case 0x0123: strcat(buf, "MENUDRAG"); break;
+            case 0x0124: strcat(buf, "MENUGETOBJECT"); break;
+            case 0x0125: strcat(buf, "UNINITMENUPOPUP"); break;
+            case 0x0126: strcat(buf, "MENUCOMMAND"); break;
             #endif 
 
-            case 0x0132: lstrcat(buf, "CTLCOLORMSGBOX"); break;
-            case 0x0133: lstrcat(buf, "CTLCOLOREDIT"); break;
-            case 0x0134: lstrcat(buf, "CTLCOLORLISTBOX"); break;
-            case 0x0135: lstrcat(buf, "CTLCOLORBTN"); break;
-            case 0x0136: lstrcat(buf, "CTLCOLORDLG"); break;
-            case 0x0137: lstrcat(buf, "CTLCOLORSCROLLBAR"); break;
-            case 0x0138: lstrcat(buf, "CTLCOLORSTATIC"); break;
+            case 0x0132: strcat(buf, "CTLCOLORMSGBOX"); break;
+            case 0x0133: strcat(buf, "CTLCOLOREDIT"); break;
+            case 0x0134: strcat(buf, "CTLCOLORLISTBOX"); break;
+            case 0x0135: strcat(buf, "CTLCOLORBTN"); break;
+            case 0x0136: strcat(buf, "CTLCOLORDLG"); break;
+            case 0x0137: strcat(buf, "CTLCOLORSCROLLBAR"); break;
+            case 0x0138: strcat(buf, "CTLCOLORSTATIC"); break;
 
-            //case 0x0200: lstrcat(buf, "MOUSEFIRST"); break;
-            case 0x0200: lstrcat(buf, "MOUSEMOVE"); break;
-            case 0x0201: lstrcat(buf, "LBUTTONDOWN"); break;
-            case 0x0202: lstrcat(buf, "LBUTTONUP"); break;
-            case 0x0203: lstrcat(buf, "LBUTTONDBLCLK"); break;
-            case 0x0204: lstrcat(buf, "RBUTTONDOWN"); break;
-            case 0x0205: lstrcat(buf, "RBUTTONUP"); break;
-            case 0x0206: lstrcat(buf, "RBUTTONDBLCLK"); break;
-            case 0x0207: lstrcat(buf, "MBUTTONDOWN"); break;
-            case 0x0208: lstrcat(buf, "MBUTTONUP"); break;
-            case 0x0209: lstrcat(buf, "MBUTTONDBLCLK"); break;
+            //case 0x0200: strcat(buf, "MOUSEFIRST"); break;
+            case 0x0200: strcat(buf, "MOUSEMOVE"); break;
+            case 0x0201: strcat(buf, "LBUTTONDOWN"); break;
+            case 0x0202: strcat(buf, "LBUTTONUP"); break;
+            case 0x0203: strcat(buf, "LBUTTONDBLCLK"); break;
+            case 0x0204: strcat(buf, "RBUTTONDOWN"); break;
+            case 0x0205: strcat(buf, "RBUTTONUP"); break;
+            case 0x0206: strcat(buf, "RBUTTONDBLCLK"); break;
+            case 0x0207: strcat(buf, "MBUTTONDOWN"); break;
+            case 0x0208: strcat(buf, "MBUTTONUP"); break;
+            case 0x0209: strcat(buf, "MBUTTONDBLCLK"); break;
 
             #if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400)
-            case 0x020A: lstrcat(buf, "MOUSEWHEEL"); break;
-            case 0x020E: lstrcat(buf, "MOUSELAST"); break;
+            case 0x020A: strcat(buf, "MOUSEWHEEL"); break;
+            case 0x020E: strcat(buf, "MOUSELAST"); break;
             #else
-            //case 0x0209: lstrcat(buf, "MOUSELAST"); break;
+            //case 0x0209: strcat(buf, "MOUSELAST"); break;
             #endif 
 
-            case 0x0210: lstrcat(buf, "PARENTNOTIFY"); break;
-            case 0x0211: lstrcat(buf, "ENTERMENULOOP"); break;
-            case 0x0212: lstrcat(buf, "EXITMENULOOP"); break;
+            case 0x0210: strcat(buf, "PARENTNOTIFY"); break;
+            case 0x0211: strcat(buf, "ENTERMENULOOP"); break;
+            case 0x0212: strcat(buf, "EXITMENULOOP"); break;
 
             #if(WINVER >= 0x0400)
-            case 0x0213: lstrcat(buf, "NEXTMENU"); break;
-            case 0x0214: lstrcat(buf, "SIZING"); break;
-            case 0x0215: lstrcat(buf, "CAPTURECHANGED"); break;
-            case 0x0216: lstrcat(buf, "MOVING"); break;
-            case 0x0218: lstrcat(buf, "POWERBROADCAST"); break;
-            case 0x0219: lstrcat(buf, "DEVICECHANGE"); break;
+            case 0x0213: strcat(buf, "NEXTMENU"); break;
+            case 0x0214: strcat(buf, "SIZING"); break;
+            case 0x0215: strcat(buf, "CAPTURECHANGED"); break;
+            case 0x0216: strcat(buf, "MOVING"); break;
+            case 0x0218: strcat(buf, "POWERBROADCAST"); break;
+            case 0x0219: strcat(buf, "DEVICECHANGE"); break;
             #endif 
 
             /*
-            case 0x0220: lstrcat(buf, "MDICREATE"); break;
-            case 0x0221: lstrcat(buf, "MDIDESTROY"); break;
-            case 0x0222: lstrcat(buf, "MDIACTIVATE"); break;
-            case 0x0223: lstrcat(buf, "MDIRESTORE"); break;
-            case 0x0224: lstrcat(buf, "MDINEXT"); break;
-            case 0x0225: lstrcat(buf, "MDIMAXIMIZE"); break;
-            case 0x0226: lstrcat(buf, "MDITILE"); break;
-            case 0x0227: lstrcat(buf, "MDICASCADE"); break;
-            case 0x0228: lstrcat(buf, "MDIICONARRANGE"); break;
-            case 0x0229: lstrcat(buf, "MDIGETACTIVE"); break;
+            case 0x0220: strcat(buf, "MDICREATE"); break;
+            case 0x0221: strcat(buf, "MDIDESTROY"); break;
+            case 0x0222: strcat(buf, "MDIACTIVATE"); break;
+            case 0x0223: strcat(buf, "MDIRESTORE"); break;
+            case 0x0224: strcat(buf, "MDINEXT"); break;
+            case 0x0225: strcat(buf, "MDIMAXIMIZE"); break;
+            case 0x0226: strcat(buf, "MDITILE"); break;
+            case 0x0227: strcat(buf, "MDICASCADE"); break;
+            case 0x0228: strcat(buf, "MDIICONARRANGE"); break;
+            case 0x0229: strcat(buf, "MDIGETACTIVE"); break;
             */
 
-            case 0x0230: lstrcat(buf, "MDISETMENU"); break;
-            case 0x0231: lstrcat(buf, "ENTERSIZEMOVE"); break;
-            case 0x0232: lstrcat(buf, "EXITSIZEMOVE"); break;
-            case 0x0233: lstrcat(buf, "DROPFILES"); break;
-            case 0x0234: lstrcat(buf, "MDIREFRESHMENU"); break;
+            case 0x0230: strcat(buf, "MDISETMENU"); break;
+            case 0x0231: strcat(buf, "ENTERSIZEMOVE"); break;
+            case 0x0232: strcat(buf, "EXITSIZEMOVE"); break;
+            case 0x0233: strcat(buf, "DROPFILES"); break;
+            case 0x0234: strcat(buf, "MDIREFRESHMENU"); break;
 
 
             /*
             #if(WINVER >= 0x0400)
-            case 0x0281: lstrcat(buf, "IME_SETCONTEXT"); break;
-            case 0x0282: lstrcat(buf, "IME_NOTIFY"); break;
-            case 0x0283: lstrcat(buf, "IME_CONTROL"); break;
-            case 0x0284: lstrcat(buf, "IME_COMPOSITIONFULL"); break;
-            case 0x0285: lstrcat(buf, "IME_SELECT"); break;
-            case 0x0286: lstrcat(buf, "IME_CHAR"); break;
+            case 0x0281: strcat(buf, "IME_SETCONTEXT"); break;
+            case 0x0282: strcat(buf, "IME_NOTIFY"); break;
+            case 0x0283: strcat(buf, "IME_CONTROL"); break;
+            case 0x0284: strcat(buf, "IME_COMPOSITIONFULL"); break;
+            case 0x0285: strcat(buf, "IME_SELECT"); break;
+            case 0x0286: strcat(buf, "IME_CHAR"); break;
             #endif 
             #if(WINVER >= 0x0500)
-            case 0x0288: lstrcat(buf, "IME_REQUEST"); break;
+            case 0x0288: strcat(buf, "IME_REQUEST"); break;
             #endif 
             #if(WINVER >= 0x0400)
-            case 0x0290: lstrcat(buf, "IME_KEYDOWN"); break;
-            case 0x0291: lstrcat(buf, "IME_KEYUP"); break;
+            case 0x0290: strcat(buf, "IME_KEYDOWN"); break;
+            case 0x0291: strcat(buf, "IME_KEYUP"); break;
             #endif 
             */
 
             #if(_WIN32_WINNT >= 0x0400)
-            case 0x02A1: lstrcat(buf, "MOUSEHOVER"); break;
-            case 0x02A3: lstrcat(buf, "MOUSELEAVE"); break;
+            case 0x02A1: strcat(buf, "MOUSEHOVER"); break;
+            case 0x02A3: strcat(buf, "MOUSELEAVE"); break;
             #endif 
 
-            case 0x0300: lstrcat(buf, "CUT"); break;
-            case 0x0301: lstrcat(buf, "COPY"); break;
-            case 0x0302: lstrcat(buf, "PASTE"); break;
-            case 0x0303: lstrcat(buf, "CLEAR"); break;
-            case 0x0304: lstrcat(buf, "UNDO"); break;
-            case 0x0305: lstrcat(buf, "RENDERFORMAT"); break;
-            case 0x0306: lstrcat(buf, "RENDERALLFORMATS"); break;
-            case 0x0307: lstrcat(buf, "DESTROYCLIPBOARD"); break;
-            case 0x0308: lstrcat(buf, "DRAWCLIPBOARD"); break;
-            case 0x0309: lstrcat(buf, "PAINTCLIPBOARD"); break;
-            case 0x030A: lstrcat(buf, "VSCROLLCLIPBOARD"); break;
-            case 0x030B: lstrcat(buf, "SIZECLIPBOARD"); break;
-            case 0x030C: lstrcat(buf, "ASKCBFORMATNAME"); break;
-            case 0x030D: lstrcat(buf, "CHANGECBCHAIN"); break;
-            case 0x030E: lstrcat(buf, "HSCROLLCLIPBOARD"); break;
-            case 0x030F: lstrcat(buf, "QUERYNEWPALETTE"); break;
-            case 0x0310: lstrcat(buf, "PALETTEISCHANGING"); break;
-            case 0x0311: lstrcat(buf, "PALETTECHANGED"); break;
-            case 0x0312: lstrcat(buf, "HOTKEY"); break;
+            case 0x0300: strcat(buf, "CUT"); break;
+            case 0x0301: strcat(buf, "COPY"); break;
+            case 0x0302: strcat(buf, "PASTE"); break;
+            case 0x0303: strcat(buf, "CLEAR"); break;
+            case 0x0304: strcat(buf, "UNDO"); break;
+            case 0x0305: strcat(buf, "RENDERFORMAT"); break;
+            case 0x0306: strcat(buf, "RENDERALLFORMATS"); break;
+            case 0x0307: strcat(buf, "DESTROYCLIPBOARD"); break;
+            case 0x0308: strcat(buf, "DRAWCLIPBOARD"); break;
+            case 0x0309: strcat(buf, "PAINTCLIPBOARD"); break;
+            case 0x030A: strcat(buf, "VSCROLLCLIPBOARD"); break;
+            case 0x030B: strcat(buf, "SIZECLIPBOARD"); break;
+            case 0x030C: strcat(buf, "ASKCBFORMATNAME"); break;
+            case 0x030D: strcat(buf, "CHANGECBCHAIN"); break;
+            case 0x030E: strcat(buf, "HSCROLLCLIPBOARD"); break;
+            case 0x030F: strcat(buf, "QUERYNEWPALETTE"); break;
+            case 0x0310: strcat(buf, "PALETTEISCHANGING"); break;
+            case 0x0311: strcat(buf, "PALETTECHANGED"); break;
+            case 0x0312: strcat(buf, "HOTKEY"); break;
 
             #if(WINVER >= 0x0400)
-            case 0x0317: lstrcat(buf, "PRINT"); break;
-            case 0x0318: lstrcat(buf, "PRINTCLIENT"); break;
+            case 0x0317: strcat(buf, "PRINT"); break;
+            case 0x0318: strcat(buf, "PRINTCLIENT"); break;
 
-            case 0x0358: lstrcat(buf, "HANDHELDFIRST"); break;
-            case 0x035F: lstrcat(buf, "HANDHELDLAST"); break;
+            case 0x0358: strcat(buf, "HANDHELDFIRST"); break;
+            case 0x035F: strcat(buf, "HANDHELDLAST"); break;
 
-            case 0x0360: lstrcat(buf, "AFXFIRST"); break;
-            case 0x037F: lstrcat(buf, "AFXLAST"); break;
+            case 0x0360: strcat(buf, "AFXFIRST"); break;
+            case 0x037F: strcat(buf, "AFXLAST"); break;
             #endif 
 
-            case 0x0380: lstrcat(buf, "PENWINFIRST"); break;
-            case 0x038F: lstrcat(buf, "PENWINLAST"); break;
+            case 0x0380: strcat(buf, "PENWINFIRST"); break;
+            case 0x038F: strcat(buf, "PENWINLAST"); break;
 
             default: 
                 sprintf(buf, "unknown"); 
@@ -579,7 +579,7 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
                 sprintf(buf2, "%shwnd=%08x, msg=%s, w=%08x, l=%08x\n", szStartText, hwnd, buf, wParam, lParam);
             else
                 sprintf(buf2, "%shwnd=%08x, msg=unknown/0x%08x, w=%08x, l=%08x\n", szStartText, hwnd, msg, wParam, lParam);
-            OutputDebugString(buf2);
+            OutputDebugStringA(buf2);
         #endif
     }
 #endif
@@ -645,73 +645,13 @@ void MissingDirectX(HWND hwnd)
         DownloadDirectX(hwnd);
 }
 
-bool CheckForMMX()
-{
-    DWORD bMMX = 0;
-    DWORD *pbMMX = &bMMX;
-    __try {
-        __asm {
-            mov eax, 1
-            cpuid
-            mov edi, pbMMX
-            mov dword ptr [edi], edx
-        }
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER)
-    {
-        bMMX = 0;
-    }
-
-    if (bMMX & 0x00800000)  // check bit 23
-		return true;
-
-	return false;
-}
-
-bool CheckForSSE()
-{
-#ifdef _WIN64
-	return true; // All x64 processors support SSE
-#else
-    /*
-    The SSE instruction set was introduced with the Pentium III and features:
-        * Additional MMX instructions such as min/max
-        * Prefetch and write-through instructions for optimizing data movement 
-            from and to the L2/L3 caches and main memory
-        * 8 New 128 bit XMM registers (xmm0..xmm7) and corresponding 32 bit floating point 
-            (single precision) instructions
-    */
-
-	DWORD bSSE = 0;
-	DWORD *pbSSE = &bSSE;
-    __try {
-	    __asm
-	    {
-		    mov eax, 1
-		    cpuid
-            mov edi, pbSSE
-            mov dword ptr [edi], edx
-	    }
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER)
-    {
-        bSSE = 0;
-    }
-
-	if (bSSE & 0x02000000)  // check bit 25
-		return true;
-
-	return false;
-#endif
-}
-
 void GetDesktopFolder(char *szDesktopFolder) // should be MAX_PATH len.
 {
     // returns the path to the desktop folder, WITHOUT a trailing backslash.
     szDesktopFolder[0] = 0;
     ITEMIDLIST pidl;
-    ZeroMemory(&pidl, sizeof(pidl));
-    if (!SHGetPathFromIDList(&pidl, szDesktopFolder))
+    SecureZeroMemory(&pidl, sizeof(pidl));
+    if (!SHGetPathFromIDListA(&pidl, szDesktopFolder))
         szDesktopFolder[0] = 0;
 }
 
@@ -742,7 +682,7 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
         {
             for (int context_pass=0; context_pass<2; context_pass++)
             {
-                SHELLEXECUTEINFO sei = { sizeof(sei) };
+                SHELLEXECUTEINFOA sei = { sizeof(sei) };
                 sei.hwnd = hWnd;
                 sei.fMask = SEE_MASK_FLAG_NO_UI;
                 if (context_pass==1)
@@ -768,17 +708,17 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
                     sei.lpFile = szFilename2;
                 }
 
-                if (ShellExecuteEx(&sei))
+                if (ShellExecuteExA(&sei))
                     return;
             }
         }
     }
 }
 
-WNDPROC        g_pOldWndProc;
 LPCONTEXTMENU2 g_pIContext2or3;
 
-LRESULT CALLBACK HookWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK HookWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp,
+							 UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
    //UINT uItem;
    //TCHAR szBuf[MAX_PATH];
@@ -811,14 +751,14 @@ LRESULT CALLBACK HookWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 	}
 
 	// for all untreated messages, call the original wndproc
-	return ::CallWindowProc(g_pOldWndProc, hWnd, msg, wp, lp);
+	return DefSubclassProc(hWnd, msg, wp, lp);
 }
 
 BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
 {
     LPMALLOC pMalloc;
     LPSHELLFOLDER psfFolder, psfNextFolder;
-    LPITEMIDLIST pidlItem, pidlNextItem, *ppidl;
+    LPITEMIDLIST pidlItem, pidlNextItem;
     LPCONTEXTMENU pContextMenu;
     CMINVOKECOMMANDINFO ici;
     UINT nCount, nCmd;
@@ -894,7 +834,7 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
         // Get a pointer to the item's IContextMenu interface and call
         // IContextMenu::QueryContextMenu to initialize a context menu.
         //
-        ppidl = &pidlItem;
+        LPITEMIDLIST *ppidl = &pidlItem;
         if (SUCCEEDED (psfFolder->GetUIObjectOf(hwnd, 1, (LPCITEMIDLIST*)ppidl, IID_IContextMenu, NULL, (void**)&pContextMenu)))   // modified by RG
         {
             // try to see if we can upgrade to an IContextMenu3 
@@ -922,12 +862,11 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                 // install the subclassing "hook", for versions 2 or 3
                 if (level >= 2) 
                 {
-                    g_pOldWndProc   = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (DWORD_PTR)HookWndProc);
+					SetWindowSubclass(hwnd, HookWndProc, (UINT_PTR)HookWndProc, 0);
                     g_pIContext2or3 = (LPCONTEXTMENU2)pContextMenu; // cast ok for ICMv3
                 }
                 else 
                 {
-                    g_pOldWndProc   = NULL;
                     g_pIContext2or3 = NULL;
                 }
 
@@ -939,21 +878,18 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                     point.x, point.y, 0, hwnd, NULL);
 
                 // restore old wndProc
-                if (g_pOldWndProc) 
-                {
-                    SetWindowLongPtr(hwnd, GWL_WNDPROC, (LONG_PTR)g_pOldWndProc);
-                }
+				RemoveWindowSubclass(hwnd, HookWndProc, (UINT_PTR)HookWndProc);
 
                 //
                 // If a command was selected from the menu, execute it.
                 //
                 if (nCmd >= 1 && nCmd <= 0x7fff) 
                 {
-                    ZeroMemory(&ici, sizeof(ici));
+                    SecureZeroMemory(&ici, sizeof(ici));
                     ici.cbSize          = sizeof (CMINVOKECOMMANDINFO);
                     //ici.fMask           = 0;
                     ici.hwnd            = hwnd;
-                    ici.lpVerb          = MAKEINTRESOURCE (nCmd - 1);
+                    ici.lpVerb          = MAKEINTRESOURCEA(nCmd - 1);
                     //ici.lpParameters    = NULL;
                     //ici.lpDirectory     = NULL;
                     ici.nShow           = SW_SHOWNORMAL;
@@ -1005,7 +941,7 @@ UINT GetItemCount (LPITEMIDLIST pidl)
     nCount = 0;
     while ((nLen = pidl->mkid.cb) != 0) {
         pidl = GetNextItem (pidl);
-        nCount++;
+        ++nCount;
     }
     return nCount;
 }
@@ -1097,14 +1033,14 @@ void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *list
 	*desktopview_wnd = NULL;
 	*listview_wnd = NULL;
 
-	*desktop_progman = FindWindow(NULL, ("Program Manager"));
+	*desktop_progman = FindWindow(NULL, (TEXT("Program Manager")));
 	if(*desktop_progman == NULL)
 	{
 		//MessageBox(NULL, "Unable to get the handle to the Program Manager.", "Fatal error", MB_OK|MB_ICONERROR);
 		return;
 	}
 	
-	*desktopview_wnd = FindWindowEx(*desktop_progman, NULL, "SHELLDLL_DefView", NULL);
+	*desktopview_wnd = FindWindowEx(*desktop_progman, NULL, TEXT("SHELLDLL_DefView"), NULL);
 	if(*desktopview_wnd == NULL)
 	{
 		//MessageBox(NULL, "Unable to get the handle to the desktopview.", "Fatal error", MB_OK|MB_ICONERROR);
@@ -1112,7 +1048,7 @@ void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *list
 	}
 	
 	// Thanks ef_ef_ef@yahoo.com for pointing out this works in NT 4 and not the way I did it originally.
-	*listview_wnd = FindWindowEx(*desktopview_wnd, NULL, "SysListView32", NULL);
+	*listview_wnd = FindWindowEx(*desktopview_wnd, NULL, TEXT("SysListView32"), NULL);
 	if(*listview_wnd == NULL)
 	{
 		//MessageBox(NULL, "Unable to get the handle to the folderview.", "Fatal error", MB_OK|MB_ICONERROR);
@@ -1132,9 +1068,9 @@ int GetDesktopIconSize()
     DWORD type;
     HKEY key;
 
-    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Desktop\\WindowMetrics", 0, KEY_READ, &key))
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("Control Panel\\Desktop\\WindowMetrics"), 0, KEY_READ, &key))
     {
-        if (ERROR_SUCCESS == RegQueryValueEx(key, "Shell Icon Size", NULL, &type, (unsigned char*)buf, &len) &&
+        if (ERROR_SUCCESS == RegQueryValueEx(key, TEXT("Shell Icon Size"), NULL, &type, (unsigned char*)buf, &len) &&
             type == REG_SZ)
         {
             int x = _atoi_l((char*)buf, g_use_C_locale);
@@ -1192,26 +1128,6 @@ D3DXCREATETEXTURE pCreateTexture=0;
 HMODULE FindD3DX9(HWND winamp)
 {
 	HMODULE d3dx9 = (HMODULE)SendMessage(winamp,WM_WA_IPC, 0, IPC_GET_D3DX9);
-	if (!d3dx9 || d3dx9 == (HMODULE)1)
-	{
-		
-	// TODO: benski> this is a quick-fix, we should call FindFirstFile() on the system directory
-	d3dx9=NULL;
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_36.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_35.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_34.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_33.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_32.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_31.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_30.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_29.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_28.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_27.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_26.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_25.dll");
-	if (!d3dx9) d3dx9 = LoadLibrary("d3dx9_24.dll");
-	}
-
 	if (d3dx9)
 	{
 		pCreateFontW = (D3DXCREATEFONTW) GetProcAddress(d3dx9,"D3DXCreateFontW");
@@ -1226,30 +1142,27 @@ HMODULE FindD3DX9(HWND winamp)
 		pCompileShader = (D3DXCOMPILESHADER)GetProcAddress(d3dx9,"D3DXCompileShader");
 		pMatrixLookAtLH = (D3DXMATRIXLOOKATLH)GetProcAddress(d3dx9,"D3DXMatrixLookAtLH");
 		pCreateTexture = (D3DXCREATETEXTURE)GetProcAddress(d3dx9,"D3DXCreateTexture");
-		
-		
-		
 	}
-	
+
 	return d3dx9;
 }
 
-LRESULT GetWinampVersion(HWND winamp)
+/*LRESULT GetWinampVersion(HWND winamp)
 {
 	static LRESULT version=0;
 	if (!version)
 		version=SendMessage(winamp,WM_WA_IPC,0,0);
 	return version;
-}
+}*/
 
-void* GetTextResource(UINT id, int no_fallback){
+/*void* GetTextResource(UINT id, int no_fallback){
 	void* data = 0;
 	HINSTANCE hinst = WASABI_API_LNG_HINST;
-	HRSRC rsrc = FindResource(hinst,MAKEINTRESOURCE(id),"TEXT");
-	if(!rsrc && !no_fallback) rsrc = FindResource((hinst = WASABI_API_ORIG_HINST),MAKEINTRESOURCE(id),"TEXT");
+	HRSRC rsrc = FindResource(hinst,MAKEINTRESOURCE(id),TEXT("TEXT"));
+	if(!rsrc && !no_fallback) rsrc = FindResource((hinst = WASABI_API_ORIG_HINST),MAKEINTRESOURCE(id),TEXT("TEXT"));
 	if(rsrc){
 	HGLOBAL resourceHandle = LoadResource(hinst,rsrc);
 		data = LockResource(resourceHandle);
 	}
 	return data;
-}
+}*/

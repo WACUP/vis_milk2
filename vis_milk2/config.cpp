@@ -152,26 +152,22 @@ static bool AddButton(int pos, HWND tabctrl, LPWSTR szButtonText)
 
 void CPluginShell::UpdateAdapters(int screenmode)
 {
-    int i;
-
     if (!g_lpDX) return;
-    
-    int nDispAdapters = 0;
-    
-    HWND ctrl;
+
+    HWND ctrl = NULL;
     GUID* pGUID = NULL;
-    char deviceName[256];
+	char deviceName[256] = {0};
     switch(screenmode)
     {
     case FULLSCREEN: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS);
         pGUID = &m_adapter_guid_fullscreen;
-        StringCbCopy(deviceName, sizeof(deviceName), m_adapter_devicename_fullscreen);
+        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_fullscreen);
         break;
     case WINDOWED: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_W);
         pGUID = &m_adapter_guid_windowed;
-        StringCbCopy(deviceName, sizeof(deviceName), m_adapter_devicename_windowed);
+        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_windowed);
         break;
     /*case FAKE_FULLSCREEN: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FFS);
@@ -181,123 +177,126 @@ void CPluginShell::UpdateAdapters(int screenmode)
     case DESKTOP: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_DMS);
         pGUID = &m_adapter_guid_desktop;
-        StringCbCopy(deviceName, sizeof(deviceName), m_adapter_devicename_desktop);
+        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_desktop);
         break;
     }
 
-    // clear the combo box
-    SendMessage( ctrl, CB_RESETCONTENT, 0, 0);
+	if (IsWindow(ctrl))
+	{
+		// clear the combo box
+		SendMessage( ctrl, CB_RESETCONTENT, 0, 0);
 
-    // repopulate the combo box with a list of adapters
-    {
-        char szDesc[1024];
-        
-        D3DADAPTER_IDENTIFIER9* global_adapter_list;
-        switch(screenmode)
-        {
-        case FULLSCREEN: 
-            global_adapter_list = g_disp_adapter_fs; 
-            break;
-        case WINDOWED: 
-            global_adapter_list = g_disp_adapter_w; 
-            break;
-        /*case FAKE_FULLSCREEN: 
-            global_adapter_list = g_disp_adapter_w;     // [sic]
-            break;*/
-        case DESKTOP: 
-            global_adapter_list = g_disp_adapter_dm;
-            break;
-        }
+		// repopulate the combo box with a list of adapters
+		{
+			D3DADAPTER_IDENTIFIER9* global_adapter_list = 0;
+			switch(screenmode)
+			{
+			case FULLSCREEN: 
+				global_adapter_list = g_disp_adapter_fs; 
+				break;
+			case WINDOWED: 
+				global_adapter_list = g_disp_adapter_w; 
+				break;
+			/*case FAKE_FULLSCREEN: 
+				global_adapter_list = g_disp_adapter_w;     // [sic]
+				break;*/
+			case DESKTOP: 
+				global_adapter_list = g_disp_adapter_dm;
+				break;
+			}
 
-        int nAdapters = g_lpDX->GetAdapterCount();
+			int nAdapters = g_lpDX->GetAdapterCount();
 
-        // re-populate it:
+			// re-populate it:
 
-        wchar_t szDebugFile[MAX_PATH];
-        StringCbCopyW(szDebugFile, sizeof(szDebugFile), m_szConfigIniFile);
-        wchar_t* p = wcsrchr(szDebugFile, L'\\');
-        if (p)
-        {
-            lstrcpyW(p+1, ADAPTERSFILE);
-            FILE* f = _wfopen(szDebugFile, L"w");
-            if (f)
-            {
-                DWORD winamp_version = SendMessage(GetWinampWindow(),WM_WA_IPC,0,0);
-                fprintf(f, "Winamp version = 0x%04X\n", winamp_version);
-                fprintf(f, "Plugin long name = \"%s\", version=%d, subversion=%d\n", LONGNAME, INT_VERSION, INT_SUBVERSION);
-                fprintf(f, "Enumeration of Display Adapters:\n");
-                //fprintf(f, "...this is a temporary debug file created by MilkDrop 2.\n");
-                //fprintf(f, "...don't worry - the final release of the plug-in will NOT generate this file.\n");
-                for (i=0; i<nAdapters && nDispAdapters<MAX_DISPLAY_ADAPTERS; i++)
-                {
-                    if (g_lpDX->GetAdapterIdentifier(i, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &global_adapter_list[nDispAdapters]) == D3D_OK)
-                    {
-                        // Now get the caps, and filter out any graphics cards that can't
-                        // do, say, gouraud shading:
+			int nDispAdapters = 0;
+			wchar_t szDebugFile[MAX_PATH];
+			StringCbCopyW(szDebugFile, sizeof(szDebugFile), m_szConfigIniFile);
+			wchar_t* p = wcsrchr(szDebugFile, L'\\');
+			if (p)
+			{
+				lstrcpyW(p+1, ADAPTERSFILE);
+				FILE* f = _wfopen(szDebugFile, L"w");
+				if (f)
+				{
+					DWORD winamp_version = SendMessage(GetWinampWindow(),WM_WA_IPC,0,0);
+					fprintf(f, "Winamp version = 0x%04X\n", winamp_version);
+					fprintf(f, "Plugin long name = \"%s\", version=%d, subversion=%d\n", LONGNAME, INT_VERSION, INT_SUBVERSION);
+					fprintf(f, "Enumeration of Display Adapters:\n");
+					//fprintf(f, "...this is a temporary debug file created by MilkDrop 2.\n");
+					//fprintf(f, "...don't worry - the final release of the plug-in will NOT generate this file.\n");
+					for (int i=0; i<nAdapters && nDispAdapters<MAX_DISPLAY_ADAPTERS; i++)
+					{
+						if (g_lpDX->GetAdapterIdentifier(i, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &global_adapter_list[nDispAdapters]) == D3D_OK)
+						{
+							// Now get the caps, and filter out any graphics cards that can't
+							// do, say, gouraud shading:
 
-                        int adapter_ok = 1;
+							int adapter_ok = 1;
 
-                        /*
-                        D3DCAPS9 caps;
-                        if (g_lpDX->GetDeviceCaps(i, D3DDEVTYPE_HAL, &caps)==D3D_OK)
-                        {
-                            // check the caps here, make sure the device is up to par.  example:
-                            if (caps.ShadeCaps & D3DPSHADECAPS_COLORGOURAUDRGB)
-                              adapter_ok = 0;
-                        }
-                        */
+							/*
+							D3DCAPS9 caps;
+							if (g_lpDX->GetDeviceCaps(i, D3DDEVTYPE_HAL, &caps)==D3D_OK)
+							{
+								// check the caps here, make sure the device is up to par.  example:
+								if (caps.ShadeCaps & D3DPSHADECAPS_COLORGOURAUDRGB)
+								  adapter_ok = 0;
+							}
+							*/
 
-                        if (f) {
-                            fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
-                            fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
-                            fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
-                            fprintf(f, "    DriverVersion=0x%08X (%d)\n",global_adapter_list[nDispAdapters].DriverVersion);
-                            fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
-                            fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
-                            fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
-                            fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
-                            //fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
-                             char szGuidText[512];
-                             GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, sizeof(szGuidText));
-                            fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
-                            fprintf(f, "    GUID=%s\n", szGuidText);                   
-                        }
+							if (f) {
+								fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
+								fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
+								fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
+								fprintf(f, "    DriverVersion=0x%08X\n",global_adapter_list[nDispAdapters].DriverVersion);
+								fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
+								fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
+								fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
+								fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
+								//fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
+								 char szGuidText[512];
+								 GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, sizeof(szGuidText));
+								fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
+								fprintf(f, "    GUID=%s\n", szGuidText);                   
+							}
 
-                        if (adapter_ok)
-                        {
-                            sprintf(szDesc, "%d. %s   [%s]", nDispAdapters+1, global_adapter_list[nDispAdapters].Description, global_adapter_list[nDispAdapters].Driver);
-                            SendMessage( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
-                            nDispAdapters++;
-                        }
-                    }
-                }    
-                fclose(f);
-            }
-        }
+							if (adapter_ok)
+							{
+								wchar_t szDesc[1024] = {0};
+								swprintf(szDesc, L"%d. %hs   [%hs]", nDispAdapters+1, global_adapter_list[nDispAdapters].Description, global_adapter_list[nDispAdapters].Driver);
+								SendMessageW( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
+								++nDispAdapters;
+							}
+						}
+					}    
+					fclose(f);
+				}
+			}
 
-        // set selection(s):
-        // find i where global_adapter_list[i].DeviceIdentifier is the same as last time,
-        // and select it.
-        int found = 0;
-        for (i=0; i<nDispAdapters; i++)
-        {
-            if (!found && 
-                memcmp(&global_adapter_list[i].DeviceIdentifier, pGUID, sizeof(GUID))==0 &&
-                !strcmp(global_adapter_list[i].DeviceName, deviceName)
-                )
-            {
-                SendMessage( ctrl, CB_SETCURSEL, i, 0);
-                found = 1;
-            }
-        }
-        if (!found)
-            SendMessage( ctrl, CB_SETCURSEL, 0, 0);
-    }
+			// set selection(s):
+			// find i where global_adapter_list[i].DeviceIdentifier is the same as last time,
+			// and select it.
+			int found = 0;
+			for (int i=0; i<nDispAdapters; i++)
+			{
+				if (!found && 
+					memcmp(&global_adapter_list[i].DeviceIdentifier, pGUID, sizeof(GUID))==0 &&
+					!strcmp(global_adapter_list[i].DeviceName, deviceName)
+					)
+				{
+					SendMessage( ctrl, CB_SETCURSEL, i, 0);
+					found = 1;
+				}
+			}
+			if (!found)
+				SendMessage( ctrl, CB_SETCURSEL, 0, 0);
+		}
 
-    if (screenmode == FULLSCREEN)
-        UpdateFSAdapterDispModes();
-    else
-        UpdateDispModeMultiSampling(screenmode);
+		if (screenmode == FULLSCREEN)
+			UpdateFSAdapterDispModes();
+		else
+			UpdateDispModeMultiSampling(screenmode);
+	}
 }
 
 void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
@@ -370,13 +369,13 @@ void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
         // keep a record of the original index, because the combo box SORTS the data:
         SendMessage( hwnd_listbox, CB_SETITEMDATA, nPos, i);
 
-        nAdded++;
+        ++nAdded;
     }
 
     g_num_disp_modes = nAdded;
 
     // now set selection, based on best match to prev. video mode.  
-    int found = 0;
+    //int found = 0;
     
     // Fallback order:
     // 0. exact match (4 params)   w,h,r,f
@@ -448,7 +447,7 @@ void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
         // find best match to prev. selection.
 		// do many passes until we find one, each time relaxing more constraints.
 		// outline of the passes:
-
+		int found = 0;
         int bpp_desired = 0;
         switch(desired_mode.Format)
         {
@@ -550,9 +549,7 @@ void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
 
 void CPluginShell::UpdateDispModeMultiSampling(int screenmode)
 {
-    int nSampleTypes = 0;
-
-    HWND hwnd_listbox;
+    HWND hwnd_listbox = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      hwnd_listbox = GetDlgItem(g_subwnd, IDC_FSMS);  break;
@@ -560,129 +557,131 @@ void CPluginShell::UpdateDispModeMultiSampling(int screenmode)
     case DESKTOP:         hwnd_listbox = GetDlgItem(g_subwnd, IDC_DMSMS);  break;
     }
 
-    wchar_t str[256];
-    int i;
+	if (IsWindow(hwnd_listbox))
+	{
+		if (!g_lpDX)
+			return;
 
-    if (!g_lpDX)
-        return;
+		if ((screenmode == WINDOWED && !m_allow_page_tearing_w) ||
+			(screenmode == FULLSCREEN && m_fake_fullscreen_mode && !m_allow_page_tearing_fs) ||
+			(screenmode == DESKTOP && !m_allow_page_tearing_dm))
+		{
+			// page tearing not allowed -> disable multisampling!
+			SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
+			SendMessageW( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_DISABLED_PAGE_TEARING));
+			SendMessage( hwnd_listbox, CB_SETITEMDATA, 0, 0 );
+			SendMessage( hwnd_listbox, CB_SETCURSEL, 0, 0);
+			EnableWindow( hwnd_listbox, 0 );
+		}
+		else
+		{
+			EnableWindow( hwnd_listbox, 1 );
 
-    if ((screenmode == WINDOWED && !m_allow_page_tearing_w) ||
-        (screenmode == FULLSCREEN && m_fake_fullscreen_mode && !m_allow_page_tearing_fs) ||
-        (screenmode == DESKTOP && !m_allow_page_tearing_dm))
-    {
-        // page tearing not allowed -> disable multisampling!
-        SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
-        SendMessageW( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_DISABLED_PAGE_TEARING));
-        SendMessage( hwnd_listbox, CB_SETITEMDATA, 0, 0 );
-        SendMessage( hwnd_listbox, CB_SETCURSEL, 0, 0);
-        EnableWindow( hwnd_listbox, 0 );
-    }
-    else
-    {
-        EnableWindow( hwnd_listbox, 1 );
+			// figure out which [fullscreen/windowed] adapter is currently selected:
+			int nAdapterOrdinal = GetCurrentlySelectedAdapter(screenmode);
 
-        // figure out which [fullscreen/windowed] adapter is currently selected:
-        int nAdapterOrdinal = GetCurrentlySelectedAdapter(screenmode);
+			// figure out current format:
+			D3DFORMAT format = D3DFMT_UNKNOWN;
+			if ((screenmode == WINDOWED) || 
+				(screenmode == FULLSCREEN && m_fake_fullscreen_mode) || 
+				(screenmode == DESKTOP))
+			{
+				// ** get it from the current display mode 
+				//    of the currently-selected [windowed/fake fullscreen] mode adapter **
+				D3DDISPLAYMODE dispmode;
+				if (g_lpDX->GetAdapterDisplayMode(nAdapterOrdinal, &dispmode) == D3D_OK)
+					format = dispmode.Format;
+			}
+			else
+			{
+				// **get it from the currently-selected fullscreen display mode**
+				int n = SendMessage( GetDlgItem( g_subwnd, IDC_DISP_MODE ), CB_GETCURSEL, 0, 0);
+				if (n != CB_ERR) 
+				{
+					// since the combobox contents were sorted, we need to look up the original
+					// index into g_disp_mode[]:
+					n = SendMessage( GetDlgItem( g_subwnd, IDC_DISP_MODE ), CB_GETITEMDATA, n, 0);
+					if (n != CB_ERR)
+						format = g_disp_mode[n].Format;
+				}
+			}
 
-        // figure out current format:
-        D3DFORMAT format = D3DFMT_UNKNOWN;
-        if ((screenmode == WINDOWED) || 
-            (screenmode == FULLSCREEN && m_fake_fullscreen_mode) || 
-            (screenmode == DESKTOP))
-        {
-            // ** get it from the current display mode 
-            //    of the currently-selected [windowed/fake fullscreen] mode adapter **
-            D3DDISPLAYMODE dispmode;
-            if (g_lpDX->GetAdapterDisplayMode(nAdapterOrdinal, &dispmode) == D3D_OK)
-                format = dispmode.Format;
-        }
-        else
-        {
-            // **get it from the currently-selected fullscreen display mode**
-            int n = SendMessage( GetDlgItem( g_subwnd, IDC_DISP_MODE ), CB_GETCURSEL, 0, 0);
-            if (n != CB_ERR) 
-            {
-                // since the combobox contents were sorted, we need to look up the original
-                // index into g_disp_mode[]:
-                n = SendMessage( GetDlgItem( g_subwnd, IDC_DISP_MODE ), CB_GETITEMDATA, n, 0);
-                if (n != CB_ERR)
-                    format = g_disp_mode[n].Format;
-            }
-        }
+			D3DMULTISAMPLE_TYPE check[16] = {
+				D3DMULTISAMPLE_NONE,
+				D3DMULTISAMPLE_2_SAMPLES ,
+				D3DMULTISAMPLE_3_SAMPLES ,
+				D3DMULTISAMPLE_4_SAMPLES ,
+				D3DMULTISAMPLE_5_SAMPLES ,
+				D3DMULTISAMPLE_6_SAMPLES ,
+				D3DMULTISAMPLE_7_SAMPLES ,
+				D3DMULTISAMPLE_8_SAMPLES ,
+				D3DMULTISAMPLE_9_SAMPLES ,
+				D3DMULTISAMPLE_10_SAMPLES,
+				D3DMULTISAMPLE_11_SAMPLES,
+				D3DMULTISAMPLE_12_SAMPLES,
+				D3DMULTISAMPLE_13_SAMPLES,
+				D3DMULTISAMPLE_14_SAMPLES,
+				D3DMULTISAMPLE_15_SAMPLES,
+				D3DMULTISAMPLE_16_SAMPLES,
+			};
 
-        D3DMULTISAMPLE_TYPE check[16] = {
-            D3DMULTISAMPLE_NONE,
-            D3DMULTISAMPLE_2_SAMPLES ,
-            D3DMULTISAMPLE_3_SAMPLES ,
-            D3DMULTISAMPLE_4_SAMPLES ,
-            D3DMULTISAMPLE_5_SAMPLES ,
-            D3DMULTISAMPLE_6_SAMPLES ,
-            D3DMULTISAMPLE_7_SAMPLES ,
-            D3DMULTISAMPLE_8_SAMPLES ,
-            D3DMULTISAMPLE_9_SAMPLES ,
-            D3DMULTISAMPLE_10_SAMPLES,
-            D3DMULTISAMPLE_11_SAMPLES,
-            D3DMULTISAMPLE_12_SAMPLES,
-            D3DMULTISAMPLE_13_SAMPLES,
-            D3DMULTISAMPLE_14_SAMPLES,
-            D3DMULTISAMPLE_15_SAMPLES,
-            D3DMULTISAMPLE_16_SAMPLES,
-        };
+			// clear the combo box
+			SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
 
-        // clear the combo box
-        SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
+			// re-populate it:
+			int nSampleTypes = 0;
+			for (int i=0; i<16; i++)
+			{
+				if (i==0 || SUCCEEDED(g_lpDX->CheckDeviceMultiSampleType(nAdapterOrdinal, D3DDEVTYPE_HAL,
+															   format, 
+															   (screenmode==FULLSCREEN) ? 0 : 1,//bWindowed,
+															   check[i], NULL)))
+				{
+					// add to listbox
+					wchar_t str[256] = {0};
+					if (i==0)
+						WASABI_API_LNGSTRINGW_BUF(IDS_NONE, str, 256);
+					else
+						StringCbPrintfW(str, sizeof(str), L"%2dX", i+1);
 
-        // re-populate it:
-        for (i=0; i<16; i++)
-        {
-            if (i==0 || SUCCEEDED(g_lpDX->CheckDeviceMultiSampleType(nAdapterOrdinal, D3DDEVTYPE_HAL,
-                                                           format, 
-                                                           (screenmode==FULLSCREEN) ? 0 : 1,//bWindowed,
-                                                           check[i], NULL)))
-            {
-                // add to listbox
-                if (i==0)
-                    WASABI_API_LNGSTRINGW_BUF(IDS_NONE, str, 256);
-                else
-                    StringCbPrintfW(str, sizeof(str), L"%2dX", i+1);
+					SendMessageW( hwnd_listbox, CB_ADDSTRING, nSampleTypes, (LPARAM)str);
 
-                SendMessage( hwnd_listbox, CB_ADDSTRING, nSampleTypes, (LPARAM)str);
+					// set the item data to the D3DMULTISAMPLE_TYPE value:
+					SendMessage( hwnd_listbox, CB_SETITEMDATA, nSampleTypes, check[i] );
 
-                // set the item data to the D3DMULTISAMPLE_TYPE value:
-                SendMessage( hwnd_listbox, CB_SETITEMDATA, nSampleTypes, check[i] );
+					++nSampleTypes;
+				}
+			}
 
-                nSampleTypes++;
-            }
-        }
+			// set prev. selection
+			D3DMULTISAMPLE_TYPE prev_seln = D3DMULTISAMPLE_NONE;
+			switch(screenmode)
+			{
+			case FULLSCREEN:      prev_seln = m_multisample_fullscreen;      break;
+			case WINDOWED:        prev_seln = m_multisample_windowed;        break;
+			//case FAKE_FULLSCREEN: prev_seln = m_multisample_fake_fullscreen; break;
+			case DESKTOP:         prev_seln = m_multisample_desktop;         break;
+			}
 
-        // set prev. selection
-        D3DMULTISAMPLE_TYPE prev_seln;
-        switch(screenmode)
-        {
-        case FULLSCREEN:      prev_seln = m_multisample_fullscreen;      break;
-        case WINDOWED:        prev_seln = m_multisample_windowed;        break;
-        //case FAKE_FULLSCREEN: prev_seln = m_multisample_fake_fullscreen; break;
-        case DESKTOP:         prev_seln = m_multisample_desktop;         break;
-        }
+			for (int i=0; i<nSampleTypes; i++)
+			{
+				int id = SendMessage( hwnd_listbox, CB_GETITEMDATA, i, 0);
+				if (id==prev_seln)
+				{
+					SendMessage( hwnd_listbox, CB_SETCURSEL, i, 0);
+					return;
+				}
+			}
 
-        for (i=0; i<nSampleTypes; i++)
-        {
-            int id = SendMessage( hwnd_listbox, CB_GETITEMDATA, i, 0);
-            if (id==prev_seln)
-            {
-                SendMessage( hwnd_listbox, CB_SETCURSEL, i, 0);
-                return;
-            }
-        }
-
-        SendMessage( hwnd_listbox, CB_SETCURSEL, 0, 0);
-    }
+			SendMessage( hwnd_listbox, CB_SETCURSEL, 0, 0);
+		}
+	}
 }
 
 void CPluginShell::UpdateMaxFps(int screenmode)
 {
     // initialize sleep combo boxes
-    HWND ctrl;
+    HWND ctrl = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      ctrl = GetDlgItem(g_subwnd, IDC_FS_MAXFPS ); break;
@@ -691,37 +690,40 @@ void CPluginShell::UpdateMaxFps(int screenmode)
     case DESKTOP:         ctrl = GetDlgItem(g_subwnd, IDC_DMS_MAXFPS); break;
     }
 
-    SendMessage( ctrl, CB_RESETCONTENT, 0, 0);
-    for (int j=0; j<=MAX_MAX_FPS; j++)
-    {
-        wchar_t buf[256];
-        if (j==0)
-			WASABI_API_LNGSTRINGW_BUF(IDS_UNLIMITED, buf, 256);
-        else 
-			swprintf(buf, WASABI_API_LNGSTRINGW(IDS_X_FRAME_SEC), (j<MAX_MAX_FPS)?(MAX_MAX_FPS+1-j):(MAX_MAX_FPS+1-j));
+	if (IsWindow(ctrl))
+	{
+		SendMessage( ctrl, CB_RESETCONTENT, 0, 0);
+		for (int j=0; j<=MAX_MAX_FPS; j++)
+		{
+			wchar_t buf[256];
+			if (j==0)
+				WASABI_API_LNGSTRINGW_BUF(IDS_UNLIMITED, buf, 256);
+			else 
+				swprintf(buf, WASABI_API_LNGSTRINGW(IDS_X_FRAME_SEC), (j<MAX_MAX_FPS)?(MAX_MAX_FPS+1-j):(MAX_MAX_FPS+1-j));
 
-        SendMessageW( ctrl, CB_ADDSTRING, j, (LPARAM)buf);
-    }
+			SendMessageW( ctrl, CB_ADDSTRING, j, (LPARAM)buf);
+		}
 
-    // set prev. selection
-    int max_fps;
-    switch(screenmode)
-    {
-    case FULLSCREEN:      max_fps = m_max_fps_fs; break;
-    case WINDOWED:        max_fps = m_max_fps_w;  break;
-    //case FAKE_FULLSCREEN: max_fps = m_max_fps_fake_fs; break;
-    case DESKTOP:         max_fps = m_max_fps_dm; break;
-    }
-    if (max_fps == 0)
-        SendMessage(ctrl, CB_SETCURSEL, 0,  0);
-    else
-        SendMessage(ctrl, CB_SETCURSEL, MAX_MAX_FPS-max_fps+1,  0);
+		// set prev. selection
+		int max_fps = 0;
+		switch(screenmode)
+		{
+		case FULLSCREEN:      max_fps = m_max_fps_fs; break;
+		case WINDOWED:        max_fps = m_max_fps_w;  break;
+		//case FAKE_FULLSCREEN: max_fps = m_max_fps_fake_fs; break;
+		case DESKTOP:         max_fps = m_max_fps_dm; break;
+		}
+		if (max_fps == 0)
+			SendMessage(ctrl, CB_SETCURSEL, 0,  0);
+		else
+			SendMessage(ctrl, CB_SETCURSEL, MAX_MAX_FPS-max_fps+1,  0);
+	}
 }
 
 int CPluginShell::GetCurrentlySelectedAdapter(int screenmode)
 {
     // returns the ordinal adapter #.
-    HWND ctrl;
+    HWND ctrl = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS ); break;
@@ -730,13 +732,18 @@ int CPluginShell::GetCurrentlySelectedAdapter(int screenmode)
     case DESKTOP:         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_DMS); break;
     }
 
-    int n = SendMessage(ctrl, CB_GETCURSEL, 0, 0);
-    //if (n != CB_ERR) 
-    //    n = SendMessage(ctrl, CB_GETITEMDATA, n, 0);
-    if (n != CB_ERR) 
-        return n;
-    else
-        return D3DADAPTER_DEFAULT;
+	if (IsWindow(ctrl))
+	{
+		int n = SendMessage(ctrl, CB_GETCURSEL, 0, 0);
+		//if (n != CB_ERR) 
+		//    n = SendMessage(ctrl, CB_GETITEMDATA, n, 0);
+		if (n != CB_ERR) 
+			return n;
+		else
+			return D3DADAPTER_DEFAULT;
+	}
+	else
+		return D3DADAPTER_DEFAULT;
 }
 
 void CPluginShell::SaveDisplayMode()
@@ -758,7 +765,7 @@ void CPluginShell::SaveDisplayMode()
 
 void CPluginShell::SaveMultiSamp(int screenmode)
 {
-    HWND ctrl;
+    HWND ctrl = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      ctrl = GetDlgItem(g_subwnd, IDC_FSMS);  break;
@@ -780,26 +787,29 @@ void CPluginShell::SaveMultiSamp(int screenmode)
     }
 
     // read windowed & fullscreen multisampling settings:
-    int n = SendMessage(ctrl , CB_GETCURSEL, 0, 0);
-    if (n != CB_ERR) 
-    {
-        n = SendMessage( ctrl, CB_GETITEMDATA, n, 0);
-        if (n != CB_ERR)
-        {
-            switch(screenmode)
-            {
-            case FULLSCREEN:      m_multisample_fullscreen      = (D3DMULTISAMPLE_TYPE)n; break;
-            case WINDOWED:        m_multisample_windowed        = (D3DMULTISAMPLE_TYPE)n; break;
-            //case FAKE_FULLSCREEN: m_multisample_fake_fullscreen = (D3DMULTISAMPLE_TYPE)n; break;
-            case DESKTOP:         m_multisample_desktop         = (D3DMULTISAMPLE_TYPE)n; break;
-            }
-        }
-    }
+	if (IsWindow(ctrl))
+	{
+		int n = SendMessage(ctrl , CB_GETCURSEL, 0, 0);
+		if (n != CB_ERR) 
+		{
+			n = SendMessage( ctrl, CB_GETITEMDATA, n, 0);
+			if (n != CB_ERR)
+			{
+				switch(screenmode)
+				{
+				case FULLSCREEN:      m_multisample_fullscreen      = (D3DMULTISAMPLE_TYPE)n; break;
+				case WINDOWED:        m_multisample_windowed        = (D3DMULTISAMPLE_TYPE)n; break;
+				//case FAKE_FULLSCREEN: m_multisample_fake_fullscreen = (D3DMULTISAMPLE_TYPE)n; break;
+				case DESKTOP:         m_multisample_desktop         = (D3DMULTISAMPLE_TYPE)n; break;
+				}
+			}
+		}
+	}
 }
 
 void CPluginShell::SaveMaxFps(int screenmode)
 {
-    HWND ctrl;
+    HWND ctrl = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      ctrl = GetDlgItem(g_subwnd, IDC_FS_MAXFPS);  break;
@@ -809,25 +819,28 @@ void CPluginShell::SaveMaxFps(int screenmode)
     }
 
     // read max fps settings
-    int n = SendMessage(ctrl, CB_GETCURSEL, 0, 0);
-    if (n != CB_ERR) 
-    {
-        if (n > 0)
-            n = MAX_MAX_FPS+1 - n;
+	if (IsWindow(ctrl))
+	{
+		int n = SendMessage(ctrl, CB_GETCURSEL, 0, 0);
+		if (n != CB_ERR) 
+		{
+			if (n > 0)
+				n = MAX_MAX_FPS+1 - n;
 
-        switch(screenmode)
-        {
-        case FULLSCREEN:      m_max_fps_fs = n; break;
-        case WINDOWED:        m_max_fps_w  = n; break;
-        //case FAKE_FULLSCREEN: m_max_fps_fake_fs = n; break;
-        case DESKTOP:         m_max_fps_dm = n; break;
-        }
+			switch(screenmode)
+			{
+			case FULLSCREEN:      m_max_fps_fs = n; break;
+			case WINDOWED:        m_max_fps_w  = n; break;
+			//case FAKE_FULLSCREEN: m_max_fps_fake_fs = n; break;
+			case DESKTOP:         m_max_fps_dm = n; break;
+			}
+		}
     }
 }
 
 void CPluginShell::SaveAdapter(int screenmode)
 {
-    HWND ctrl;
+    HWND ctrl = NULL;
     switch(screenmode)
     {
     case FULLSCREEN:      ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS);  break;
@@ -837,32 +850,35 @@ void CPluginShell::SaveAdapter(int screenmode)
     }
 
     // save windowed/fullscreen adapter
-    int n = SendMessage( ctrl, CB_GETCURSEL, 0, 0);
-    if (n != CB_ERR) 
-    {
-        switch(screenmode)
-        {
-        case FULLSCREEN:      
-            m_adapter_guid_fullscreen      = g_disp_adapter_fs[n].DeviceIdentifier; 
-            StringCbCopy(m_adapter_devicename_fullscreen, sizeof(m_adapter_devicename_fullscreen), g_disp_adapter_fs[n].DeviceName);
-            //strcpy(m_adapter_desc_fullscreen, g_disp_adapter_fs[n].Description);
-            break;
-        case WINDOWED:        
-            m_adapter_guid_windowed        = g_disp_adapter_w[n].DeviceIdentifier;  
-            StringCbCopy(m_adapter_devicename_windowed, sizeof(m_adapter_devicename_windowed), g_disp_adapter_fs[n].DeviceName);
-            //strcpy(m_adapter_desc_windowed, g_disp_adapter_fs[n].Description);
-            break;
-        //case FAKE_FULLSCREEN: 
-            //m_adapter_guid_fake_fullscreen = g_disp_adapter_w[n].DeviceIdentifier;  
-            //strcpy(m_adapter_desc_fake_fullscreen, g_disp_adapter_fs[n].Description);
-            //break; // [sic]
-        case DESKTOP:         
-            m_adapter_guid_desktop         = g_disp_adapter_dm[n].DeviceIdentifier;  
-            StringCbCopy(m_adapter_devicename_desktop, sizeof(m_adapter_devicename_desktop), g_disp_adapter_fs[n].DeviceName);
-            //strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
-            break; 
-        }
-    }
+	if (IsWindow(ctrl))
+	{
+		int n = SendMessage( ctrl, CB_GETCURSEL, 0, 0);
+		if (n != CB_ERR) 
+		{
+			switch(screenmode)
+			{
+			case FULLSCREEN:      
+				m_adapter_guid_fullscreen      = g_disp_adapter_fs[n].DeviceIdentifier; 
+				StringCbCopyA(m_adapter_devicename_fullscreen, sizeof(m_adapter_devicename_fullscreen), g_disp_adapter_fs[n].DeviceName);
+				//strcpy(m_adapter_desc_fullscreen, g_disp_adapter_fs[n].Description);
+				break;
+			case WINDOWED:        
+				m_adapter_guid_windowed        = g_disp_adapter_w[n].DeviceIdentifier;  
+				StringCbCopyA(m_adapter_devicename_windowed, sizeof(m_adapter_devicename_windowed), g_disp_adapter_fs[n].DeviceName);
+				//strcpy(m_adapter_desc_windowed, g_disp_adapter_fs[n].Description);
+				break;
+			//case FAKE_FULLSCREEN: 
+				//m_adapter_guid_fake_fullscreen = g_disp_adapter_w[n].DeviceIdentifier;  
+				//strcpy(m_adapter_desc_fake_fullscreen, g_disp_adapter_fs[n].Description);
+				//break; // [sic]
+			case DESKTOP:         
+				m_adapter_guid_desktop         = g_disp_adapter_dm[n].DeviceIdentifier;  
+				StringCbCopyA(m_adapter_devicename_desktop, sizeof(m_adapter_devicename_desktop), g_disp_adapter_fs[n].DeviceName);
+				//strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
+				break; 
+			}
+		}
+	}
 }
 
 /*
@@ -953,12 +969,12 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             if (!mod1.hwndParent || SendMessage(mod1.hwndParent,WM_WA_IPC,0,0) < 0x2900)
             {
                 m_skin = 0;
-                EnableWindow(GetDlgItem(hwnd,IDC_CB_SKIN), 0);
-                char buf[256];
-                buf[0] = 0;
-                GetWindowText(GetDlgItem(hwnd,IDC_CB_SKIN), buf, 255);
-                StringCbCat(buf, sizeof(buf), " 2.90+");
-                SetWindowText(GetDlgItem(hwnd,IDC_CB_SKIN), buf);
+				HWND skin = GetDlgItem(hwnd,IDC_CB_SKIN);
+                EnableWindow(skin, 0);
+				wchar_t buf[256] = {0};
+                GetWindowText(skin, buf, 255);
+                StringCbCat(buf, sizeof(buf), TEXT(" 2.90+"));
+                SetWindowText(skin, buf);
             }
 
             // set checkboxes
@@ -1334,14 +1350,14 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             }
 
             // set window caption
-            SetWindowText( hwnd, WINDOWCAPTION );
+            SetWindowText( hwnd, TEXT(WINDOWCAPTION) );
 
             // Test for DirectX 9 + start it
             // note: if you don't call LoadLibrary here, and you're on a system
             //       where DX9 is missing, Direct3DCreate9() might crash; so call it.
-            int d3d9_already_loaded = (GetModuleHandle("d3d9.dll") != NULL) ? 1 : 0;
+            int d3d9_already_loaded = (GetModuleHandle(TEXT("d3d9.dll")) != NULL) ? 1 : 0;
             if (!d3d9_already_loaded)
-                g_hmod_d3d9 = LoadLibrary("d3d9.dll");
+                g_hmod_d3d9 = LoadLibrary(TEXT("d3d9.dll"));
 
             if ( (!d3d9_already_loaded && !g_hmod_d3d9) ||
                  !(g_lpDX = Direct3DCreate9(D3D_SDK_VERSION))

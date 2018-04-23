@@ -86,7 +86,7 @@ CMilkMenu::~CMilkMenu()
 
 bool CMilkMenu::ItemIsEnabled(int j)
 {
-    if (j < m_nChildMenus)
+    if ((j < m_nChildMenus) && m_ppChildMenu)
         return m_ppChildMenu[j]->IsEnabled();
     
     int i = m_nChildMenus;
@@ -94,7 +94,7 @@ bool CMilkMenu::ItemIsEnabled(int j)
     while (pChild && i<j) 
     {
         pChild = pChild->m_pNext;
-        i++;
+        ++i;
     }   
     if (pChild)
         return pChild->m_bEnabled;
@@ -107,17 +107,18 @@ bool CMilkMenu::ItemIsEnabled(int j)
 void CMilkMenu::EnableItem(wchar_t* szName, bool bEnable)
 {
     //search submenus
-    for (int i=0; i<m_nChildMenus; i++) {
+	int i = 0;
+    for (; i<m_nChildMenus; i++) {
         if (!wcscmp(m_ppChildMenu[i]->GetName(), szName)) 
         {
             m_ppChildMenu[i]->Enable(bEnable);
             if (!bEnable) 
             {
                 while (m_nCurSel > 0 && !ItemIsEnabled(m_nCurSel))
-    			    m_nCurSel--;
+    			    --m_nCurSel;
                 if (m_nCurSel==0 && !ItemIsEnabled(m_nCurSel))
                     while (m_nCurSel < m_nChildMenus+m_nChildItems-1 && !ItemIsEnabled(m_nCurSel))
-    			        m_nCurSel++;
+    			        ++m_nCurSel;
             }
             return;
         }
@@ -133,15 +134,15 @@ void CMilkMenu::EnableItem(wchar_t* szName, bool bEnable)
             if (!bEnable)
             {
                 while (m_nCurSel > 0 && !ItemIsEnabled(m_nCurSel))
-    			    m_nCurSel--;
+    			    --m_nCurSel;
                 if (m_nCurSel==0 && !ItemIsEnabled(m_nCurSel))
                     while (m_nCurSel < m_nChildMenus+m_nChildItems-1 && !ItemIsEnabled(m_nCurSel))
-    			        m_nCurSel++;
+    			        ++m_nCurSel;
             }
             return;
         }
         pChild = pChild->m_pNext;
-        i++;
+        ++i;
     }   
 }
 
@@ -233,7 +234,7 @@ void CMilkMenu::AddItem(wchar_t *szName, void *var, MENUITEMTYPE type, wchar_t *
 	}
 	pLastItem->m_pCallbackFn = pCallback;
 
-	m_nChildItems++;
+	++m_nChildItems;
 }
 
 //----------------------------------------
@@ -278,17 +279,15 @@ void CMilkMenu::DrawMenu(RECT rect, int xR, int yB, int bCalcRect, RECT* pCalcRe
 		int nLines = (rect.bottom - rect.top - PLAYLIST_INNER_MARGIN*2) / g_plugin.GetFontHeight(SIMPLE_FONT) - 1;	// save 1 line for the tooltip
         if (nLines<1) return;
 		int nStart = (m_nCurSel/nLines)*nLines;
-
-        int nLinesDrawn = 0;
-
-		for (int i=0; i < m_nChildMenus; i++)
+        int nLinesDrawn = 0, i = 0;
+		for (; i < m_nChildMenus; i++)
 		{
 			if (i >= nStart && i < nStart+nLines)
 			{
                 //rect.top += g_plugin.GetFont(SIMPLE_FONT)->DrawText(m_ppChildMenu[i]->m_szMenuName, -1, pRect, DT_SINGLELINE | DT_END_ELLIPSIS, (i == m_nCurSel) ? MENU_HILITE_COLOR : MENU_COLOR);
                 if (m_ppChildMenu[i]->IsEnabled()) {
                     MyMenuTextOut(SIMPLE_FONT, m_ppChildMenu[i]->m_szMenuName, (i == m_nCurSel) ? MENU_HILITE_COLOR : MENU_COLOR, &rect, bCalcRect, pCalcRect);
-                    nLinesDrawn++;
+                    ++nLinesDrawn;
                 }
 
 				if (g_plugin.m_bShowMenuToolTips && i == m_nCurSel && !bCalcRect)
@@ -306,7 +305,7 @@ void CMilkMenu::DrawMenu(RECT rect, int xR, int yB, int bCalcRect, RECT* pCalcRe
             if (!pItem->m_bEnabled) 
             {
                 pItem = pItem->m_pNext;
-                i++;
+                ++i;
                 continue;
             }
 
@@ -342,11 +341,11 @@ void CMilkMenu::DrawMenu(RECT rect, int xR, int yB, int bCalcRect, RECT* pCalcRe
 				{
                     MyMenuTextOut(SIMPLE_FONT, szItemText, MENU_COLOR, &rect, bCalcRect, pCalcRect);
 				}
-                nLinesDrawn++;
+                ++nLinesDrawn;
 			}
 
 			pItem = pItem->m_pNext;
-			i++;
+			++i;
 		}
 	}
 	else
@@ -428,38 +427,37 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	// return value: FALSE if it handled the key; TRUE if it didn't
 
     int nRepeat = LOWORD(lParam);
-    int rep;
 
 	if (!m_bEditingCurSel)
 	{
 		switch(wParam)
 		{
 		case VK_UP:
-            for (rep=0; rep<nRepeat; rep++)
+            for (int rep=0; rep<nRepeat; rep++)
             {
                 if (m_nCurSel==0)
                     break;
                 do {
-			        m_nCurSel--;
+			        --m_nCurSel;
                 } while (m_nCurSel > 0 && !ItemIsEnabled(m_nCurSel));
             }
 			if (m_nCurSel < 0) m_nCurSel = 0;//m_nChildMenus + m_nChildItems - 1;
             while (m_nCurSel < m_nChildMenus + m_nChildItems - 1 && !ItemIsEnabled(m_nCurSel))
-			    m_nCurSel++;
+			    ++m_nCurSel;
 			return 0; // we processed (or absorbed) the key
 
 		case VK_DOWN:
-            for (rep=0; rep<nRepeat; rep++)
+            for (int rep=0; rep<nRepeat; rep++)
             {
                 if (m_nCurSel == m_nChildMenus + m_nChildItems - 1)
                     break;
                 do {
-			        m_nCurSel++;
+			        ++m_nCurSel;
                 } while (m_nCurSel < m_nChildMenus + m_nChildItems - 1 && !ItemIsEnabled(m_nCurSel));
             }
             if (m_nCurSel >= m_nChildMenus + m_nChildItems) m_nCurSel = m_nChildMenus + m_nChildItems - 1;//0;
             while (m_nCurSel > 0 && !ItemIsEnabled(m_nCurSel))
-			    m_nCurSel--;
+			    --m_nCurSel;
 			return 0; // we processed (or absorbed) the key
 
 		case VK_HOME:
@@ -485,7 +483,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case VK_RETURN:
 		case VK_RIGHT:
 		case VK_SPACE:
-			if (m_nCurSel < m_nChildMenus)
+			if ((m_nCurSel < m_nChildMenus) && m_ppChildMenu)
 			{	
 				// go to sub-menu
 				g_plugin.m_pCurMenu = m_ppChildMenu[m_nCurSel];
@@ -702,12 +700,12 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 				{
 					if (wParam == VK_UP)
 					{
-						pItem->m_nSubSel--;
+						--pItem->m_nSubSel;
 						if (pItem->m_nSubSel < 0) pItem->m_nSubSel = 4;
 					}
 					else if (wParam == VK_DOWN)
 					{
-						pItem->m_nSubSel++;
+						++pItem->m_nSubSel;
 						if (pItem->m_nSubSel > 4) pItem->m_nSubSel = 0;
 					}
 				}
@@ -742,7 +740,6 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		default:
 			// key wasn't handled
 			return TRUE;
-			break;
 		}
 	}
 

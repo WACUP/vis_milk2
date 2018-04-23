@@ -36,12 +36,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "support.h"
 #include "texmgr.h"
 #include "state.h"
-#include "../nu/Vector.h"
-
-#include "gstring.h"
+#include <nu/Vector.h>
 #include "../ns-eel2/ns-eel.h"
-
-
+#include <string>
 
 extern "C" int (*warand)(void);
 
@@ -176,7 +173,7 @@ typedef struct
 
 typedef struct
 {
-    GString    texname;  // just for ref
+    std::wstring     texname;  // just for ref
     D3DXHANDLE texsize_param;
     int        w,h;
 } TexSizeParamInfo;
@@ -190,7 +187,7 @@ typedef struct
 
 typedef struct
 {
-    GString   msg;
+    std::wstring    msg;
     bool      bBold;  // true == red bkg; false == black bkg
     float     birthTime;
     float     expireTime;
@@ -285,7 +282,7 @@ typedef struct
 
 typedef struct 
 {
-    GString  szFilename;    // without path
+	std::wstring szFilename;    // without path
     float    fRatingThis;
     float    fRatingCum;
 } PresetInfo;
@@ -387,8 +384,8 @@ public:
         #define SHADER_COMP  1
         #define SHADER_BLUR  2
         #define SHADER_OTHER 3
-        bool LoadShaderFromMemory( const char* szShaderText, char* szFn, char* szProfile, 
-                                   LPD3DXCONSTANTTABLE* ppConstTable, void** ppShader, int shaderType, bool bHardErrors );
+        bool LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, char* szProfile, 
+                                    LPD3DXCONSTANTTABLE* ppConstTable, void** ppShader, int shaderType, bool bHardErrors );
         bool RecompileVShader(const char* szShadersText, VShaderInfo *si, int shaderType, bool bHardErrors);
         bool RecompilePShader(const char* szShadersText, PShaderInfo *si, int shaderType, bool bHardErrors, int PSVersion);
         bool EvictSomeTexture();
@@ -470,7 +467,7 @@ public:
 
         // PRESET HISTORY
         #define PRESET_HIST_LEN (64+2)     // make this 2 more than the # you REALLY want to be able to go back.
-        GString     m_presetHistory[PRESET_HIST_LEN];   //circular
+        std::wstring m_presetHistory[PRESET_HIST_LEN];   //circular
         int         m_presetHistoryPos;
         int         m_presetHistoryBackFence;
         int         m_presetHistoryFwdFence;
@@ -560,8 +557,6 @@ public:
         MYVERTEX    m_comp_verts[FCGSX*FCGSY];
         int         m_comp_indices[(FCGSX-2)*(FCGSY-2)*2*3];
 
-        bool		m_bMMX;
-        //bool		m_bSSE;
         bool        m_bHasFocus;
         bool        m_bHadFocus;
         bool		m_bOrigScrollLockState;

@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ICON_TEXTURES 8
 #define ICON_TEXTURE_SIZE 256
 #define DEFAULT_WINDOW_SIZE 0.625f      // as a portion of the width or height of the screen (whichever is smaller)
-#define DESKTOP_MODE_KEYBOARD_INPUT_WINDOW_CLASSNAME "DESKTOP MODE KEYBOARD INPUT WINDOW"
+#define DESKTOP_MODE_KEYBOARD_INPUT_WINDOW_CLASSNAME TEXT("DESKTOP MODE KEYBOARD INPUT WINDOW")
 #define BGR2RGB(x) (((x>>16)&0xFF) | (x & 0xFF00) | ((x<<16)&0xFF0000))
 
 #define NUM_BASIC_FONTS 4 
@@ -71,6 +71,7 @@ typedef enum
 } 
 eScrMode;
 
-#include "../Winamp/wa_ipc.h"
+#include <Winamp/wa_ipc.h>
+#include <Winamp/wa_cup.h>
 
 #endif

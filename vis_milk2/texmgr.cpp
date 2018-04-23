@@ -36,6 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 texmgr::texmgr()
 {
+	SecureZeroMemory(&m_tex, sizeof(m_tex));
 }
 
 texmgr::~texmgr()
@@ -139,7 +140,7 @@ bool texmgr::TryCreateDDrawSurface(int iSlot, int w, int h)
 			break;
 
 		// TRY TO CREATE THE SURFACE IN SYSTEM MEMORY.
-		ZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
+		SecureZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
 		ddsd.dwSize = sizeof( ddsd );
 		ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH; 
 		ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;//DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;// | DDSCAPS_3DDEVICE;// | DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY; 
@@ -152,7 +153,7 @@ bool texmgr::TryCreateDDrawSurface(int iSlot, int w, int h)
 				break;
 		m_tex[iSlot].pSurface = NULL;
 
-		loop++;
+		++loop;
 	} 
 	while (!done);
 	
@@ -160,7 +161,7 @@ bool texmgr::TryCreateDDrawSurface(int iSlot, int w, int h)
 		return false;
 
 	// find out (& remember) actual size created:
-	ZeroMemory(&ddsd, sizeof(ddsd));
+	SecureZeroMemory(&ddsd, sizeof(ddsd));
 	ddsd.dwSize = sizeof(ddsd);
 	m_tex[iSlot].pSurface->GetSurfaceDesc(&ddsd);
 	m_tex[iSlot].tex_w = ddsd.dwWidth;
@@ -296,7 +297,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 		//g_dumpmsg(buf);
 
 		DDSURFACEDESC2 ddsd;
-		ZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
+		SecureZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
 		ddsd.dwSize = sizeof( ddsd );
 		
 		if (m_tex[iSlot].pSurface->Lock(0, &ddsd, DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT|DDLOCK_NOSYSLOCK, 0) != DD_OK)
@@ -321,7 +322,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 				for (y=0; y<32; y++)
 				{
 					if ((mask[x] & (1<<y)) == 0)
-						zeroBits[x]++;
+						++zeroBits[x];
 					else
 						break;
 				}
@@ -329,7 +330,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 				for (y=0; y<32; y++)
 				{
 					if ((mask[x] & (1<<y)) != 0)
-						chopBits[x]--;
+						--chopBits[x];
 				}
 			}
 		}
@@ -405,7 +406,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 							{
 								cols -= input_cols_per_output_col;
 								portion = 256 - portion;
-								out_x++;
+								++out_x;
 								buf2[out_x*3  ] = (downsample_buf[x*3  ] * portion) >> 4;
 								buf2[out_x*3+1] = (downsample_buf[x*3+1] * portion) >> 4;
 								buf2[out_x*3+2] = (downsample_buf[x*3+2] * portion) >> 4;
@@ -452,7 +453,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 							}
 						}
 
-						out_y++;
+						++out_y;
 
 					}
 
@@ -575,7 +576,7 @@ void texmgr::KillTex(int iSlot)
 		int refcount = 0;
 		for (int x=0; x<NUM_TEX; x++)
 			if (m_tex[x].pSurface == m_tex[iSlot].pSurface)
-				refcount++;
+				++refcount;
 
 		if (refcount==1)
 			m_tex[iSlot].pSurface->Release();
@@ -661,7 +662,7 @@ bool texmgr::RecompileExpressions(int iSlot)
 	// because for some strange reason this would cause an error in compileCode().
 	{
 		char *p = expr;
-		while (*p==' ' || *p==LINEFEED_CONTROL_CHAR) p++;
+		while (*p==' ' || *p==LINEFEED_CONTROL_CHAR) ++p;
 		if (*p == 0) expr[0] = 0;
 	}
 
@@ -698,7 +699,7 @@ bool texmgr::RecompileExpressions(int iSlot)
 	return true;
 }
 
-void texmgr::FreeVars(int iSlot)
+void texmgr::FreeVars(int /*iSlot*/)
 {
 	// free the built-in variables AND any user variables
 }

@@ -70,6 +70,14 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	memset(&myWindowState,0,sizeof(myWindowState));
 	m_szDriver[0] = 0;
 	m_szDesc[0] = 0;
+	m_window_width = 0;
+	m_window_height = 0;
+	m_client_width = 0;
+	m_client_height = 0;
+	m_REAL_client_width = 0;
+	m_REAL_client_height = 0;
+	m_fake_fs_covers_all = 0;
+	SecureZeroMemory(&m_current_mode, sizeof(DXCONTEXT_PARAMS));
 
 	WNDCLASSW wc = {0};
 
@@ -96,7 +104,6 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	if (!m_classAtom)
 	{
 		wchar_t title[64];
-		int y = GetLastError();
 		m_lastErr = DXC_ERR_REGWIN;
 		MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_REGISTER_WINDOW_CLASS),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -105,7 +112,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 		return;
 	}
 
-	StringCbCopy(m_szWindowCaption, sizeof(m_szWindowCaption), szWindowCaption);
+	StringCbCopyA(m_szWindowCaption, sizeof(m_szWindowCaption), szWindowCaption);
 	m_hInstance = hInstance;
 	m_uWindowLong = uWindowLong;
 }
@@ -216,7 +223,7 @@ int DXContext::CheckAndCorrectFullscreenDispMode(int ordinal_adapter, D3DDISPLAY
 	int nValid = 0;
 	for (int i=0; i<nCount; i++)
 		if (m_lpD3D->EnumAdapterModes(ordinal_adapter, D3DFMT_A8R8G8B8, i, &list[nValid]) == D3D_OK)
-			nValid++;
+			++nValid;
 
 	// do many passes through the set until we find a match,
 	// each time relaxing more constraints.
@@ -255,7 +262,7 @@ int DXContext::CheckAndCorrectFullscreenDispMode(int ordinal_adapter, D3DDISPLAY
 	{
 		for (int pass=0; pass<2 && !found; pass++)
 		{
-			for (i=0; i<nValid && !found; i++)
+			for (int i=0; i<nValid && !found; i++)
 			{
 				bool bMatch = true;
 
@@ -439,9 +446,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		// Test for DirectX 9 + start it
 		// note: if you don't call LoadLibrary here, and you're on a system
 		//       where DX9 is missing, Direct3DCreate8() might crash; so call it.
-		int d3d9_already_loaded = (GetModuleHandle("d3d9.dll") != NULL) ? 1 : 0;
+		int d3d9_already_loaded = (GetModuleHandle(TEXT("d3d9.dll")) != NULL) ? 1 : 0;
 		if (!d3d9_already_loaded)
-			m_hmod_d3d9 = LoadLibrary("d3d9.dll");
+			m_hmod_d3d9 = LoadLibrary(TEXT("d3d9.dll"));
 
 		if ((!d3d9_already_loaded && !m_hmod_d3d9) ||
 		    !(m_lpD3D = Direct3DCreate9(D3D_SDK_VERSION))
@@ -493,8 +500,8 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (m_lpD3D->GetAdapterIdentifier(m_ordinal_adapter, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &temp) == D3D_OK)
 		{
-			StringCbCopy(m_szDriver, sizeof(m_szDriver), temp.Driver);
-			StringCbCopy(m_szDesc, sizeof(m_szDesc), temp.Description);
+			StringCbCopyA(m_szDriver, sizeof(m_szDriver), temp.Driver);
+			StringCbCopyA(m_szDesc, sizeof(m_szDesc), temp.Description);
 		}
 
 		int caps_ok = 0;
@@ -599,7 +606,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				{
 					// try again, this time using the default adapter:
 					m_ordinal_adapter = caps_tries;
-					caps_tries++;
+					++caps_tries;
 				}
 				else
 				{
@@ -662,29 +669,30 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		// note that we'd prefer to set the CLIENT size we want, but we can't, so we'll just do
 		// this here, and later, adjust the client rect size to what's left...
 		int size = GetWindowedModeAutoSize(0);  // note: requires 'm_monitor_rect' has been set!
-		myWindowState.r.left   = GetPrivateProfileIntW(L"settings",L"avs_wx",64,m_szIniFile);
-		myWindowState.r.top    = GetPrivateProfileIntW(L"settings",L"avs_wy",64,m_szIniFile);
+		myWindowState.r.left   = GetPrivateProfileIntW(L"settings",L"avs_wx",0,m_szIniFile);
+		myWindowState.r.top    = GetPrivateProfileIntW(L"settings",L"avs_wy",0,m_szIniFile);
 		myWindowState.r.right  = myWindowState.r.left + GetPrivateProfileIntW(L"settings",L"avs_ww",size+24,m_szIniFile);
 		myWindowState.r.bottom = myWindowState.r.top  + GetPrivateProfileIntW(L"settings",L"avs_wh",size+40,m_szIniFile);
 
 		// only works on winamp 2.90+!
 		int success = 0;
-		if (GetWinampVersion(mod1.hwndParent) >= 0x2900)
-		{
+		/*if (GetWinampVersion(mod1.hwndParent) >= 0x2900)
+		{*/
 			SET_EMBED_GUID((&myWindowState), avs_guid);
-			myWindowState.flags |= EMBED_FLAGS_NOTRANSPARENCY;
+			myWindowState.flags |= EMBED_FLAGS_NOTRANSPARENCY | EMBED_FLAGS_NOWINDOWMENU;
 			HWND (*e)(embedWindowState *v);
 			*(void**)&e = (void *)SendMessage(mod1.hwndParent,WM_WA_IPC,(LPARAM)0,IPC_GET_EMBEDIF);
 			if (e)
 			{
+				myWindowState.flags |= EMBED_FLAGS_SCALEABLE_WND;
 				m_current_mode.parent_window = e(&myWindowState);
 				if (m_current_mode.parent_window)
 				{
-					SetWindowText(m_current_mode.parent_window, m_szWindowCaption);
+					SetWindowTextA(m_current_mode.parent_window, m_szWindowCaption);
 					success = 1;
 				}
 			}
-		}
+		//}
 
 		if (!success)
 			m_current_mode.m_skin = 0;
@@ -699,20 +707,21 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 	// ...and in case windowed mode init fails severely,
 	// set it up to try next time for a simple 256x256 window.
-	WriteSafeWindowPos();
+	//WriteSafeWindowPos();
 
 	// 7. create the window, if not already created
 	if (!m_hwnd)
 	{
-		m_hwnd = CreateWindowEx(
+		m_hwnd = CreateWindowExA(
 		           MY_EXT_WINDOW_STYLE, // extended style
-		           MAKEINTATOM(m_classAtom), // class
+				   #define MAKEINTATOMA(i)  (LPSTR)((ULONG_PTR)((WORD)(i)))
+		           MAKEINTATOMA(m_classAtom), // class
 		           m_szWindowCaption, // caption
 		           MY_WINDOW_STYLE, // style
-		           0, // left
-		           0, // top
-		           256,  // temporary width
-		           256,  // temporary height
+		           myWindowState.r.left, // left
+		           myWindowState.r.top, // top
+		           (myWindowState.r.right - myWindowState.r.left),  // temporary width
+		           (myWindowState.r.bottom - myWindowState.r.top),  // temporary height
 		           m_current_mode.parent_window,  // parent window
 		           NULL, // menu
 		           m_hInstance, // instance
@@ -733,9 +742,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (m_current_mode.m_skin)
 		{
-			if (GetWinampVersion(mod1.hwndParent) < 0x5051)
+			/*if (GetWinampVersion(mod1.hwndParent) < 0x5051)
 				ShowWindow(m_current_mode.parent_window,SW_SHOWNA); // showing the parent wnd will make it size the child, too
-			else
+			else*/
 				SendMessage(m_current_mode.parent_window, WM_USER+102, 0, 0); // benski> major hack alert. winamp's embedwnd will call ShowWindow in response.  SendMessage moves us over to the main thread (we're currently sitting on the viz thread)
 		}		
 	}
@@ -795,7 +804,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				RECT r = m_monitor_rect;
 
 				// if possible, shrink the desktop window so it doesn't cover the taskbar.
-				HWND hTaskbar = FindWindow("Shell_TrayWnd", "");
+				HWND hTaskbar = FindWindow(TEXT("Shell_TrayWnd"), TEXT(""));
 				if (hTaskbar)
 				{
 					RECT taskbar;
@@ -957,7 +966,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				m_REAL_client_width  = r.right - r.left;
 				m_REAL_client_height = r.bottom - r.top;
 				GetSnappedClientSize();
-				if (m_current_mode.m_skin) // check this here in case they got a non-aligned size by resizing when "integrated with winamp" was unchecked, then checked it & ran the plugin...
+				/*if (m_current_mode.m_skin) // check this here in case they got a non-aligned size by resizing when "integrated with winamp" was unchecked, then checked it & ran the plugin...
 				{
 					// STRANGE ALIGNMENTS FOR THE WINDOW FRAME: (required by winamp 2):
 					// the window frame's width must be divisible by 25, and height by 29.
@@ -967,7 +976,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 						m_REAL_client_height = ((m_client_height + margin.top + margin.bottom)/29)*29 - margin.top - margin.bottom;
 						GetSnappedClientSize();
 					}
-				}
+				}*/
 
 				// transform screen-space CLIENT rect into screen-space WINDOW rect
 				r.top    = windowed_mode_desired_client_rect.top    - margin.top;
@@ -979,10 +988,13 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				//   otherwise, autosize/place it.
 				// (note that this test is only appled 1) at startup, and 2) after a resize/max/restore.
 				//  this test is not applied when merely moving the window.)
-				if (r.top    >= m_monitor_work_rect.top &&
-				    r.left   >= m_monitor_work_rect.left &&
-				    r.right  <= m_monitor_work_rect.right &&
-				    r.bottom <= m_monitor_work_rect.bottom)
+				// changed: factor in the size of the skinned window frame
+				//			as it otherwiae resets the window position even
+				//			if it was in a valid position on the set monitor
+				if (r.top    >= (m_monitor_work_rect.top - (m_current_mode.m_skin ? 20 : 0)) &&
+				    r.left   >= (m_monitor_work_rect.left - (m_current_mode.m_skin ? 11 : 0)) &&
+				    r.right  <= (m_monitor_work_rect.right + (m_current_mode.m_skin ? 11 : 0)) &&
+				    r.bottom <= (m_monitor_work_rect.bottom + (m_current_mode.m_skin ? 20 : 0)))
 				{
 					if (m_current_mode.m_skin)
 					{
@@ -1018,16 +1030,16 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				{
 					// STRANGE ALIGNMENTS FOR THE WINDOW FRAME: (required by winamp 2):
 					// the window frame's width must be divisible by 25, and height by 29.
-					if (GetWinampVersion(mod1.hwndParent) < 0x4000) // ... winamp 5 doesn't have this prob.  (test vs. 0x4000 because winamp5 betas have version tags like 0x4987)
+					/*if (GetWinampVersion(mod1.hwndParent) < 0x4000) // ... winamp 5 doesn't have this prob.  (test vs. 0x4000 because winamp5 betas have version tags like 0x4987)
 					{
 						m_REAL_client_width  = ((m_client_width + margin.left + margin.right)/25)*25 - margin.left - margin.right;
 						m_REAL_client_height = ((m_client_height + margin.top + margin.bottom)/29)*29 - margin.top - margin.bottom;
 						GetSnappedClientSize();
-					}
+					}*/
 
 					m_window_width  = m_client_width ; // m_window_width/height are for OUR [borderless] window, not the parent window (which is the embedwnd frame).
 					m_window_height = m_client_height;
-					SetWindowPos(m_current_mode.parent_window,HWND_NOTOPMOST, m_monitor_work_rect.left+32, m_monitor_work_rect.top+32, m_client_width + margin.left + margin.right, m_client_height + margin.top + margin.bottom, /*SWP_SHOWWINDOW|*//*SWP_ASYNCWINDOWPOS*/0);
+					SetWindowPos(m_current_mode.parent_window,HWND_NOTOPMOST, m_monitor_work_rect.left, m_monitor_work_rect.top, m_client_width + margin.left + margin.right, m_client_height + margin.top + margin.bottom, /*SWP_SHOWWINDOW|*//*SWP_ASYNCWINDOWPOS*/0);
 					SetWindowPos(m_hwnd ,HWND_NOTOPMOST, m_monitor_work_rect.left+32 + margin.left, m_monitor_work_rect.top+32 + margin.top, m_client_width, m_client_height, SWP_SHOWWINDOW);
 				}
 				else
@@ -1050,7 +1062,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			m_current_mode.display_mode.Height = m_client_height;
 
 			// set up m_d3dpp (presentation parameters):
-			ZeroMemory(&m_d3dpp,sizeof(m_d3dpp));
+			SecureZeroMemory(&m_d3dpp,sizeof(m_d3dpp));
 			m_d3dpp.Windowed         = (m_current_mode.screenmode==FULLSCREEN) ? 0 : 1;
 			m_d3dpp.BackBufferFormat = m_current_mode.display_mode.Format;
 			m_d3dpp.BackBufferWidth  = m_client_width;
@@ -1086,7 +1098,6 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			{
 				int code = LOWORD(hRes);
 
-				wchar_t str[1024];
 				if (code==2156) //D3DERR_NOTAVAILABLE
 				{
 					m_lastErr = DXC_ERR_CREATEDEV_NOT_AVAIL;
@@ -1110,6 +1121,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				}
 				else if (m_current_mode.screenmode != WINDOWED || m_client_width <= 64)
 				{
+					wchar_t str[2048];
 					// usually, code==2154 here, which is D3DERR_OUTOFVIDEOMEMORY
 					m_lastErr = DXC_ERR_CREATEDEV_PROBABLY_OUTOFVIDEOMEMORY;
 					StringCbPrintfW(str, sizeof(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
@@ -1127,7 +1139,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			}
 		}
 
-		iteration++;
+		++iteration;
 	}
 	while (!device_ok);
 
@@ -1140,9 +1152,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 	if (m_current_mode.m_skin)
 	{
-		if (GetWinampVersion(mod1.hwndParent) < 0x5051) 
+		/*if (GetWinampVersion(mod1.hwndParent) < 0x5051) 
 			SetFocus(m_current_mode.parent_window);
-		else
+		else*/
 			PostMessage(m_current_mode.parent_window, WM_USER+103, 0, 0); 
 		
 		//SetActiveWindow(m_current_mode.parent_window);

@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "textmgr.h"
 
 #include "icon_t.h"
-#include "../nu/Vector.h"
+#include <nu/Vector.h>
 
 #define TIME_HIST_SLOTS 128     // # of slots used if fps > 60.  half this many if fps==30.
 #define MAX_SONGS_PER_PAGE 40

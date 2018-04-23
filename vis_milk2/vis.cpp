@@ -34,6 +34,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "resource.h"
 #include "utility.h"
+#include <loader/hook/get_api_service.h>
+#include <loader/loader/utils.h>
 
 CPlugin  g_plugin;
 _locale_t g_use_C_locale = 0;
@@ -111,39 +113,41 @@ extern "C" {
 	{
 		if(!WASABI_API_LNG_HINST)
 		{
+			WASABI_API_SVC = GetServiceAPIPtr();/*/
 			// loader so that we can get the localisation service api for use
 			WASABI_API_SVC = (api_service*)SendMessage(hwndParent, WM_WA_IPC, 0, IPC_GET_API_SERVICE);
-			if (WASABI_API_SVC == (api_service*)1) WASABI_API_SVC = NULL;
+			if (WASABI_API_SVC == (api_service*)1) WASABI_API_SVC = NULL;/**/
+			if (WASABI_API_SVC != NULL)
+			{
+				waServiceFactory *sf = WASABI_API_SVC->service_getServiceByGuid(languageApiGUID);
+				if (sf) WASABI_API_LNG = reinterpret_cast<api_language*>(sf->getInterface());
 
-			waServiceFactory *sf = WASABI_API_SVC->service_getServiceByGuid(languageApiGUID);
-			if (sf) WASABI_API_LNG = reinterpret_cast<api_language*>(sf->getInterface());
+				sf = WASABI_API_SVC->service_getServiceByGuid(applicationApiServiceGuid);
+				if (sf) WASABI_API_APP = reinterpret_cast<api_application*>(sf->getInterface());
 
-			sf = WASABI_API_SVC->service_getServiceByGuid(applicationApiServiceGuid);
-			if (sf) WASABI_API_APP = reinterpret_cast<api_application*>(sf->getInterface());
+				sf = WASABI_API_SVC->service_getServiceByGuid(syscbApiServiceGuid);
+				if (sf) WASABI_API_SYSCB = reinterpret_cast<api_syscb*>(sf->getInterface());
 
-			sf = WASABI_API_SVC->service_getServiceByGuid(syscbApiServiceGuid);
-			if (sf) WASABI_API_SYSCB = reinterpret_cast<api_syscb*>(sf->getInterface());
+				// need to have this initialised before we try to do anything with localisation features
+				WASABI_API_START_LANG(GetMyInstance(),VisMilkdropLangGUID);
 
-			// need to have this initialised before we try to do anything with localisation features
-			WASABI_API_START_LANG(GetMyInstance(),VisMilkdropLangGUID);
+				/* added for v2.25 as a quick work around to allow partial
+				/* keyboard mappings (mainly coming from de-de requirements)
+				** [yY][Y][yY][zZ]
+				**  1   2   3   4
+				**
+				** 1 - does yes for the 3 different prompt types
+				** 2 - does Ctrl+Y for stopping display of custom message of song title
+				** 3 - something for preset editing (not 100% sure what)
+				** 4 - used for the previous track sent to Winamp
+				*/
+				WASABI_API_LNGSTRING_BUF(IDS_KEY_MAPPINGS, keyMappings, 8);
 
-			/* added for v2.25 as a quick work around to allow partial
-			/* keyboard mappings (mainly coming from de-de requirements)
-			** [yY][Y][yY][zZ]
-			**  1   2   3   4
-			**
-			** 1 - does yes for the 3 different prompt types
-			** 2 - does Ctrl+Y for stopping display of custom message of song title
-			** 3 - something for preset editing (not 100% sure what)
-			** 4 - used for the previous track sent to Winamp
-			*/
-			WASABI_API_LNGSTRING_BUF(IDS_KEY_MAPPINGS, keyMappings, 8);
-
-			// as we're under a different thread we need to set the locale
-			//WASABI_API_LNG->UseUserNumericLocale();
-			g_use_C_locale = WASABI_API_LNG->Get_C_NumericLocale();
+				// as we're under a different thread we need to set the locale
+				//WASABI_API_LNG->UseUserNumericLocale();
+				g_use_C_locale = WASABI_API_LNG->Get_C_NumericLocale();
+			}
 		}
-
 		return &hdr;
 	}
 #ifdef __cplusplus
@@ -171,14 +175,6 @@ bool WaitUntilPluginFinished(HWND hWndWinamp)
     return true;
 }
 
-HWND GetDialogBoxParent(HWND winamp)
-{
-	HWND parent = (HWND)SendMessage(winamp, WM_WA_IPC, 0, IPC_GETDIALOGBOXPARENT);
-	if (!parent || parent == (HWND)1)
-		return winamp;
-	return parent;
-}
-
 // configuration. Passed this_mod, as a "this" parameter. Allows you to make one configuration
 // function that shares code for all your modules (you don't HAVE to use it though, you can make
 // config1(), config2(), etc...)
@@ -192,7 +188,7 @@ void config(struct winampVisModule *this_mod)
 
     g_bFullyExited = false;
     g_plugin.PluginPreInitialize(this_mod->hwndParent, this_mod->hDllInstance);
-    WASABI_API_DIALOGBOXPARAMW(IDD_CONFIG, GetDialogBoxParent(this_mod->hwndParent), g_plugin.ConfigDialogProc, (LPARAM)&g_plugin);
+    WASABI_API_DIALOGBOXPARAMW(IDD_CONFIG, GetDialogBoxParent(), g_plugin.ConfigDialogProc, (LPARAM)&g_plugin);
     g_bFullyExited = true;
 }
 
@@ -207,8 +203,6 @@ int fallback_rand_fn(void) {
 // returns 0 on success, 1 on failure.
 int init(struct winampVisModule *this_mod)
 {
-    DWORD version = GetWinampVersion(mod1.hwndParent);
-
 	if (!warand)
     {
 		warand = (int (*)(void))SendMessage(this_mod->hwndParent, WM_WA_IPC, 0, IPC_GET_RANDFUNC);
@@ -223,7 +217,7 @@ int init(struct winampVisModule *this_mod)
         return 1;        
     }
 
-    if (GetWinampVersion(mod1.hwndParent) < 0x4000)
+    /*if (GetWinampVersion(mod1.hwndParent) < 0x4000)
     {
         // query winamp for its playback state
         LRESULT ret = SendMessage(this_mod->hwndParent, WM_USER, 0, 104); 
@@ -237,7 +231,7 @@ int init(struct winampVisModule *this_mod)
 					   MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL );
             return 1;  // failure
         }
-    }
+    }*/
 
     g_bFullyExited = false;
 

@@ -29,7 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "support.h"
 #include "utility.h"
-#include "../Winamp/wa_ipc.h"
+#include <Winamp/wa_ipc.h>
 
 bool g_bDebugOutput = false;
 bool g_bDumpFileCleared = false;
@@ -239,7 +239,7 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
     float h = (float)1/tanf(fov_vert*0.5f);   // 1/tan(x) == cot(x)
     float Q = far_plane/(far_plane - near_plane);
  
-    ZeroMemory(pOut, sizeof(D3DXMATRIX));
+    SecureZeroMemory(pOut, sizeof(D3DXMATRIX));
     pOut->_11 = w;
     pOut->_22 = h;
     pOut->_33 = Q;

@@ -65,8 +65,10 @@ wchar_t g_szMsgPool[2][MAX_MSG_CHARS];
         in a clipped area for the text - hmm....
 */
 
-CTextManager::CTextManager()
+CTextManager::CTextManager() : m_lpDevice(NULL), m_lpTextSurface(NULL), m_blit_additively(0), m_next_msg_start_ptr(NULL), m_b(0)
 {
+	m_nMsg[0] = 0;
+	m_nMsg[1] = 0;
 }
 
 CTextManager::~CTextManager()
@@ -111,8 +113,8 @@ void CTextManager::DrawBox(LPRECT pRect, DWORD boxColor)
         m_msg[m_b][m_nMsg[m_b]].flags = 0;
         m_msg[m_b][m_nMsg[m_b]].color = 0xFFFFFFFF;
         m_msg[m_b][m_nMsg[m_b]].bgColor = boxColor;
-        m_nMsg[m_b]++;
-        m_next_msg_start_ptr += 1;
+        ++m_nMsg[m_b];
+        ++m_next_msg_start_ptr;
     }
 }
 
@@ -125,7 +127,7 @@ int CTextManager::DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD fl
         return 0;
         
     if (flags & DT_CALCRECT)
-        return pFont->DrawText(NULL, szText, -1, pRect, flags, color);
+        return pFont->DrawTextA(NULL, szText, -1, pRect, flags, color);
 
     if (!m_lpDevice /*|| !m_lpTextSurface*/) 
         return 0;
@@ -145,9 +147,9 @@ int CTextManager::DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD fl
         m_msg[m_b][m_nMsg[m_b]].bgColor = boxColor;
 
         // shrink rects on new frame's text strings; important for deletions
-        int h = pFont->DrawText(NULL, szText, len, &m_msg[m_b][m_nMsg[m_b]].rect, flags | DT_CALCRECT, color);
+        int h = pFont->DrawTextA(NULL, szText, len, &m_msg[m_b][m_nMsg[m_b]].rect, flags | DT_CALCRECT, color);
 
-        m_nMsg[m_b]++;
+        ++m_nMsg[m_b];
         m_next_msg_start_ptr += len + 1;
 
         if (bBox) 
@@ -164,7 +166,7 @@ int CTextManager::DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD fl
 
     // no room for more text? ok, but still return accurate info:
     RECT r2 = *pRect;
-    int h = pFont->DrawText(NULL, szText, len, &r2, flags | DT_CALCRECT, color);
+    int h = pFont->DrawTextA(NULL, szText, len, &r2, flags | DT_CALCRECT, color);
     return h;
 }
 
@@ -199,7 +201,7 @@ int CTextManager::DrawTextW(LPD3DXFONT pFont, wchar_t* szText, RECT* pRect, DWOR
         // shrink rects on new frame's text strings; important for deletions
         int h = pFont->DrawTextW(NULL, szText, len, &m_msg[m_b][m_nMsg[m_b]].rect, flags | DT_CALCRECT, color);
 
-        m_nMsg[m_b]++;
+        ++m_nMsg[m_b];
         m_next_msg_start_ptr += len + 1;
 
         if (bBox) 
@@ -239,8 +241,7 @@ void CTextManager::DrawNow()
         m_lpDevice->SetTransform(D3DTS_PROJECTION, &Ortho2D);
 
         #define NUM_DIRTY_RECTS 3
-        RECT dirty_rect[NUM_DIRTY_RECTS];
-        int dirty_rects_ready = 0;
+        RECT dirty_rect[NUM_DIRTY_RECTS] = {0};
  
         int bRTT = (m_lpTextSurface==NULL) ? 0 : 1;
         LPDIRECT3DSURFACE9 pBackBuffer=NULL;//, pZBuffer=NULL;
@@ -255,7 +256,9 @@ void CTextManager::DrawNow()
             last_dark_box = (m_msg[m_b][i].pfont) ? last_dark_box : (void*)&m_msg[m_b][i];
         }
         last_dark_box = NULL;
-        for (int j=0; j<m_nMsg[1-m_b]; j++)
+
+		int j = 0;
+        for (; j<m_nMsg[1-m_b]; j++)
         {
             m_msg[1-m_b][j].deleted = m_msg[1-m_b][j].added = 0;
             m_msg[1-m_b][j].prev_dark_box_ptr = last_dark_box;
@@ -279,15 +282,14 @@ void CTextManager::DrawNow()
             //  additions/deletions/change(s) are left unchanged.)
             // in any other case, all the text is just re-rendered.
 
-            int i = 0;
-            int j = 0;
+            int i = 0, j = 0;
             while (i < m_nMsg[m_b] && j < m_nMsg[1-m_b])
             {
                 // MATCH macro: first idx is record # for current stuff; second idx is record # for prev frame stuff.
                 if (MATCH(i,j))
                 {
-                    i++;
-                    j++;
+                    ++i;
+                    ++j;
                 }
                 else
                 {
@@ -365,14 +367,14 @@ void CTextManager::DrawNow()
                 {
                     m_msg[m_b][i].added = 1;
                     bRedrawText = 1;
-                    i++;
+                    ++i;
                 }
                 
                 while (j < m_nMsg[1-m_b])
                 {
                     m_msg[1-m_b][j].deleted = 1;
                     bRedrawText = 1;
-                    j++;
+                    ++j;
                 }
             }
         }
@@ -450,6 +452,8 @@ void CTextManager::DrawNow()
             }
             else
             {
+				int dirty_rects_ready = 0;
+
                 // 1. erase (draw black box over) any old text items deleted.
                 // also, update the dirty rects; stuff that was ABOVE/BELOW these guys will need redrawn!
                 //   (..picture them staggered)
@@ -496,11 +500,11 @@ void CTextManager::DrawNow()
                             RECT t;
                             RECT r1 = m_msg[1-m_b][j].rect;
                             RECT r2 = m_msg[1-m_b][j].rect;
-                            r2.top -= 1;
-                            r2.left -= 1;
-                            r2.right += 1;
-                            r2.bottom += 1;
-                            for (i=0; i<dirty_rects_ready; i++)
+                            --r2.top;
+                            --r2.left;
+                            ++r2.right;
+                            ++r2.bottom;
+                            for (int i=0; i<dirty_rects_ready; i++)
                             {
                                 if (IntersectRect(&t, &r2, &dirty_rect[i]))
                                 {
@@ -517,14 +521,14 @@ void CTextManager::DrawNow()
                             if (dirty_rects_ready < NUM_DIRTY_RECTS)
                             {
                                 dirty_rect[dirty_rects_ready] = r1;
-                                dirty_rects_ready++;
+                                ++dirty_rects_ready;
                                 continue;
                             }
 
                             // otherwise, find the closest dirty rect...
-                            float nearest_dist;
-                            int nearest_id;
-                            for (i=0; i<NUM_DIRTY_RECTS; i++)
+                            float nearest_dist = 0;
+                            int nearest_id = 0;
+                            for (int i=0; i<NUM_DIRTY_RECTS; i++)
                             {
                                 int dx=0, dy=0;
 
@@ -554,14 +558,14 @@ void CTextManager::DrawNow()
 
                 // 2. erase AND REDRAW any of *this* frame's text that falls in dirty rects
                 //     from erasures of *prev* frame's deleted text:
-                for (j=0; j<m_nMsg[m_b]; j++)
+                for (int j=0; j<m_nMsg[m_b]; j++)
                 {
                     RECT t;
                     // note: none of these could be 'deleted' status yet.
                     if (!m_msg[m_b][j].added)
                     {
                         // check vs. dirty rects so far; if intersects any, erase + redraw this one.
-                        for (i=0; i<dirty_rects_ready; i++)
+                        for (int i=0; i<dirty_rects_ready; i++)
                             if (m_msg[m_b][j].pfont &&   // exclude dark boxes... //fixme?
                                 IntersectRect(&t, &dirty_rect[i], &m_msg[m_b][j].rect))
                             {
@@ -569,12 +573,12 @@ void CTextManager::DrawNow()
                                 float x1 = -1.0f + 2.0f*m_msg[m_b][j].rect.right/(float)desc_text_surface.Width;
                                 float y0 = -1.0f + 2.0f*m_msg[m_b][j].rect.top/(float)desc_text_surface.Height;
                                 float y1 = -1.0f + 2.0f*m_msg[m_b][j].rect.bottom/(float)desc_text_surface.Height;
-                                for (int i=0; i<4; i++)
+                                for (int k=0; k<4; k++)
                                 {
-                                    v3[i].x = (i%2) ? x0 : x1;
-                                    v3[i].y = (i/2) ? y0 : y1;
-                                    v3[i].z = 0;
-                                    v3[i].Diffuse = m_msg[m_b][j].bgColor;//0xFF000000;//0xFF000030;
+                                    v3[k].x = (k%2) ? x0 : x1;
+                                    v3[k].y = (k/2) ? y0 : y1;
+                                    v3[k].z = 0;
+                                    v3[k].Diffuse = m_msg[m_b][j].bgColor;//0xFF000000;//0xFF000030;
                                 }
                                 m_lpDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v3, sizeof(WFVERTEX));
 
@@ -641,7 +645,7 @@ void CTextManager::DrawNow()
             m_lpDevice->SetFVF( SPRITEVERTEX_FORMAT );
 
 	        SPRITEVERTEX v3[4];
-	        ZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
+	        SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
             float fx = desc_text_surface.Width  / (float)desc_backbuf.Width ;
             float fy = desc_text_surface.Height / (float)desc_backbuf.Height;
             for (int i=0; i<4; i++)

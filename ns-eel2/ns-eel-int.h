@@ -136,7 +136,7 @@ INT_PTR *EEL_GLUE_set_immediate(void *_p, void *newv);
 
 INT_PTR nseel_setVar(compileContext *ctx, INT_PTR varNum);
 INT_PTR nseel_getVar(compileContext *ctx, INT_PTR varNum);
-void *nseel_compileExpression(compileContext *ctx, char *txt);
+void *nseel_compileExpression(compileContext *ctx, char *exp);
 
 #define	VALUE	258
 #define	IDENTIFIER	259

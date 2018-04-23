@@ -43,15 +43,15 @@ int CALLBACK EnumFontsProc(
   LPARAM lpData            // application-defined data
 )
 {
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT1), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT2), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT4), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT5), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT6), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT7), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT8), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT9), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT1), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT2), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT4), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT5), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT6), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT7), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT8), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT9), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
 	return 1;
 }
 
@@ -97,7 +97,7 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
     }
 
 	// set selection
-	int nPos = SendMessageW( fontbox, CB_FINDSTRINGEXACT, -1, (LPARAM)fi->szFace);
+	int nPos = SendMessageW( fontbox, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)fi->szFace);
 	if (nPos == CB_ERR)
         nPos = 0;
     SendMessage( fontbox, CB_SETCURSEL, nPos, 0);

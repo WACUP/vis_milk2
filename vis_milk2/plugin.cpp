@@ -503,7 +503,8 @@ Order of Function Calls
 #include <process.h>  // for beginthread, etc.
 #include <shellapi.h>
 #include <strsafe.h>
-#include "../nu/AutoCharFn.h"
+#include <nu/AutoCharFn.h>
+#include <loader/hook/squash.h>
 
 #define FRAND ((warand() % 7381)/7380.0f)
 
@@ -576,32 +577,48 @@ const unsigned char LC2UC[256] = {
 void copyStringToClipboardA(const char * source)
 {
     int ok = OpenClipboard(NULL);
-    if (!ok) 
+    if (!ok)
+	{
         return;
+	}
 
-    HGLOBAL clipbuffer;
     EmptyClipboard();
-    clipbuffer = GlobalAlloc(GMEM_DDESHARE, (lstrlenA(source)+1)*sizeof(char));
-    char* buffer = (char*)GlobalLock(clipbuffer);
-    lstrcpyA(buffer, source);
-    GlobalUnlock(clipbuffer);
-    SetClipboardData(CF_TEXT, clipbuffer);
+    HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, (lstrlenA(source)+1)*sizeof(char));
+	if (clipbuffer)
+	{
+		char* buffer = (char*)GlobalLock(clipbuffer);
+		if (buffer)
+		{
+			lstrcpyA(buffer, source);
+			GlobalUnlock(clipbuffer);
+			SetClipboardData(CF_TEXT, clipbuffer);
+		}
+	}
+
     CloseClipboard();
 }
 
 void copyStringToClipboardW(const wchar_t * source)
 {
     int ok = OpenClipboard(NULL);
-    if (!ok) 
+    if (!ok)
+	{
         return;
+	}
 
-    HGLOBAL clipbuffer;
     EmptyClipboard();
-    clipbuffer = GlobalAlloc(GMEM_DDESHARE, (lstrlenW(source)+1)*sizeof(wchar_t));
-    wchar_t* buffer = (wchar_t*)GlobalLock(clipbuffer);
-    lstrcpyW(buffer, source);
-    GlobalUnlock(clipbuffer);
-    SetClipboardData(CF_UNICODETEXT, clipbuffer);
+    HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, (lstrlenW(source)+1)*sizeof(wchar_t));
+	if (clipbuffer)
+	{
+		wchar_t* buffer = (wchar_t*)GlobalLock(clipbuffer);
+		if (buffer)
+		{
+			lstrcpyW(buffer, source);
+			GlobalUnlock(clipbuffer);
+			SetClipboardData(CF_UNICODETEXT, clipbuffer);
+		}
+	}
+
     CloseClipboard();
 }
 
@@ -612,8 +629,10 @@ void copyStringToClipboardW(const wchar_t * source)
 char * getStringFromClipboardA()
 {
     int ok = OpenClipboard(NULL);
-    if (!ok) 
+    if (!ok)
+	{
         return NULL;
+	}
 
     HANDLE hData = GetClipboardData(CF_TEXT);
     char* buffer = (char*)GlobalLock(hData);
@@ -625,8 +644,10 @@ char * getStringFromClipboardA()
 wchar_t * getStringFromClipboardW()
 {
     int ok = OpenClipboard(NULL);
-    if (!ok) 
+	if (!ok)
+	{
         return NULL;
+	}
 
     HANDLE hData = GetClipboardData(CF_UNICODETEXT);
     wchar_t* buffer = (wchar_t*)GlobalLock(hData);
@@ -639,7 +660,6 @@ void ConvertCRsToLFCA(const char* src, char* dst)
 {
     while (*src) 
     {
-        char ch = *src;
         if (*src==13 && *(src+1)==10)
         {
             *dst++ = LINEFEED_CONTROL_CHAR;
@@ -657,7 +677,6 @@ void ConvertCRsToLFCW(const wchar_t* src, wchar_t* dst)
 {
     while (*src) 
     {
-        wchar_t ch = *src;
         if (*src==13 && *(src+1)==10)
         {
             *dst++ = LINEFEED_CONTROL_CHAR;
@@ -675,12 +694,11 @@ void ConvertLFCToCRsA(const char* src, char* dst)
 {
     while (*src) 
     {
-        char ch = *src;
         if (*src==LINEFEED_CONTROL_CHAR)
         {
             *dst++ = 13;
             *dst++ = 10;
-            src++;
+            ++src;
         }
         else 
         {
@@ -694,12 +712,11 @@ void ConvertLFCToCRsW(const wchar_t* src, wchar_t* dst)
 {
     while (*src) 
     {
-        wchar_t ch = *src;
         if (*src==LINEFEED_CONTROL_CHAR)
         {
             *dst++ = 13;
             *dst++ = 10;
-            src++;
+            ++src;
         }
         else 
         {
@@ -720,7 +737,7 @@ int mystrcmpiW(const wchar_t *s1, const wchar_t *s2)
 	int i=0;
 
 	while (LC2UC[s1[i]] == LC2UC[s2[i]] && s1[i] != 0)
-		i++;
+		++i;
 
 	//FIX THIS!
 
@@ -736,15 +753,16 @@ int mystrcmpiW(const wchar_t *s1, const wchar_t *s2)
 
 bool ReadFileToString(const wchar_t* szBaseFilename, char* szDestText, int nMaxBytes, bool bConvertLFsToSpecialChar)
 {
-    wchar_t szFile[MAX_PATH];
-    swprintf(szFile, L"%s%s", g_plugin.m_szMilkdrop2Path, szBaseFilename);
+	// PathCombine(..)?
+	wchar_t szFile[MAX_PATH] = {0};
+    _snwprintf(szFile, ARRAYSIZE(szFile), L"%s%s", g_plugin.m_szMilkdrop2Path, szBaseFilename);
     
     // read in all chars.  Replace char combos:  { 13;  13+10;  10 } with LINEFEED_CONTROL_CHAR, if bConvertLFsToSpecialChar is true.
     FILE* f = _wfopen(szFile, L"rb");
     if (!f)
     {
-        wchar_t buf[1024], title[64];
-		swprintf(buf, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_READ_DATA_FILE_X), szFile);
+		wchar_t buf[1024] = {0}, title[64] = {0};
+		_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_READ_DATA_FILE_X), szFile);
 		g_plugin.dumpmsg(buf); 
 		MessageBoxW(NULL, buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		return false;
@@ -852,7 +870,6 @@ void OnUserEditedCompShaders(LPARAM param1, LPARAM param2)
 // A good guideline: your entire help screen should be visible when fullscreen 
 //   @ 640x480 and using the default help screen font.
 wchar_t* g_szHelp = 0;
-int g_szHelp_W = 0;
 
 // this is for integrating modern skins (with their Random button)
 // and having it match our Scroll Lock (preset lock) state...
@@ -926,10 +943,17 @@ void CPlugin::MyPreInitialize()
     // seed the system's random number generator w/the current system time:
     //srand((unsigned)time(NULL));  -don't - let winamp do it
 
-	// attempt to load a unicode F1 help message otherwise revert to the ansi version
-	g_szHelp = (wchar_t*)GetTextResource(IDR_TEXT2,1);
-	if(!g_szHelp) g_szHelp = (wchar_t*)GetTextResource(IDR_TEXT1,0);
-	else g_szHelp_W = 1;
+	DWORD data_size = 0;
+	unsigned char *data = (unsigned char *)WASABI_API_LOADRESFROMFILEW(L"GZ", MAKEINTRESOURCEW(IDR_TEXT_GZ), &data_size),
+				  *output = NULL;
+
+	decompress_resource(data, data_size, &output, 0);
+	g_szHelp = AutoWideDup((LPCSTR)output, CP_UTF8);
+
+	if (output)
+	{
+		free(output);
+	}
 
     // CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
 	m_bFirstRun		            = true;
@@ -995,12 +1019,12 @@ void CPlugin::MyPreInitialize()
     //m_ps_warp = NULL;
     //m_vs_comp = NULL;
     //m_ps_comp = NULL;
-    ZeroMemory(&m_shaders,    sizeof(PShaderSet));
-    ZeroMemory(&m_OldShaders, sizeof(PShaderSet));
-    ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
-    ZeroMemory(&m_fallbackShaders_vs, sizeof(VShaderSet));
-    ZeroMemory(&m_fallbackShaders_ps, sizeof(PShaderSet));
-    ZeroMemory(m_BlurShaders, sizeof(m_BlurShaders));
+    SecureZeroMemory(&m_shaders,    sizeof(PShaderSet));
+    SecureZeroMemory(&m_OldShaders, sizeof(PShaderSet));
+    SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
+    SecureZeroMemory(&m_fallbackShaders_vs, sizeof(VShaderSet));
+    SecureZeroMemory(&m_fallbackShaders_ps, sizeof(PShaderSet));
+    SecureZeroMemory(m_BlurShaders, sizeof(m_BlurShaders));
     m_bWarpShaderLock = false;
     m_bCompShaderLock = false;
     m_bNeedRescanTexturesDir = true;
@@ -1085,7 +1109,7 @@ void CPlugin::MyPreInitialize()
 	m_lpVS[0]				= NULL;
 	m_lpVS[1]				= NULL;
     #if (NUM_BLUR_TEX>0)
-        for (i=0; i<NUM_BLUR_TEX; i++)
+        for (int i=0; i<NUM_BLUR_TEX; i++)
             m_lpBlur[i] = NULL;
     #endif
     m_lpDDSTitle			= NULL;
@@ -1097,7 +1121,6 @@ void CPlugin::MyPreInitialize()
 	m_indices_list			= NULL;
 	m_indices_strip			= NULL;
 
-	m_bMMX			        = false;
     m_bHasFocus             = true;
     m_bHadFocus             = false;
     m_bOrigScrollLockState  = GetKeyState(VK_SCROLL) & 1;
@@ -1119,16 +1142,17 @@ void CPlugin::MyPreInitialize()
     g_bDebugOutput		= false;
 	g_bDumpFileCleared	= false;
 
-    swprintf(m_szMilkdrop2Path, L"%s%s", GetPluginsDirPath(), SUBDIR);
-	swprintf(m_szPresetDir,  L"%spresets\\", m_szMilkdrop2Path );
+    _snwprintf(m_szMilkdrop2Path, ARRAYSIZE(m_szMilkdrop2Path), L"%s%s", GetPluginsDirPath(), SUBDIR);
+	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir),  L"%spresets\\", m_szMilkdrop2Path );
 
     // note that the config dir can be under Program Files or Application Data!!
     wchar_t szConfigDir[MAX_PATH] = {0};
-    lstrcpyW(szConfigDir, GetConfigIniFile());
+    lstrcpynW(szConfigDir, GetConfigIniFile(), ARRAYSIZE(szConfigDir));
     wchar_t* p = wcsrchr(szConfigDir, L'\\');
     if (p) *(p+1) = 0;
-   	swprintf(m_szMsgIniFile, L"%s%s", szConfigDir, MSG_INIFILE );
-	swprintf(m_szImgIniFile, L"%s%s", szConfigDir, IMG_INIFILE );
+	// TODO PathCombine()
+   	_snwprintf(m_szMsgIniFile, ARRAYSIZE(m_szMsgIniFile), L"%s%s", szConfigDir, MSG_INIFILE );
+	_snwprintf(m_szImgIniFile, ARRAYSIZE(m_szImgIniFile), L"%s%s", szConfigDir, IMG_INIFILE );
 }
 
 //----------------------------------------------------------------------
@@ -1149,7 +1173,6 @@ void CPlugin::MyReadConfig()
 
     //ex: m_fog_enabled = GetPrivateProfileInt("settings","fog_enabled"       ,m_fog_enabled       ,GetConfigIniFile());
 
-	int n=0;
     wchar_t *pIni = GetConfigIniFile();
 
 	m_bFirstRun		= !GetPrivateProfileBoolW(L"settings",L"bConfigured" ,false,pIni);
@@ -1213,7 +1236,7 @@ void CPlugin::MyReadConfig()
 
     // --------
 
-	GetPrivateProfileStringW(L"settings",L"szPresetDir",m_szPresetDir,m_szPresetDir,sizeof(m_szPresetDir),pIni);
+	GetPrivateProfileStringW(L"settings",L"szPresetDir",m_szPresetDir,m_szPresetDir,ARRAYSIZE(m_szPresetDir),pIni);
 
 	ReadCustomMessages();
 
@@ -1257,8 +1280,6 @@ void CPlugin::MyWriteConfig()
 	WritePrivateProfileStringW(L"settings",L"bConfigured",L"1",pIni);
 
 	//note: m_szPresetDir is not written here; it is written manually, whenever it changes.
-
-	wchar_t szSectionName[] = L"settings";
 
 	WritePrivateProfileIntW(m_bSongTitleAnims,		L"bSongTitleAnims",		pIni, L"settings");
 	WritePrivateProfileIntW(m_bHardCutsDisabled,	    L"bHardCutsDisabled",	pIni, L"settings");
@@ -1323,7 +1344,7 @@ void ConvertLLCto1310(char* d, const char *s)
         {
             *d++ = *s;
         }
-        s++;
+        ++s;
     };
     *d = 0;
 }
@@ -1363,7 +1384,7 @@ void StripComments(char* str)
         if (!bIgnoreTilEndOfLine && !bIgnoreTilCloseComment)
         {
             if (nCharsToSkip > 0)
-                nCharsToSkip--;
+                --nCharsToSkip;
             else
                 *dest++ = c0;
         }
@@ -1371,7 +1392,7 @@ void StripComments(char* str)
         if (c1==0)
             break;
 
-        p++;
+        ++p;
         c0 = c1;
         c1 = *p;
     }
@@ -1399,11 +1420,10 @@ int CPlugin::AllocateMyNonDx9Stuff()
 	InitializeCriticalSection(&g_cs);
 
     // read in 'm_szShaderIncludeText'
-    bool bSuccess = true;
-    bSuccess = ReadFileToString(L"data\\include.fx", m_szShaderIncludeText, sizeof(m_szShaderIncludeText)-4, false);
+    bool bSuccess = ReadFileToString(L"data\\include.fx", m_szShaderIncludeText, sizeof(m_szShaderIncludeText)-4, false);
 	if (!bSuccess) return false;
 	StripComments(m_szShaderIncludeText);
-	m_nShaderIncludeTextLen = lstrlen(m_szShaderIncludeText);
+	m_nShaderIncludeTextLen = lstrlenA(m_szShaderIncludeText);
     bSuccess |= ReadFileToString(L"data\\warp_vs.fx", m_szDefaultWarpVShaderText, sizeof(m_szDefaultWarpVShaderText), true);
     if (!bSuccess) return false;
     bSuccess |= ReadFileToString(L"data\\warp_ps.fx", m_szDefaultWarpPShaderText, sizeof(m_szDefaultWarpPShaderText), true);
@@ -1420,9 +1440,6 @@ int CPlugin::AllocateMyNonDx9Stuff()
     if (!bSuccess) return false;
 
 	BuildMenus();
-
-	m_bMMX = CheckForMMX();
-	//m_bSSE = CheckForSSE();
 
 	m_pState->Default();
 	m_pOldState->Default();
@@ -1479,7 +1496,7 @@ void CPlugin::CleanUpMyNonDx9Stuff()
 	m_menuPost    .Finish();
     for (int i=0; i<MAX_CUSTOM_WAVES; i++)
 	    m_menuWavecode[i].Finish();
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
 	    m_menuShapecode[i].Finish();
 
     SetScrollLock(m_bOrigScrollLockState, m_bPreventScollLockHandling);
@@ -1736,66 +1753,66 @@ int CPlugin::AllocateMyDX9Stuff()
         // Create vertex declarations (since we're not using FVF anymore)
         if (D3D_OK != GetDevice()->CreateVertexDeclaration( g_MyVertDecl, &m_pMyVertDecl )) 
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_MY_VERTEX_DECLARATION,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_MY_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,sizeof(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (D3D_OK != GetDevice()->CreateVertexDeclaration( g_WfVertDecl, &m_pWfVertDecl ))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_WF_VERTEX_DECLARATION,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_WF_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,sizeof(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (D3D_OK != GetDevice()->CreateVertexDeclaration( g_SpriteVertDecl, &m_pSpriteVertDecl ))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_SPRITE_VERTEX_DECLARATION,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_SPRITE_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,sizeof(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
-				}
+		}
 
-				// Load the FALLBACK shaders...
-				if (!RecompilePShader(m_szDefaultWarpPShaderText, &m_fallbackShaders_ps.warp, SHADER_WARP, true, 2))
-				{
-					wchar_t szSM[64];
-					switch(m_nMaxPSVersion_DX9)
-					{
-					case MD2_PS_2_0:
-					case MD2_PS_2_X:
-						WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_2,szSM,64); break;
-					case MD2_PS_3_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_3,szSM,64); break;
-					case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
-					default:
-						swprintf(szSM, WASABI_API_LNGSTRINGW(IDS_UKNOWN_CASE_X), m_nMaxPSVersion_DX9);
-						break;
-					}
-					if (m_nMaxPSVersion_ConfigPanel >= MD2_PS_NONE && m_nMaxPSVersion_DX9 < m_nMaxPSVersion_ConfigPanel) 
-						swprintf(buf, WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_USING_X),szSM,PSVersion);
-					else
-						swprintf(buf, WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_HARDWARE_MIS_REPORT),szSM,PSVersion);
-					dumpmsg(buf); 
-					MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
-					return false;
-				}
-				if (!RecompileVShader(m_szDefaultWarpVShaderText, &m_fallbackShaders_vs.warp, SHADER_WARP, true))
-				{
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_WV_SHADER,buf,sizeof(buf));
-		    dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
-		    return false;
-        }
+		// Load the FALLBACK shaders...
+		if (!RecompilePShader(m_szDefaultWarpPShaderText, &m_fallbackShaders_ps.warp, SHADER_WARP, true, 2))
+		{
+			wchar_t szSM[64] = {0};
+			switch(m_nMaxPSVersion_DX9)
+			{
+			case MD2_PS_2_0:
+			case MD2_PS_2_X:
+				WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_2,szSM,64); break;
+			case MD2_PS_3_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_3,szSM,64); break;
+			case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
+			default:
+				_snwprintf(szSM, ARRAYSIZE(szSM), WASABI_API_LNGSTRINGW(IDS_UKNOWN_CASE_X), m_nMaxPSVersion_DX9);
+				break;
+			}
+			if (m_nMaxPSVersion_ConfigPanel >= MD2_PS_NONE && m_nMaxPSVersion_DX9 < m_nMaxPSVersion_ConfigPanel) 
+				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_USING_X),szSM,PSVersion);
+			else
+				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_HARDWARE_MIS_REPORT),szSM,PSVersion);
+			dumpmsg(buf); 
+			MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			return false;
+		}
+		if (!RecompileVShader(m_szDefaultWarpVShaderText, &m_fallbackShaders_vs.warp, SHADER_WARP, true))
+		{
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_WV_SHADER,buf,ARRAYSIZE(buf));
+			dumpmsg(buf); 
+			MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			return false;
+		}
         if (!RecompileVShader(m_szDefaultCompVShaderText, &m_fallbackShaders_vs.comp, SHADER_COMP, true))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CV_SHADER,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CV_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf);
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (!RecompilePShader(m_szDefaultCompPShaderText, &m_fallbackShaders_ps.comp, SHADER_COMP, true, 2))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CP_SHADER,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CP_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
@@ -1804,28 +1821,28 @@ int CPlugin::AllocateMyDX9Stuff()
         // Load the BLUR shaders...
         if (!RecompileVShader(m_szBlurVS, &m_BlurShaders[0].vs, SHADER_BLUR, true))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_VERTEX_SHADER,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_VERTEX_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (!RecompilePShader(m_szBlurPSX, &m_BlurShaders[0].ps, SHADER_BLUR, true, 2))
         {
-		    WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_PIXEL_SHADER,buf,sizeof(buf));
+		    WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_PIXEL_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (!RecompileVShader(m_szBlurVS, &m_BlurShaders[1].vs, SHADER_BLUR, true))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
         }
         if (!RecompilePShader(m_szBlurPSY, &m_BlurShaders[1].ps, SHADER_BLUR, true, 2))
         {
-			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_PIXEL_SHADER,buf,sizeof(buf));
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_PIXEL_SHADER,buf,ARRAYSIZE(buf));
 		    dumpmsg(buf); 
 		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
@@ -1893,7 +1910,6 @@ int CPlugin::AllocateMyDX9Stuff()
 	    // reallocate
 	    bool bSuccess = false;
         DWORD vs_flags = D3DUSAGE_RENDERTARGET;// | D3DUSAGE_AUTOGENMIPMAP;//FIXME! (make automipgen optional)
-		bool bRevertedBitDepth = false;
 	    do
 	    {
 		    SafeRelease(m_lpVS[0]);
@@ -1947,21 +1963,21 @@ int CPlugin::AllocateMyDX9Stuff()
 
 	    if (!bSuccess)
 	    {
-            wchar_t buf[2048];
+            wchar_t buffer[2048];
 			UINT err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM;
 		    if (GetScreenMode() == FULLSCREEN)
 				err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_SMALLER_DISPLAY;
 		    else if (!(m_bTexSizeWasAutoExact || m_bTexSizeWasAutoPow2))
 				err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM_RECOMMENDATION;
 
-			WASABI_API_LNGSTRINGW_BUF(err_id,buf,sizeof(buf));
-		    dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			WASABI_API_LNGSTRINGW_BUF(err_id,buffer,ARRAYSIZE(buffer));
+		    dumpmsg(buffer); 
+		    MessageBoxW(GetPluginWindow(), buffer, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
 	    }
         else 
         {
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SUCCESSFULLY_CREATED_VS0_VS1), m_nTexSizeX, m_nTexSizeY, GetWidth(), GetHeight());
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SUCCESSFULLY_CREATED_VS0_VS1), m_nTexSizeX, m_nTexSizeY, GetWidth(), GetHeight());
             dumpmsg(buf);
         }
 
@@ -1969,7 +1985,7 @@ int CPlugin::AllocateMyDX9Stuff()
         if (m_nTexSizeX != GetWidth() || m_nTexSizeY != GetHeight())
 	    {
             char buf[2048];
-		    sprintf(buf, "warning - canvas size adjusted from %dx%d to %dx%d.", GetWidth(), GetHeight(), m_nTexSizeX, m_nTexSizeY);
+		    _snwprintf(buf, ARRAYSIZE(buf), "warning - canvas size adjusted from %dx%d to %dx%d.", GetWidth(), GetHeight(), m_nTexSizeX, m_nTexSizeY);
 		    dumpmsg(buf);
             AddError(buf, 3.2f, ERR_INIT, true);
 	    }/**/
@@ -2002,14 +2018,14 @@ int CPlugin::AllocateMyDX9Stuff()
                 {
                     m_nBlurTexW[i] = 1;
                     m_nBlurTexH[i] = 1;
-			        MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_BLUR_TEXTURES,buf,sizeof(buf)),
-							   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING,title,sizeof(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			        MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_BLUR_TEXTURES,buf,ARRAYSIZE(buf)),
+							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
                     break;
                 }
 
                 // add it to m_textures[].  
                 TexInfo x;  
-				swprintf(x.texname, L"blur%d%s", i/2+1, (i%2) ? L"" : L"doNOTuseME");
+				_snwprintf(x.texname, ARRAYSIZE(x.texname), L"blur%d%s", i/2+1, (i%2) ? L"" : L"doNOTuseME");
                 x.texptr  = m_lpBlur[i];
                 //x.texsize_param = NULL;
                 x.w = w2;
@@ -2023,17 +2039,15 @@ int CPlugin::AllocateMyDX9Stuff()
         #endif
     }
 
-
     m_fAspectX = (m_nTexSizeY > m_nTexSizeX) ? m_nTexSizeX/(float)m_nTexSizeY : 1.0f;
     m_fAspectY = (m_nTexSizeX > m_nTexSizeY) ? m_nTexSizeY/(float)m_nTexSizeX : 1.0f;
     m_fInvAspectX = 1.0f/m_fAspectX;
     m_fInvAspectY = 1.0f/m_fAspectY;
 
-
     // BUILD VERTEX LIST for final composite blit
 	//   note the +0.5-texel offset! 
 	//   (otherwise, a 1-pixel-wide line of the image would wrap at the top and left edges).
-	ZeroMemory(m_comp_verts, sizeof(MYVERTEX)*FCGSX*FCGSY);
+	SecureZeroMemory(m_comp_verts, sizeof(MYVERTEX)*FCGSX*FCGSY);
 	//float fOnePlusInvWidth  = 1.0f + 1.0f/(float)GetWidth();
 	//float fOnePlusInvHeight = 1.0f + 1.0f/(float)GetHeight();
     float fHalfTexelW =  0.5f / (float)GetWidth();   // 2.5: 2 pixels bad @ bottom right
@@ -2152,9 +2166,9 @@ int CPlugin::AllocateMyDX9Stuff()
 	{
         if (pCreateTexture(GetDevice(), GetWidth(), GetHeight(), 1, D3DUSAGE_RENDERTARGET, GetBackBufFormat(), D3DPOOL_DEFAULT, &m_lpDDSText) != D3D_OK)
 		{
-            char buf[2048];
+            char buf[2048] = {0};
 			dumpmsg("Init: -WARNING-:"); 
-			sprintf(buf, "WARNING: Not enough video memory to make a dedicated text surface; \rtext will still be drawn directly to the back buffer.\r\rTo avoid seeing this error again, uncheck the 'fix slow text' option.");
+			_snprintf(buf, ARRAYSIZE(buf), "WARNING: Not enough video memory to make a dedicated text surface; \rtext will still be drawn directly to the back buffer.\r\rTo avoid seeing this error again, uncheck the 'fix slow text' option.");
 			dumpmsg(buf); 
 			if (!m_bWarningsDisabled)
 				MessageBox(GetPluginWindow(), buf, "WARNING", MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
@@ -2223,7 +2237,7 @@ int CPlugin::AllocateMyDX9Stuff()
 		    m_fontinfo[SONGTITLE_FONT].bItalic, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, m_fontinfo[SONGTITLE_FONT].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY, DEFAULT_PITCH, m_fontinfo[SONGTITLE_FONT].szFace)))
     {
         MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DOUBLE_SIZED_GDI_TITLE_FONT),
-						 WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,sizeof(title)),
+						 WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)),
 						 MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
         return false;
     }
@@ -2243,7 +2257,7 @@ int CPlugin::AllocateMyDX9Stuff()
 					) != D3D_OK)
     {
         MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DOUBLE_SIZED_D3DX_TITLE_FONT),
-				   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,sizeof(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+				   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
         return false;
     }
 
@@ -2268,7 +2282,7 @@ int CPlugin::AllocateMyDX9Stuff()
 	int nVert = 0;
 	float texel_offset_x = 0.5f / (float)m_nTexSizeX;
 	float texel_offset_y = 0.5f / (float)m_nTexSizeY;
-	for (y=0; y<=m_nGridY; y++)
+	for (int y=0; y<=m_nGridY; y++)
 	{
 		for (int x=0; x<=m_nGridX; x++)
 		{
@@ -2291,7 +2305,7 @@ int CPlugin::AllocateMyDX9Stuff()
             m_verts[nVert].tu_orig =  m_verts[nVert].x*0.5f + 0.5f + texel_offset_x;
             m_verts[nVert].tv_orig = -m_verts[nVert].y*0.5f + 0.5f + texel_offset_y;
 
-			nVert++;
+			++nVert;
 		}
 	}
 	
@@ -2424,7 +2438,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
     //           2 = smoothed (interp)
     //           4/8/16... = cubic interp.
 
-    wchar_t buf[2048], title[64];
+	wchar_t buf[2048] = {0}, title[64] = {0};
 
     // Synthesize noise texture(s)
     LPDIRECT3DTEXTURE9 pNoiseTex = NULL;
@@ -2435,7 +2449,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
         {
             if (i==1) 
             {
-				WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_NOISE_TEXTURE,buf,sizeof(buf));
+				WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		        dumpmsg(buf); 
 		        MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		        return false;
@@ -2448,7 +2462,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
     D3DLOCKED_RECT r;
     if (D3D_OK != pNoiseTex->LockRect(0, &r, NULL, D3DLOCK_DISCARD))
     {
-		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_NOISE_TEXTURE,buf,sizeof(buf));
+		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		dumpmsg(buf); 
 		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		return false;
@@ -2456,7 +2470,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
 
     if (r.Pitch < size*4)
     {
-		WASABI_API_LNGSTRINGW_BUF(IDS_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,sizeof(buf));
+		WASABI_API_LNGSTRINGW_BUF(IDS_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,ARRAYSIZE(buf));
 		dumpmsg(buf); 
 		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		return false;
@@ -2477,7 +2491,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
                      (((DWORD)(warand() % RANGE)+RANGE/2)      ); 
         }
         // swap some pixels randomly, to improve 'randomness'
-        for (x=0; x<size; x++) 
+        for (int x=0; x<size; x++) 
         {
             int x1 = (warand() ^ q.LowPart ) % size;
             int x2 = (warand() ^ q.HighPart) % size;
@@ -2536,7 +2550,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
 
     // add it to m_textures[].  
     TexInfo x;  
-    lstrcpyW(x.texname, szTexName);
+    lstrcpynW(x.texname, szTexName, ARRAYSIZE(x.texname));
     x.texptr  = pNoiseTex;
     //x.texsize_param = NULL;
     x.w = size;
@@ -2558,7 +2572,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
     //           2 = smoothed (interp)
     //           4/8/16... = cubic interp.
 
-    wchar_t buf[2048], title[64];
+	wchar_t buf[2048] = {0}, title[64] = {0};
 
     // Synthesize noise texture(s)
     LPDIRECT3DVOLUMETEXTURE9 pNoiseTex = NULL;
@@ -2570,7 +2584,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
         {
             if (i==1) 
             {
-		        WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_3D_NOISE_TEXTURE,buf,sizeof(buf));
+		        WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_3D_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		        dumpmsg(buf); 
 		        MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		        return false;
@@ -2582,14 +2596,14 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
     D3DLOCKED_BOX r;
     if (D3D_OK != pNoiseTex->LockBox(0, &r, NULL, D3DLOCK_DISCARD))
     {
-		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_3D_NOISE_TEXTURE,buf,sizeof(buf));
+		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_3D_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		dumpmsg(buf); 
 		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		return false;
     }
     if (r.RowPitch < size*4 || r.SlicePitch < size*size*4)
     {
-		WASABI_API_LNGSTRINGW_BUF(IDS_3D_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,sizeof(buf));
+		WASABI_API_LNGSTRINGW_BUF(IDS_3D_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,ARRAYSIZE(buf));
 		dumpmsg(buf); 
 		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		return false;
@@ -2611,7 +2625,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
                          (((DWORD)(warand() % RANGE)+RANGE/2)      ); 
             }
             // swap some pixels randomly, to improve 'randomness'
-            for (x=0; x<size; x++) 
+            for (int x=0; x<size; x++) 
             {
                 int x1 = (warand() ^ q.LowPart ) % size;
                 int x2 = (warand() ^ q.HighPart) % size;
@@ -2648,7 +2662,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
                     }
         
         // next go down, doing cubic interp along Y, on the main slices.
-        for (z=0; z<size; z+=zoom_factor)
+        for (int z=0; z<size; z+=zoom_factor)
             for (int x=0; x<size; x++) 
                 for (int y=0; y<size; y++)
                     if (y % zoom_factor)
@@ -2694,7 +2708,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
 
     // add it to m_textures[].  
     TexInfo x;  
-    lstrcpyW(x.texname, szTexName);
+    lstrcpynW(x.texname, szTexName, ARRAYSIZE(x.texname));
     x.texptr  = pNoiseTex;
     //x.texsize_param = NULL;
     x.w = size;
@@ -2714,6 +2728,7 @@ void VShaderInfo::Clear()
     SafeRelease(CT); 
     params.Clear(); 
 }
+
 void PShaderInfo::Clear() 
 { 
     SafeRelease(ptr); 
@@ -2749,9 +2764,9 @@ void CShaderParams::Clear()
     rand_frame  = NULL;
     rand_preset = NULL;
 
-    ZeroMemory(rot_mat, sizeof(rot_mat));
-    ZeroMemory(const_handles, sizeof(const_handles));
-    ZeroMemory(q_const_handles, sizeof(q_const_handles));
+    SecureZeroMemory(rot_mat, sizeof(rot_mat));
+    SecureZeroMemory(const_handles, sizeof(const_handles));
+    SecureZeroMemory(q_const_handles, sizeof(q_const_handles));
     texsize_params.clear();
 
     // sampler stages for various PS texture bindings:
@@ -2775,12 +2790,12 @@ bool CPlugin::EvictSomeTexture()
         for (int i=0; i<N; i++)
             if (m_textures[i].bEvictable && m_textures[i].texptr) 
             {
-                nEvictableFiles++;
+                ++nEvictableFiles;
                 nEvictableBytes += m_textures[i].nSizeInBytes;
             }
         char buf[1024];
         sprintf(buf, "evicting at %d textures, %.1f MB\n", nEvictableFiles, nEvictableBytes*0.000001f);
-        OutputDebugString(buf);
+        OutputDebugStringA(buf);
     }
     #endif
 
@@ -2804,7 +2819,7 @@ bool CPlugin::EvictSomeTexture()
     // are HALF as big as the oldest textures, and thus, less likely to get booted.
     int biggest_bytes = 0;
     int biggest_index = -1;
-    for (i=0; i<N; i++)
+    for (int i=0; i<N; i++)
         if (m_textures[i].bEvictable && m_textures[i].nSizeInBytes>0 && m_textures[i].nAge < m_nPresetsLoadedTotal-1) // note: -1 here keeps images around for the blend-from preset, too...
         {
             float size_mult = 1.0f + (m_textures[i].nAge - newest)/(float)(oldest-newest);
@@ -2824,7 +2839,7 @@ bool CPlugin::EvictSomeTexture()
 
     // notify all CShaderParams classes that we're releasing a bindable texture!!
     N = global_CShaderParams_master_list.size();
-    for (i=0; i<N; i++) 
+    for (int i=0; i<N; i++) 
         global_CShaderParams_master_list[i]->OnTextureEvict( m_textures[biggest_index].texptr );
 
     // 2. erase the texture itself
@@ -2834,9 +2849,9 @@ bool CPlugin::EvictSomeTexture()
     return true;
 }
 
-GString texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", };
+std::wstring  texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", };
 const wchar_t szExtsWithSlashes[] = L"jpg|png|dds|etc.";
-typedef Vector<GString> StringVec;
+typedef Vector<std::wstring> StringVec;
 bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //should be MAX_PATH chars
 {
     static StringVec texfiles;
@@ -2851,8 +2866,8 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //
         g_plugin.m_bNeedRescanTexturesDir = false;//texfiles_timestamp = t;
         texfiles.clear();
 
-        wchar_t szMask[MAX_PATH];
-        swprintf(szMask, L"%stextures\\*.*", g_plugin.m_szMilkdrop2Path);
+		wchar_t szMask[MAX_PATH] = {0};
+        _snwprintf(szMask, ARRAYSIZE(szMask), L"%stextures\\*.*", g_plugin.m_szMilkdrop2Path);
 
 		WIN32_FIND_DATAW ffd = {0};
 
@@ -2871,7 +2886,7 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //
                 continue;
 
             for (int i=0; i<sizeof(texture_exts)/sizeof(texture_exts[0]); i++)
-                if (!wcsicmp(texture_exts[i].c_str(), ext+1))
+                if (!_wcsicmp(texture_exts[i].c_str(), ext+1))
                 {
                     // valid texture found - add it to the list.  ("heart.jpg", for example)
                     texfiles.push_back( ffd.cFileName );
@@ -2898,7 +2913,8 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //
         StringVec temp_list;
         int N = texfiles.size();
         int len = lstrlenW(prefix);
-        for (int i=0; i<N; i++) 
+		int i = 0;
+        for (; i<N; i++) 
             if (!_wcsnicmp(prefix, texfiles[i].c_str(), len))
                 temp_list.push_back(texfiles[i]);
         N = temp_list.size();
@@ -2924,7 +2940,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
     D3DXCONSTANT_DESC cd;
 
     #define MAX_RAND_TEX 16
-    GString RandTexName[MAX_RAND_TEX];
+    std::wstring  RandTexName[MAX_RAND_TEX];
 
     // pass 1: find all the samplers (and texture bindings).
     for (UINT i=0; i<d.Constants; i++) 
@@ -2943,9 +2959,9 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
             // remove "sampler_" prefix to create root file name.  could still have "FW_" prefix or something like that.
             wchar_t szRootName[MAX_PATH];
             if (!strncmp(cd.Name, "sampler_", 8)) 
-                lstrcpyW(szRootName, AutoWide(&cd.Name[8]));
+                lstrcpynW(szRootName, AutoWide(&cd.Name[8]), ARRAYSIZE(szRootName));
             else
-                lstrcpyW(szRootName, AutoWide(cd.Name));
+                lstrcpynW(szRootName, AutoWide(cd.Name), ARRAYSIZE(szRootName));
 
             // also peel off "XY_" prefix, if it's there, to specify filtering & wrap mode.
             bool bBilinear = true;
@@ -2974,13 +2990,13 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                 else if (!wcscmp(temp, L"CP")) { bWrapFilterSpecified = true; bBilinear = false; bWrap = false; }
 
                 // peel off the prefix
-                int i = 0;
-                while (szRootName[i+3]) 
+                int k = 0;
+                while (szRootName[k+3]) 
                 {
-                    szRootName[i] = szRootName[i+3];
-                    i++;
+                    szRootName[k] = szRootName[k+3];
+                    ++k;
                 }
-                szRootName[i] = 0;
+                szRootName[k] = 0;
             }
             m_texture_bindings[ cd.RegisterIndex ].bWrap     = bWrap;
             m_texture_bindings[ cd.RegisterIndex ].bBilinear = bBilinear;
@@ -3077,7 +3093,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                         prefix[0] = 0;
                     szRootName[6] = 0;
 
-                    swscanf(&szRootName[4], L"%d", &rand_slot);
+                    (void)swscanf(&szRootName[4], L"%d", &rand_slot);
                     if (rand_slot >= 0 && rand_slot <= 15)      // otherwise, not a special filename - ignore it
                     {
                         if (!PickRandomTexture(prefix, szRootName))
@@ -3095,7 +3111,6 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                                 *p = 0;
                         }
 
-                        assert(RandTexName[rand_slot].GetLength() == 0);
                         RandTexName[rand_slot] = szRootName; // we'll need to remember this for texsize_ params!
                     }
                 }
@@ -3133,7 +3148,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                             if (g_plugin.m_textures[i].bEvictable && g_plugin.m_textures[i].texptr)
                             {
                                 nBytesCached += g_plugin.m_textures[i].nSizeInBytes;
-                                nTexturesCached++;
+                                ++nTexturesCached;
                             }
                         if ( nTexturesCached < g_plugin.m_nMaxImages && 
                              nBytesCached < g_plugin.m_nMaxBytes )
@@ -3199,11 +3214,14 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                 
                     if (!x.texptr)
                     {
-		                wchar_t buf[2048], title[64];
-                        swprintf(buf, WASABI_API_LNGSTRINGW(IDS_COULD_NOT_LOAD_TEXTURE_X), szRootName, szExtsWithSlashes);
+		                wchar_t buf[2048] = {0};
+                        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_COULD_NOT_LOAD_TEXTURE_X), szRootName, szExtsWithSlashes);
 		                g_plugin.dumpmsg(buf); 
                         if (bHardErrors)
+						{
+							wchar_t title[64] = {0};
 		                    MessageBoxW(g_plugin.GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+						}
                         else {
                             g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
                         }
@@ -3218,7 +3236,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
     }
 
     // pass 2: bind all the float4's.  "texsize_XYZ" params will be filled out via knowledge of loaded texture sizes.
-    for (i=0; i<d.Constants; i++) 
+    for (UINT i=0; i<d.Constants; i++) 
     {
         D3DXHANDLE h = pCT->GetConstant(NULL, i);
         unsigned int count = 1;
@@ -3280,9 +3298,9 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                         if (szRootName[6]==L'_')
                             szRootName[6] = 0;
 
-                        swscanf(&szRootName[4], L"%d", &rand_slot);
+                        (void)swscanf(&szRootName[4], L"%d", &rand_slot);
                         if (rand_slot >= 0 && rand_slot <= 15)      // otherwise, not a special filename - ignore it
-                            if (RandTexName[rand_slot].GetLength() > 0)
+                            if (RandTexName[rand_slot].size() > 0)
                                 lstrcpyW(szRootName, RandTexName[rand_slot].c_str());
                     }
 
@@ -3335,7 +3353,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
 bool CPlugin::RecompileVShader(const char* szShadersText, VShaderInfo *si, int shaderType, bool bHardErrors)
 {
     SafeRelease(si->ptr);
-    ZeroMemory(si, sizeof(VShaderInfo));    
+    SecureZeroMemory(si, sizeof(VShaderInfo));    
    
     // LOAD SHADER
     if (!LoadShaderFromMemory( szShadersText, "VS", "vs_1_1", &si->CT, (void**)&si->ptr, shaderType, bHardErrors && (GetScreenMode()==WINDOWED)))
@@ -3353,25 +3371,26 @@ bool CPlugin::RecompilePShader(const char* szShadersText, PShaderInfo *si, int s
     assert(m_nMaxPSVersion > 0);
 
     SafeRelease(si->ptr);
-    ZeroMemory(si, sizeof(PShaderInfo));    
+    SecureZeroMemory(si, sizeof(PShaderInfo));    
    
     // LOAD SHADER
     // note: ps_1_4 required for dependent texture lookups.
     //       ps_2_0 required for tex2Dbias.
-		char ver[16];
-		lstrcpy(ver, "ps_0_0");
+		char ver[16] = {0};
+		lstrcpyA(ver, "ps_0_0");
+
 		switch(PSVersion) {
 		case MD2_PS_NONE: 
 			// Even though the PRESET doesn't use shaders, if MilkDrop is running where it CAN do shaders,
 			//   we run all the old presets through (shader) emulation.
 			// This way, during a MilkDrop session, we are always calling either WarpedBlit() or WarpedBlit_NoPixelShaders(),
 			//   and blending always works.
-			lstrcpy(ver, "ps_2_0"); 
+			lstrcpyA(ver, "ps_2_0"); 
 			break;  
-		case MD2_PS_2_0: lstrcpy(ver, "ps_2_0"); break;
-		case MD2_PS_2_X: lstrcpy(ver, "ps_2_a"); break; // we'll try ps_2_a first, LoadShaderFromMemory will try ps_2_b if compilation fails
-		case MD2_PS_3_0: lstrcpy(ver, "ps_3_0"); break;
-		case MD2_PS_4_0: lstrcpy(ver, "ps_4_0"); break;
+		case MD2_PS_2_0: lstrcpyA(ver, "ps_2_0"); break;
+		case MD2_PS_2_X: lstrcpyA(ver, "ps_2_a"); break; // we'll try ps_2_a first, LoadShaderFromMemory will try ps_2_b if compilation fails
+		case MD2_PS_3_0: lstrcpyA(ver, "ps_3_0"); break;
+		case MD2_PS_4_0: lstrcpyA(ver, "ps_4_0"); break;
 		default: assert(0); break;
 		}
 
@@ -3498,11 +3517,11 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     char szWhichShader[64];
     switch(shaderType)
     {
-    case SHADER_WARP:  lstrcpy(szWhichShader, "warp"); break;
-    case SHADER_COMP:  lstrcpy(szWhichShader, "composite"); break;
-    case SHADER_BLUR:  lstrcpy(szWhichShader, "blur"); break;
-    case SHADER_OTHER: lstrcpy(szWhichShader, "(other)"); break;
-    default:           lstrcpy(szWhichShader, "(unknown)"); break;
+    case SHADER_WARP:  lstrcpyA(szWhichShader, "warp"); break;
+    case SHADER_COMP:  lstrcpyA(szWhichShader, "composite"); break;
+    case SHADER_BLUR:  lstrcpyA(szWhichShader, "blur"); break;
+    case SHADER_OTHER: lstrcpyA(szWhichShader, "(other)"); break;
+    default:           lstrcpyA(szWhichShader, "(unknown)"); break;
     }
 
     LPD3DXBUFFER pShaderByteCode;
@@ -3511,24 +3530,23 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     *ppShader = NULL;
     *ppConstTable = NULL;
 
-    char szShaderText[128000];
-    char temp[128000];
+    char szShaderText[128000] = {0};
     int writePos = 0;
 
     // paste the universal #include
-    lstrcpy(&szShaderText[writePos], m_szShaderIncludeText);  // first, paste in the contents of 'inputs.fx' before the actual shader text.  Has 13's and 10's.
+    lstrcpyA(&szShaderText[writePos], m_szShaderIncludeText);  // first, paste in the contents of 'inputs.fx' before the actual shader text.  Has 13's and 10's.
     writePos += m_nShaderIncludeTextLen;
 
     // paste in any custom #defines for this shader type
     if (shaderType == SHADER_WARP && szProfile[0]=='p') 
     {
-        lstrcpy(&szShaderText[writePos], szWarpDefines);
-        writePos += lstrlen(szWarpDefines);
+        lstrcpyA(&szShaderText[writePos], szWarpDefines);
+        writePos += lstrlenA(szWarpDefines);
     }
     else if (shaderType == SHADER_COMP && szProfile[0]=='p')
     {
-        lstrcpy(&szShaderText[writePos], szCompDefines);
-        writePos += lstrlen(szCompDefines);
+        lstrcpyA(&szShaderText[writePos], szCompDefines);
+        writePos += lstrlenA(szCompDefines);
     }
 
     // paste in the shader itself - converting LCC's to 13+10's.
@@ -3541,16 +3559,16 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         {
             if (*s == LINEFEED_CONTROL_CHAR)
             {
-                *d++ = 13; writePos++;
-                *d++ = 10; writePos++;
+                *d++ = 13; ++writePos;
+                *d++ = 10; ++writePos;
             }
             else
             {
-                *d++ = *s; writePos++;
+                *d++ = *s; ++writePos;
             }
-            s++;
+            ++s;
         }
-        *d = 0; writePos++;
+        *d = 0; ++writePos;
     }
 
     // strip out all comments - but cheat a little - start at the shader test.
@@ -3567,7 +3585,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
             OutputDebugString(buf);
             if ((rand() % 9) == 0)
                 Sleep(1);
-            p++;
+            ++p;
         }
         OutputDebugString("\n");
     }/**/
@@ -3597,7 +3615,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         
         // seek to 'shader_body' and replace it with spaces
         while (*p && strncmp(p, "shader_body", 11))
-            p++;
+            ++p;
         if (p) 
         {
             for (int i=0; i<11; i++)
@@ -3607,23 +3625,24 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         if (p)
         {
             // insert "void PS(...params...)\n"
-            lstrcpy(temp, p);
+			char temp[128000] = {0};
+            lstrcpyA(temp, p);
             const char *params = (shaderType==SHADER_WARP) ? szWarpParams : szCompParams;
             sprintf(p, "void %s( %s )\n", szFn, params);
-            p += lstrlen(p);
-            lstrcpy(p, temp);
+            p += lstrlenA(p);
+            lstrcpyA(p, temp);
 
             // find the starting curly brace
             p = strchr(p, '{');
             if (p)
             {
                 // skip over it
-                p++;
+                ++p;
                 // then insert "float3 ret = 0;"
-                lstrcpy(temp, p);
+                lstrcpyA(temp, p);
                 sprintf(p, "%s\n", szFirstLine);
-                p += lstrlen(p);
-                lstrcpy(p, temp);
+                p += lstrlenA(p);
+                lstrcpyA(p, temp);
 
                 // find the ending curly brace
                 p = strrchr(p, '}');
@@ -3646,7 +3665,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     // now really try to compile it.
 
 	bool failed=false;
-    int len = lstrlen(szShaderText);
+    int len = lstrlenA(szShaderText);
     if (D3D_OK != pCompileShader(
         szShaderText,
         len,
@@ -3692,7 +3711,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 			return false;
 		}
 
-    HRESULT hr = 1;
+    HRESULT hr = S_FALSE;
     if (szProfile[0] == 'v') 
     {
         hr = GetDevice()->CreateVertexShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DVertexShader9**)ppShader);
@@ -3704,8 +3723,8 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 
     if (hr != D3D_OK)
     {
-		wchar_t temp[512];
-        WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_SHADER,temp,sizeof(temp));
+		wchar_t temp[512] = {0};
+        WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_SHADER, temp, ARRAYSIZE(temp));
 		dumpmsg(temp); 
         if (bHardErrors)
 		    MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
@@ -3778,7 +3797,7 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
 
     // DON'T RELEASE blur textures - they were already released because they're in m_textures[].
     #if (NUM_BLUR_TEX>0)
-        for (i=0; i<NUM_BLUR_TEX; i++)
+        for (int i=0; i<NUM_BLUR_TEX; i++)
             m_lpBlur[i] = NULL;//SafeRelease(m_lpBlur[i]);
     #endif
 
@@ -3906,7 +3925,6 @@ void CPlugin::MyRenderFn(int redraw)
     //   1. take care of timing/other paperwork/etc. for new frame
     if (!redraw)
     {
-        float dt = GetTime() - m_prev_time;
         m_prev_time = GetTime(); // note: m_prev_time is not for general use!
         m_bPresetLockedByCode = (m_UI_mode != UI_REGULAR);
         if (m_bPresetLockedByUser || m_bPresetLockedByCode)
@@ -4039,7 +4057,7 @@ void CPlugin::MyRenderFn(int redraw)
 
     if (!redraw)
     {
-        m_nFramesSinceResize++;
+        ++m_nFramesSinceResize;
         if (m_nLoadingPreset > 0) 
         {
             LoadPresetTick();
@@ -4112,10 +4130,10 @@ void CPlugin::DrawTooltip(wchar_t* str, int xR, int yB)
     else if (corner == MTO_UPPER_RIGHT) SetRect(&r, xR-w, *upper_right_corner_y, xR, *upper_right_corner_y + h); \
     else if (corner == MTO_LOWER_LEFT ) SetRect(&r, xL, *lower_left_corner_y - h, xL+w, *lower_left_corner_y); \
     else if (corner == MTO_LOWER_RIGHT) SetRect(&r, xR-w, *lower_right_corner_y - h, xR, *lower_right_corner_y); \
-    r.top += 1; r.left += 1;      \
+    ++r.top; ++r.left;      \
     m_text.DrawTextW(pFont, (wchar_t*)str, -1, &r, DT_NOPREFIX | DT_SINGLELINE | DT_WORD_ELLIPSIS, 0xFF000000, false, 0xFF000000); \
     /* now draw real text */            \
-    r.top -= 1; r.left -= 1;       \
+    --r.top; --r.left;       \
 	m_text.DrawTextW(pFont, (wchar_t*)str, -1, &r, DT_NOPREFIX | DT_SINGLELINE | DT_WORD_ELLIPSIS, 0xFFFFFFFF, false, 0xFF000000); \
     if      (corner == MTO_UPPER_LEFT ) *upper_left_corner_y  += h; \
     else if (corner == MTO_UPPER_RIGHT) *upper_right_corner_y += h; \
@@ -4150,8 +4168,8 @@ void CPlugin::ClearErrors(int category)  // 0=all categories
     if (category==ERR_ALL || m_errors[i].category == category)
     {
         m_errors.eraseAt(i);
-        i--;
-        N--;
+        --i;
+        --N;
     }
 }
 
@@ -4189,7 +4207,6 @@ void CPlugin::MyRenderUI(
     //   pluginshell.cpp for example code.
 
     RECT r = {0};
-	wchar_t buf[512] = {0};
     LPD3DXFONT pFont = GetFont(DECORATIVE_FONT);
     int h = GetFontHeight(DECORATIVE_FONT);
 
@@ -4205,8 +4222,9 @@ void CPlugin::MyRenderUI(
         // a) preset name
 		if (m_bShowPresetInfo)
 		{
+			wchar_t buf[512] = {0};
             SelectFont(DECORATIVE_FONT);
-            swprintf(buf, L"%s ", (m_nLoadingPreset != 0) ? m_pNewState->m_szDesc : m_pState->m_szDesc);
+            _snwprintf(buf, ARRAYSIZE(buf), L"%s ", (m_nLoadingPreset != 0) ? m_pNewState->m_szDesc : m_pState->m_szDesc);
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -4214,8 +4232,9 @@ void CPlugin::MyRenderUI(
 		if (m_bShowRating || GetTime() < m_fShowRatingUntilThisTime)
 		{
 			// see also: SetCurrentPresetRating() in milkdrop.cpp
+			wchar_t buf[512] = {0};
             SelectFont(DECORATIVE_FONT);
-			swprintf(buf, L" %s: %d ", WASABI_API_LNGSTRINGW(IDS_RATING), (int)m_pState->m_fRating);	
+			_snwprintf(buf, ARRAYSIZE(buf), L" %s: %d ", WASABI_API_LNGSTRINGW(IDS_RATING), (int)m_pState->m_fRating);	
 			if (!m_bEnableRating) lstrcatW(buf, WASABI_API_LNGSTRINGW(IDS_DISABLED));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
@@ -4223,16 +4242,18 @@ void CPlugin::MyRenderUI(
         // c) fps display
         if (m_bShowFPS)
         {
+			wchar_t buf[512] = {0};
             SelectFont(DECORATIVE_FONT);
-            swprintf(buf, L"%s: %4.2f ", WASABI_API_LNGSTRINGW(IDS_FPS), GetFps()); // leave extra space @ end, so italicized fonts don't get clipped
+            _snwprintf(buf, ARRAYSIZE(buf), L"%s: %4.2f ", WASABI_API_LNGSTRINGW(IDS_FPS), GetFps()); // leave extra space @ end, so italicized fonts don't get clipped
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
         }
 
         // d) debug information
 		if (m_bShowDebugInfo)
 		{
+			wchar_t buf[512] = {0};
             SelectFont(SIMPLE_FONT);
-			swprintf(buf, L" %s: %6.4f ", WASABI_API_LNGSTRINGW(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
+			_snwprintf(buf, ARRAYSIZE(buf), L" %s: %6.4f ", WASABI_API_LNGSTRINGW(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -4250,21 +4271,21 @@ void CPlugin::MyRenderUI(
 
     // 3. render text in lower-left corner
     {
-        wchar_t buf2[512] = {0};
-        wchar_t buf3[512+1] = {0}; // add two extra spaces to end, so italicized fonts don't get clipped
-
         // render song title in lower-left corner:
         if (m_bShowSongTitle)
         {
 			wchar_t buf4[512] = {0};
             SelectFont(DECORATIVE_FONT);
-            GetWinampSongTitle(GetWinampWindow(), buf4, sizeof(buf4)); // defined in utility.h/cpp
+            GetWinampSongTitle(GetWinampWindow(), buf4, ARRAYSIZE(buf4)); // defined in utility.h/cpp
             MyTextOut_Shadow(buf4, MTO_LOWER_LEFT);
         }
 
         // render song time & len above that:
         if (m_bShowSongTime || m_bShowSongLen)
         {
+			wchar_t buf[512] = {0};
+			wchar_t buf2[512] = {0};
+			wchar_t buf3[512+1] = {0}; // add two extra spaces to end, so italicized fonts don't get clipped
             GetWinampSongPosAsText(GetWinampWindow(), buf); // defined in utility.h/cpp
             GetWinampSongLenAsText(GetWinampWindow(), buf2); // defined in utility.h/cpp
             if (m_bShowSongTime && m_bShowSongLen)
@@ -4353,7 +4374,7 @@ void CPlugin::MyRenderUI(
             }
             else if (m_UI_mode == UI_SAVEAS && (m_bWarpShaderLock || m_bCompShaderLock))
             {
-                wchar_t buf[256] = {0};
+                wchar_t buffer[256] = {0};
 				int shader_msg_id = IDS_COMPOSITE_SHADER_LOCKED;
                 if (m_bWarpShaderLock && m_bCompShaderLock)
 					shader_msg_id = IDS_WARP_AND_COMPOSITE_SHADERS_LOCKED;
@@ -4362,8 +4383,8 @@ void CPlugin::MyRenderUI(
                 else 
                     shader_msg_id = IDS_COMPOSITE_SHADER_LOCKED;
 
-				WASABI_API_LNGSTRINGW_BUF(shader_msg_id, buf, 256);
-                MyTextOut_BGCOLOR(buf, MTO_UPPER_LEFT, true, 0xFF000000);
+				WASABI_API_LNGSTRINGW_BUF(shader_msg_id, buffer, 256);
+                MyTextOut_BGCOLOR(buffer, MTO_UPPER_LEFT, true, 0xFF000000);
                 *upper_left_corner_y  += h*2/3;
             }
             else
@@ -4377,8 +4398,8 @@ void CPlugin::MyRenderUI(
                                  //((GetFrame() % 3) >= 2)
                                );
 
-			lstrcpyW(buf, m_waitstring.szText);
-			lstrcpyA(bufA, (char*)m_waitstring.szText);
+			lstrcpynW(buf, m_waitstring.szText, ARRAYSIZE(buf));
+			lstrcpynA(bufA, (char*)m_waitstring.szText, ARRAYSIZE(bufA));
 
             int temp_cursor_pos = m_waitstring.nCursorPos;
             int temp_anchor_pos = m_waitstring.nSelAnchorPos;
@@ -4396,12 +4417,12 @@ void CPlugin::MyRenderUI(
 					for (i=len; i>end; i--)
 						bufA[i+1] = bufA[i];
 					bufA[end+1] = ']';
-					len++;
+					++len;
 
 					for (i=len; i>=start; i--)
 						bufA[i+1] = bufA[i];
 					bufA[start] = '[';
-					len++;
+					++len;
 				}
 				else
 				{
@@ -4414,12 +4435,12 @@ void CPlugin::MyRenderUI(
 					for (i=len; i>end; i--)
 						buf[i+1] = buf[i];
 					buf[end+1] = L']';
-					len++;
+					++len;
 
 					for (i=len; i>=start; i--)
 						buf[i+1] = buf[i];
 					buf[start] = L'[';
-					len++;
+					++len;
 				}
 			}
 			else
@@ -4521,7 +4542,6 @@ void CPlugin::MyRenderUI(
 				// compute top_of_page_pos so that the line the cursor is on will show.
                 // also compute dims of the black rectangle while we're at it.
 				{
-					int start = 0;
 					int pos   = 0;
 					int ypixels = 0;
 					int page  = 1;
@@ -4533,16 +4553,16 @@ void CPlugin::MyRenderUI(
 
 					while (bufA[pos] != 0)  // for each line of text... (note that it might wrap)
 					{
-						start = pos;
+						int start = pos;
 						while (bufA[pos] != LINEFEED_CONTROL_CHAR && bufA[pos] != 0) 
-							pos++;
+							++pos;
 
 						char ch = bufA[pos];
 						bufA[pos] = 0;
 						sprintf(buf2, "   %sX", &bufA[start]); // put a final 'X' instead of ' ' b/c CALCRECT returns w==0 if string is entirely whitespace!
 						RECT r2 = rect;
                         r2.bottom = 4096;
-						m_text.DrawTextA(GetFont(SIMPLE_FONT), buf2, -1, &r2, DT_CALCRECT /*| DT_WORDBREAK*/, 0xFFFFFFFF, false);
+						m_text.DrawText(GetFont(SIMPLE_FONT), buf2, -1, &r2, DT_CALCRECT /*| DT_WORDBREAK*/, 0xFFFFFFFF, false);
                         int h = r2.bottom-r2.top;
 						ypixels += h;
 						bufA[pos] = ch;
@@ -4560,7 +4580,7 @@ void CPlugin::MyRenderUI(
 
 							ypixels = h;
 							top_of_page_pos = start;
-							page++;
+							++page;
 
                             box = rect;
                             box.right = box.left;
@@ -4571,7 +4591,7 @@ void CPlugin::MyRenderUI(
                         
                         if (bufA[pos]==0)
                             break;
-                        pos++;
+                        ++pos;
 					}
 
                     // use r2 to draw a dark box:
@@ -4592,7 +4612,7 @@ void CPlugin::MyRenderUI(
 					while (bufA[pos] != 0)
 					{
 						while (bufA[pos] != LINEFEED_CONTROL_CHAR && bufA[pos] != 0) 
-							pos++;
+							++pos;
 
 						char ch = bufA[pos];
 						bufA[pos] = 0;
@@ -4600,13 +4620,13 @@ void CPlugin::MyRenderUI(
                         DWORD color = MENU_COLOR;
 						if (m_waitstring.nCursorPos >= start && m_waitstring.nCursorPos <= pos)
 							color = MENU_HILITE_COLOR;
-						rect.top += m_text.DrawTextA(GetFont(SIMPLE_FONT), buf2, -1, &rect, 0/*DT_WORDBREAK*/, color, false);
+						rect.top += m_text.DrawText(GetFont(SIMPLE_FONT), buf2, -1, &rect, 0/*DT_WORDBREAK*/, color, false);
 						bufA[pos] = ch;
 
                         if (rect.top > rect.bottom)
                             break;
 						
-						if (bufA[pos] != 0) pos++;
+						if (bufA[pos] != 0) ++pos;
 						start = pos;
 					} 
 				}
@@ -4662,9 +4682,9 @@ void CPlugin::MyRenderUI(
                 m_pState->m_nCompPSVersion >= m_nMaxPSVersion) 
             {
                 assert(m_pState->m_nMaxPSVersion == m_nMaxPSVersion);
-                wchar_t buf[1024] = {0};
-                swprintf(buf, WASABI_API_LNGSTRINGW(IDS_PRESET_USES_HIGHEST_PIXEL_SHADER_VERSION), m_nMaxPSVersion);
-		        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buf, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+                wchar_t buffer[1024] = {0};
+                _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PRESET_USES_HIGHEST_PIXEL_SHADER_VERSION), m_nMaxPSVersion);
+		        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
 		        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESS_ESC_TO_RETURN), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
             }
             else 
@@ -4752,9 +4772,9 @@ void CPlugin::MyRenderUI(
 			if (m_nPresets-m_nDirs == 0)
 			{
 				// note: this error message is repeated in milkdrop.cpp in LoadRandomPreset()
-				wchar_t buf[1024];
-                swprintf(buf, WASABI_API_LNGSTRINGW(IDS_ERROR_NO_PRESET_FILE_FOUND_IN_X_MILK), m_szPresetDir);
-                AddError(buf, 6.0f, ERR_MISC, true);
+				wchar_t buffer[1024];
+                _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_ERROR_NO_PRESET_FILE_FOUND_IN_X_MILK), m_szPresetDir);
+                AddError(buffer, 6.0f, ERR_MISC, true);
 				m_UI_mode = UI_REGULAR;
 			}
 			else
@@ -4850,8 +4870,8 @@ void CPlugin::MyRenderUI(
 				// tooltip:
 				if (m_bShowMenuToolTips)
 				{
-					wchar_t buf[256];
-					swprintf(buf, WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nMashPreset[m_nMashSlot]/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
+					wchar_t buffer[256] = {0};
+					_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nMashPreset[m_nMashSlot]/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
                     DrawTooltip(buf, xR, *lower_right_corner_y);
 				}
 
@@ -4877,16 +4897,15 @@ void CPlugin::MyRenderUI(
                     int w = 0;
                     int h = 0;
 
-                    int start_y = orig_rect.top;
-                    for (mash=0; mash<MASH_SLOTS; mash++)
+                    for (int mash=0; mash<MASH_SLOTS; mash++)
                     {
                         int idx = m_nMashPreset[mash];
                     
-                        wchar_t buf[1024];
-                        swprintf(buf, L"%s%s", WASABI_API_LNGSTRINGW(mashNames[mash]), m_presets[idx].szFilename);
+						wchar_t buffer[1024] = {0};
+						_snwprintf(buffer, ARRAYSIZE(buffer), L"%s%s", WASABI_API_LNGSTRINGW(mashNames[mash]), m_presets[idx].szFilename.c_str());
                         RECT r2 = orig_rect;
                         r2.top += h;
-                        h += m_text.DrawTextW(GetFont(SIMPLE_FONT), buf, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), (mash==m_nMashSlot) ? PLAYLIST_COLOR_HILITE_TRACK : PLAYLIST_COLOR_NORMAL, false);
+                        h += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), (mash==m_nMashSlot) ? PLAYLIST_COLOR_HILITE_TRACK : PLAYLIST_COLOR_NORMAL, false);
                         w = max(w, r2.right - r2.left);
                     }
                     if (pass==0) {
@@ -4905,7 +4924,7 @@ void CPlugin::MyRenderUI(
                 box.bottom = box.top;
 
                 // draw a directory listing box right after...
-                for (pass=0; pass<2; pass++)
+                for (int pass=0; pass<2; pass++)
                 {   
                     //if (pass==1)
                     //    GetFont(SIMPLE_FONT)->Begin();
@@ -4982,18 +5001,18 @@ void CPlugin::MyRenderUI(
 			if (m_nPresets == 0)
 			{
 				// note: this error message is repeated in milkdrop.cpp in LoadRandomPreset()
-				wchar_t buf[1024];
-                swprintf(buf, WASABI_API_LNGSTRINGW(IDS_ERROR_NO_PRESET_FILE_FOUND_IN_X_MILK), m_szPresetDir);
-                AddError(buf, 6.0f, ERR_MISC, true);
+				wchar_t buffer[1024] = {0};
+                _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_ERROR_NO_PRESET_FILE_FOUND_IN_X_MILK), m_szPresetDir);
+                AddError(buffer, 6.0f, ERR_MISC, true);
 				m_UI_mode = UI_REGULAR;
 			}
 			else
 			{
                 MyTextOut(WASABI_API_LNGSTRINGW(IDS_LOAD_WHICH_PRESET_PLUS_COMMANDS), MTO_UPPER_LEFT, true);
 
-                wchar_t buf[MAX_PATH+64];
-                swprintf(buf, WASABI_API_LNGSTRINGW(IDS_DIRECTORY_OF_X), m_szPresetDir);
-                MyTextOut(buf, MTO_UPPER_LEFT, true);
+				wchar_t buffer[MAX_PATH+64] = {0};
+                _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_DIRECTORY_OF_X), m_szPresetDir);
+                MyTextOut(buffer, MTO_UPPER_LEFT, true);
 
                 *upper_left_corner_y += h/2;
 
@@ -5050,9 +5069,8 @@ void CPlugin::MyRenderUI(
 				// tooltip:
 				if (m_bShowMenuToolTips)
 				{
-					wchar_t buf[256];
-					swprintf(buf, WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nPresetListCurPos/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
-                    DrawTooltip(buf, xR, *lower_right_corner_y);
+					_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nPresetListCurPos/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
+                    DrawTooltip(buffer, xR, *lower_right_corner_y);
 				}
 
                 RECT orig_rect = rect;
@@ -5137,7 +5155,7 @@ void CPlugin::MyRenderUI(
 		// e) custom timed message:
 		if (!m_bWarningsDisabled2)
 		{
-			wchar_t buf[512] = {0};
+			wchar_t buffer[512] = {0};
             SelectFont(SIMPLE_FONT);
             float t = GetTime();
             int N = m_errors.size();
@@ -5145,19 +5163,19 @@ void CPlugin::MyRenderUI(
             {
                 if (t >= m_errors[i].birthTime && t < m_errors[i].expireTime) 
                 {
-			        swprintf(buf, L"%s ", m_errors[i].msg.c_str());
+			        _snwprintf(buffer, ARRAYSIZE(buffer), L"%s ", m_errors[i].msg.c_str());
                     float age_rel = (t - m_errors[i].birthTime) / (m_errors[i].expireTime - m_errors[i].birthTime);
                     DWORD cr = (DWORD)(200 - 199*powf(age_rel,4));
                     DWORD cg = 0;//(DWORD)(136 - 135*powf(age_rel,1));
                     DWORD cb = 0;
                     DWORD z = 0xFF000000 | (cr<<16) | (cg<<8) | cb;
-                    MyTextOut_BGCOLOR(buf, MTO_UPPER_RIGHT, true, m_errors[i].bBold ? z : 0xFF000000);
+                    MyTextOut_BGCOLOR(buffer, MTO_UPPER_RIGHT, true, m_errors[i].bBold ? z : 0xFF000000);
                 }
                 else
                 {
                     m_errors.eraseAt(i);
-                    i--;
-                    N--;
+                    --i;
+                    --N;
                 }
             }
 		}
@@ -5185,7 +5203,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
     //   for these particular messages!
 
     USHORT mask = 1 << (sizeof(SHORT)*8 - 1);
-    bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
     bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
 
     int nRepeat = 1;  //updated as appropriate
@@ -5237,7 +5254,9 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         case ID_VIS_MENU:
             POINT pt;
             GetCursorPos(&pt);
-            SendMessage(hWnd, WM_CONTEXTMENU, (WPARAM)hWnd, (pt.y << 16) | pt.x);
+			// this was a SendMessage(..) but it could cause a lock-up
+			// if done via the Bento / modern skin UI button to show it
+            PostMessage(hWnd, WM_CONTEXTMENU, (WPARAM)hWnd, (pt.y << 16) | pt.x);
             return 0;
         }
         break;
@@ -5311,14 +5330,14 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 								if (m_waitstring.nCursorPos == len)
 								{
 									lstrcatA((char*)m_waitstring.szText, buf);
-									len++;
+									++len;
 								}
 								else
 								{
 									char* ptr = (char*)m_waitstring.szText;
 									*(ptr + m_waitstring.nCursorPos) = buf[0];
 								}
-								m_waitstring.nCursorPos++;
+								++m_waitstring.nCursorPos;
 							}
 						}
 						else
@@ -5330,8 +5349,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 								for (int i=len; i>=m_waitstring.nCursorPos; i--)
 									*(ptr + i+1) = *(ptr + i);
 								*(ptr + m_waitstring.nCursorPos) = buf[0];
-								m_waitstring.nCursorPos++;
-								len++;
+								++m_waitstring.nCursorPos;
+								++len;
 							}
 						}
 					}
@@ -5351,11 +5370,11 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 								if (m_waitstring.nCursorPos == len)
 								{
 									lstrcatW(m_waitstring.szText, buf);
-									len++;
+									++len;
 								}
 								else
 									m_waitstring.szText[m_waitstring.nCursorPos] = buf[0];
-								m_waitstring.nCursorPos++;
+								++m_waitstring.nCursorPos;
 							}
 						}
 						else
@@ -5366,8 +5385,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 								for (int i=len; i>=m_waitstring.nCursorPos; i--)
 									m_waitstring.szText[i+1] = m_waitstring.szText[i];
 								m_waitstring.szText[m_waitstring.nCursorPos] = buf[0];
-								m_waitstring.nCursorPos++;
-								len++;
+								++m_waitstring.nCursorPos;
+								++len;
 							}
 						}
 					}
@@ -5377,7 +5396,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_LOAD_DEL)	// waiting to confirm file delete
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if ((char)wParam == keyMappings[0] || (char)wParam == keyMappings[1])	// 'y' or 'Y'
 			{
 				// first add pathname to filename
 				wchar_t szDelFile[512];
@@ -5393,7 +5412,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_UPGRADE_PIXEL_SHADER)
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if ((char)wParam == keyMappings[0] || (char)wParam == keyMappings[1])	// 'y' or 'Y'
 			{
                 if (m_pState->m_nMinPSVersion == m_pState->m_nMaxPSVersion)
                 {
@@ -5459,7 +5478,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_SAVE_OVERWRITE)	// waiting to confirm overwrite file on save
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if ((char)wParam == keyMappings[0] || (char)wParam == keyMappings[1])	// 'y' or 'Y'
 			{
 				// first add pathname + extension to filename
 				wchar_t szNewFile[512];
@@ -5647,7 +5666,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				case VK_LEFT:
                     for (rep=0; rep<nRepeat; rep++)
 					    if (m_waitstring.nCursorPos > 0) 
-						    m_waitstring.nCursorPos--;
+						    --m_waitstring.nCursorPos;
 					return 0; // we processed (or absorbed) the key
 
 				case VK_RIGHT:
@@ -5656,12 +5675,12 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 						if (m_waitstring.bDisplayAsCode)
 						{
 							if (m_waitstring.nCursorPos < (int)lstrlenA((char*)m_waitstring.szText))
-								m_waitstring.nCursorPos++;
+								++m_waitstring.nCursorPos;
 						}
 						else
 						{
 							if (m_waitstring.nCursorPos < (int)lstrlenW(m_waitstring.szText))
-								m_waitstring.nCursorPos++;
+								++m_waitstring.nCursorPos;
 						}
 					}
 					return 0; // we processed (or absorbed) the key
@@ -5752,11 +5771,11 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				case VK_RETURN:
 					if (m_UI_mode == UI_LOAD_RENAME)	// rename (move) the file
 					{
+						// TODO consider PathCombine(..)
 						// first add pathnames to filenames
-						wchar_t szOldFile[512];
-						wchar_t szNewFile[512];
-						lstrcpyW(szOldFile, GetPresetDir());
-						lstrcpyW(szNewFile, GetPresetDir());
+						wchar_t szOldFile[512] = {0}, szNewFile[512] = {0};
+						lstrcpynW(szOldFile, GetPresetDir(), ARRAYSIZE(szNewFile));
+						lstrcpynW(szNewFile, GetPresetDir(), ARRAYSIZE(szNewFile));
 						lstrcatW(szOldFile, m_presets[m_nPresetListCurPos].szFilename.c_str());
 						lstrcatW(szNewFile, m_waitstring.szText);
 						lstrcatW(szNewFile, L".milk");
@@ -5768,11 +5787,10 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                              m_UI_mode == UI_IMPORT_SHAPE ||
                              m_UI_mode == UI_EXPORT_SHAPE)
                     {
-                        int bWave   = (m_UI_mode == UI_IMPORT_WAVE || m_UI_mode == UI_EXPORT_WAVE);
                         int bImport = (m_UI_mode == UI_IMPORT_WAVE || m_UI_mode == UI_IMPORT_SHAPE);
 
                         int i = m_pCurMenu->GetCurItem()->m_lParam;
-                        int ret;
+                        int ret = 0;
                         switch(m_UI_mode)
                         {
                         case UI_IMPORT_WAVE : ret = m_pState->m_wave[i].Import(NULL, m_waitstring.szText, 0); break;
@@ -5862,10 +5880,9 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 						//m_fShowUserMessageUntilThisTime = GetTime();	// if there was an error message already, clear it
 
 						// change dir
-						wchar_t szOldDir[512];
-						wchar_t szNewDir[512];
-						lstrcpyW(szOldDir, g_plugin.m_szPresetDir);
-						lstrcpyW(szNewDir, m_waitstring.szText);
+						wchar_t szOldDir[512] = {0}, szNewDir[512] = {0};
+						lstrcpynW(szOldDir, g_plugin.m_szPresetDir, ARRAYSIZE(szOldDir));
+						lstrcpynW(szNewDir, m_waitstring.szText, ARRAYSIZE(szNewDir));
 
 						int len = lstrlenW(szNewDir);
 						if (len > 0 && szNewDir[len-1] != L'\\')
@@ -6030,7 +6047,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			{
                 for (rep=0; rep<nRepeat; rep++)
 				    if (m_nPresetListCurPos > 0)
-					    m_nPresetListCurPos--;
+					    --m_nPresetListCurPos;
 				return 0; // we processed (or absorbed) the key
 
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
@@ -6050,7 +6067,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			{
                 for (rep=0; rep<nRepeat; rep++)
     				if (m_nPresetListCurPos < m_nPresets - 1) 
-	    				m_nPresetListCurPos++;
+	    				++m_nPresetListCurPos;
 				return 0; // we processed (or absorbed) the key
 
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
@@ -6110,7 +6127,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_nMashPreset[m_nMashSlot] = m_nPresets-1;
                 m_nLastMashChangeFrame[m_nMashSlot] = GetFrame();  // causes delayed apply
 				return 0; // we processed (or absorbed) the key
-            }
+        }
 			break;
 		
 		case VK_DELETE:
@@ -6152,7 +6169,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 					else
 					{
 						int newest = -1;
-						int frame;
+						int frame = 0;
 						for (int x=0; x<NUM_TEX; x++)
 						{
 							if (m_texmgr.m_tex[x].pSurface)
@@ -6296,7 +6313,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             }
             break;*/
 		}
-		if (wParam == keyMappings[2])	// 'Y'
+		if ((char)wParam == keyMappings[2])	// 'Y'
 		{
             if (bCtrlHeldDown)      // stop display of custom message or song title.
             {
@@ -6355,7 +6372,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		{
 			int digit = wParam - '0';
 			m_nNumericInputNum		= (m_nNumericInputNum*10) + digit;
-			m_nNumericInputDigits++;
+			++m_nNumericInputDigits;
 
 			if (m_nNumericInputDigits >= 2)
 			{
@@ -6384,11 +6401,11 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		m_pState->m_fVideoEchoZoom *= 1.05f;
 		return 0; // we processed (or absorbed) the key
 	case 'w':
-		m_pState->m_nWaveMode++;
+		++m_pState->m_nWaveMode;
 		if (m_pState->m_nWaveMode >= NUM_WAVES) m_pState->m_nWaveMode = 0;
 		return 0; // we processed (or absorbed) the key
 	case 'W':
-		m_pState->m_nWaveMode--;
+		--m_pState->m_nWaveMode;
 		if (m_pState->m_nWaveMode < 0) m_pState->m_nWaveMode = NUM_WAVES - 1;
 		return 0; // we processed (or absorbed) the key
 	case 'e':
@@ -6679,7 +6696,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	}
 
-	if (wParam == keyMappings[3] || wParam == keyMappings[4])	// 'y' or 'Y'
+	if ((char)wParam == keyMappings[3] || (char)wParam == keyMappings[4])	// 'y' or 'Y'
 	{
 		m_nNumericInputMode   = NUMERIC_INPUT_MODE_CUST_MSG;
 		m_nNumericInputNum    = 0;
@@ -6709,7 +6726,7 @@ int CALLBACK MyEnumFontsProc(
   LPARAM lpData            // application-defined data
 )
 {
-	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
 	return 1;
 }
 
@@ -6719,7 +6736,7 @@ void DoColors(HWND hwnd, int *r, int *g, int *b)
 	static COLORREF acrCustClr[16]; 
 
 	CHOOSECOLOR cc;
-	ZeroMemory(&cc, sizeof(CHOOSECOLOR));
+	SecureZeroMemory(&cc, sizeof(CHOOSECOLOR));
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner = hwnd;//NULL;//hSaverMainWindow;
 	cc.Flags = CC_RGBINIT | CC_FULLOPEN;
@@ -6795,13 +6812,13 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
         {
         case WM_INITDIALOG: // initialize controls here
             {
-                char buf[2048];
+				char buf[2048] = {0};
 				int nPos, i;
                 HWND ctrl;
 
 			    //-------------- pixel shaders combo box ---------------------
                 ctrl = GetDlgItem( hwnd, IDC_SHADERS );
-                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_PS_AUTO_RECOMMENDED), -1);
+                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_PS_AUTO_RECOMMENDED), (DWORD)-1);
                 AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_PS_DISABLED), MD2_PS_NONE);
                 AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_PS_SHADER_MODEL_2), MD2_PS_2_0);
                 AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_PS_SHADER_MODEL_3), MD2_PS_3_0);
@@ -6851,9 +6868,10 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    //-------------- texture size combo box ---------------------
 			    for (i=0; i<5; i++)
 			    {
+					wchar_t bufw[2048] = {0};
 				    int size = (int)pow(2., i+8);
-				    sprintf(buf, " %4d x %4d ", size, size);
-				    nPos = SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)buf);
+				    swprintf(bufw, L" %4d x %4d ", size, size);
+				    nPos = SendMessageW( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)bufw);
 				    SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_SETITEMDATA, nPos, size);
 			    }
 
@@ -6884,9 +6902,9 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				    SendMessage( GetDlgItem( hwnd, IDC_BRIGHT_SLIDER), TBM_SETTIC, 0, i);
 
 			    // append debug output filename to the checkbox's text
-			    GetWindowText( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf, 256);
-			    lstrcat(buf, DEBUGFILE);
-			    SetWindowText( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf);
+			    GetWindowTextA( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf, 256);
+			    lstrcatA(buf, DEBUGFILE);
+			    SetWindowTextA( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf);
 
 			    // set checkboxes
 			    CheckDlgButton(hwnd, IDC_CB_DEBUGOUTPUT, g_bDebugOutput);
@@ -7055,7 +7073,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 
 			    //-------------- image cache max. bytes combo box ---------------------
                 ctrl = GetDlgItem( hwnd, IDC_MAX_BYTES );
-                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_AUTO), -1);
+                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_AUTO), (DWORD)-1);
                 AddItem(ctrl, FormImageCacheSizeString(L"   0", IDS_MB), 0);
                 AddItem(ctrl, FormImageCacheSizeString(L"   1", IDS_MB), 1000000);
                 AddItem(ctrl, FormImageCacheSizeString(L"   2", IDS_MB), 2000000);
@@ -7095,7 +7113,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 
 			    //-------------- image cache max. # images combo box ---------------------
                 ctrl = GetDlgItem( hwnd, IDC_MAX_IMAGES );
-                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_AUTO), -1);
+                AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_AUTO), (DWORD)-1);
                 AddItem(ctrl, L"    0 ",  0);
                 AddItem(ctrl, L"    1 ",  1);
                 AddItem(ctrl, L"    2 ",  2);
@@ -7135,11 +7153,11 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    //SetWindowText( GetDlgItem( hwnd, IDC_3DSEP ), buf );
 
 			    sprintf(buf, " %2.1f", m_fSongTitleAnimDuration);
-			    SetWindowText(GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION), buf);
+			    SetWindowTextA(GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION), buf);
 			    sprintf(buf, " %2.1f", m_fTimeBetweenRandomSongTitles);
-			    SetWindowText(GetDlgItem(hwnd, IDC_RAND_TITLE), buf);
+			    SetWindowTextA(GetDlgItem(hwnd, IDC_RAND_TITLE), buf);
 			    sprintf(buf, " %2.1f", m_fTimeBetweenRandomCustomMsgs);
-			    SetWindowText(GetDlgItem(hwnd, IDC_RAND_MSG), buf);
+			    SetWindowTextA(GetDlgItem(hwnd, IDC_RAND_MSG), buf);
 
 			    CheckDlgButton(hwnd, IDC_CB_TITLE_ANIMS, m_bSongTitleAnims);
             }
@@ -7152,11 +7170,12 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 {
                 case ID_SPRITE:
 				    {
-					    wchar_t szPath[512], szFile[512];
+					    wchar_t szPath[512] = {0};
 					    lstrcpyW(szPath, GetConfigIniFile());
 					    wchar_t *p = wcsrchr(szPath, L'\\');
 					    if (p != NULL)
 					    {
+							wchar_t szFile[512] = {0};
 						    *(p+1) = 0;
 						    lstrcpyW(szFile, szPath);
 						    lstrcatW(szFile, IMG_INIFILE);
@@ -7172,11 +7191,12 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 
 			    case ID_MSG:
 				    {
-					    wchar_t szPath[512], szFile[512];
+					    wchar_t szPath[512] = {0};
 					    lstrcpyW(szPath, GetConfigIniFile());
 					    wchar_t *p = wcsrchr(szPath, L'\\');
 					    if (p != NULL)
 					    {
+							wchar_t szFile[512] = {0};
 						    *(p+1) = 0;
 						    lstrcpyW(szFile, szPath);
 						    lstrcatW(szFile, MSG_INIFILE);
@@ -7202,15 +7222,15 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 ReadCBValue(hwnd, IDC_MAX_BYTES    , &m_nMaxBytes   );
                 ReadCBValue(hwnd, IDC_MAX_IMAGES   , &m_nMaxImages  );
 
-                char buf[2048];
+				char buf[2048] = {0};
 
-				GetWindowText( GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fSongTitleAnimDuration = val;
-				GetWindowText( GetDlgItem( hwnd, IDC_RAND_TITLE ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_RAND_TITLE ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fTimeBetweenRandomSongTitles = val;
-				GetWindowText( GetDlgItem( hwnd, IDC_RAND_MSG ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_RAND_MSG ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fTimeBetweenRandomCustomMsgs = val;
 
@@ -7285,17 +7305,17 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 
 			    // soft cuts
 			    sprintf(buf, " %2.1f", m_fTimeBetweenPresets);
-			    SetWindowText( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf );
+			    SetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf );
 			    sprintf(buf, " %2.1f", m_fTimeBetweenPresetsRand);
-			    SetWindowText( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf );
+			    SetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf );
 			    sprintf(buf, " %2.1f", m_fBlendTimeUser);
-			    SetWindowText( GetDlgItem( hwnd, IDC_BLEND_USER ), buf );
+			    SetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_USER ), buf );
 			    sprintf(buf, " %2.1f", m_fBlendTimeAuto);
-			    SetWindowText( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf );
+			    SetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf );
 
 			    // hard cuts
 			    sprintf(buf, " %2.1f", m_fHardCutHalflife);
-			    SetWindowText( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf );
+			    SetWindowTextA( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf );
 
 			    int n = (int)((m_fHardCutLoudnessThresh - 1.25f) * 10.0f);
 			    if (n<0) n = 0;
@@ -7312,21 +7332,21 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 char buf[2048];
 
 				// soft cuts
-				GetWindowText( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fTimeBetweenPresets = val;
-				GetWindowText( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fTimeBetweenPresetsRand = val;
-				GetWindowText( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fBlendTimeAuto = val;
-				GetWindowText( GetDlgItem( hwnd, IDC_BLEND_USER ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_USER ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fBlendTimeUser = val;
 
 				// hard cuts
-				GetWindowText( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf, sizeof(buf));
+				GetWindowTextA( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf, sizeof(buf));
 				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
 					m_fHardCutHalflife = val;
 
@@ -7463,7 +7483,7 @@ void CPlugin::BuildMenus()
         swprintf(buf, WASABI_API_LNGSTRINGW(IDS_CUSTOM_WAVE_X), i+1);
 	    m_menuWavecode[i].Init(buf);
     }
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
     {
         swprintf(buf, WASABI_API_LNGSTRINGW(IDS_CUSTOM_SHAPE_X), i+1);
 	    m_menuShapecode[i].Init(buf);
@@ -7480,9 +7500,9 @@ void CPlugin::BuildMenus()
     m_menuPreset.AddChildMenu(&m_menuAugment);
     m_menuPreset.AddChildMenu(&m_menuPost);
 
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
 	    m_menuCustomShape.AddChildMenu(&m_menuShapecode[i]);
-    for (i=0; i<MAX_CUSTOM_WAVES; i++)
+    for (int i=0; i<MAX_CUSTOM_WAVES; i++)
 	    m_menuCustomWave.AddChildMenu(&m_menuWavecode[i]);
     
 	// NOTE: all of the eval menuitems use a CALLBACK function to register the user's changes (see last param)
@@ -7599,7 +7619,7 @@ void CPlugin::BuildMenus()
 	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MIN_COLOR_VALUE),	&m_pState->m_fBlur3Min,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MIN_COLOR_VALUE_TT), 0.0f, 1.0f);
 	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MAX_COLOR_VALUE),	&m_pState->m_fBlur3Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
 
-    for (i=0; i<MAX_CUSTOM_WAVES; i++)
+    for (int i=0; i<MAX_CUSTOM_WAVES; i++)
     {
         // blending: do both; fade opacities in/out (w/exagerrated weighting)
         m_menuWavecode[i].AddItem(MEN_T(IDS_MENU_ENABLED),			&m_pState->m_wave[i].enabled,	MENUITEMTYPE_BOOL,	MEN_TT(IDS_MENU_ENABLED_TT)); // bool
@@ -7622,7 +7642,7 @@ void CPlugin::BuildMenus()
         m_menuWavecode[i].AddItem(MEN_T(IDS_MENU_EDIT_PER_POINT_CODE),	&m_pState->m_wave[i].m_szPerPoint,  MENUITEMTYPE_STRING, MEN_TT(IDS_MENU_EDIT_PER_POINT_CODE_TT), 256, 0, &OnUserEditedWavecode, sizeof(m_pState->m_wave[i].m_szPerPoint), 0);
     }
 
-    for (i=0; i<MAX_CUSTOM_SHAPES; i++)
+    for (int i=0; i<MAX_CUSTOM_SHAPES; i++)
     {
         // blending: do both; fade opacities in/out (w/exagerrated weighting)
         m_menuShapecode[i].AddItem(MEN_T(IDS_MENU_ENABLED),				&m_pState->m_shape[i].enabled,	MENUITEMTYPE_BOOL,	MEN_TT(IDS_MENU_ENABLED_SHAPE_TT)); // bool
@@ -7684,7 +7704,7 @@ void CPlugin::PrevPreset(float fBlendTime)
 {
     if (m_bSequentialPresetOrder)
     {
-		m_nCurrentPreset--;
+		--m_nCurrentPreset;
 		if (m_nCurrentPreset < m_nDirs)
             m_nCurrentPreset = m_nPresets-1;
         if (m_nCurrentPreset >= m_nPresets) // just in case
@@ -7770,7 +7790,7 @@ void CPlugin::LoadRandomPreset(float fBlendTime)
 
 	if (m_bSequentialPresetOrder)
 	{
-		m_nCurrentPreset++;
+		++m_nCurrentPreset;
 		if (m_nCurrentPreset < m_nDirs || m_nCurrentPreset >= m_nPresets)
 			m_nCurrentPreset = m_nDirs;
 	}
@@ -7849,7 +7869,7 @@ void CPlugin::RandomizeBlendPattern()
 		    {
                 m_vertinfo[nVert].a = 1;
                 m_vertinfo[nVert].c = 0;
-			    nVert++;
+			    ++nVert;
             }
         }
     }
@@ -7878,7 +7898,7 @@ void CPlugin::RandomizeBlendPattern()
 
                 m_vertinfo[nVert].a = inv_band * (1 + band);
                 m_vertinfo[nVert].c = -inv_band + inv_band*t;//(x/(float)m_nGridX - 0.5f)/band;
-			    nVert++;
+			    ++nVert;
 		    }
 	    }
     }
@@ -7909,7 +7929,7 @@ void CPlugin::RandomizeBlendPattern()
                     minc = m_vertinfo[nVert].c;
                 if (maxc < m_vertinfo[nVert].c)
                     maxc = m_vertinfo[nVert].c;
-			    nVert++;
+			    ++nVert;
 		    }
 	    }
 
@@ -7922,7 +7942,7 @@ void CPlugin::RandomizeBlendPattern()
                 float t = (m_vertinfo[nVert].c - minc)*mult;
                 m_vertinfo[nVert].a = inv_band * (1 + band);
                 m_vertinfo[nVert].c = -inv_band + inv_band*t;
-                nVert++;
+                ++nVert;
             }
         }
     }
@@ -7946,7 +7966,7 @@ void CPlugin::RandomizeBlendPattern()
 
                 m_vertinfo[nVert].a = inv_band * (1 + band);
                 m_vertinfo[nVert].c = -inv_band + inv_band*t;
-			    nVert++;
+			    ++nVert;
             }
         }
     }
@@ -8063,7 +8083,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         SafeRelease( m_OldShaders.comp.CT );
         SafeRelease( m_OldShaders.warp.CT );
         m_OldShaders = m_shaders;
-        ZeroMemory(&m_shaders, sizeof(PShaderSet));
+        SecureZeroMemory(&m_shaders, sizeof(PShaderSet));
     
         LoadShaders(&m_shaders, m_pState, false);
 
@@ -8074,7 +8094,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         // set ourselves up to load the preset (and esp. compile shaders) a little bit at a time
         SafeRelease( m_NewShaders.comp.ptr );
         SafeRelease( m_NewShaders.warp.ptr );
-        ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
+        SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
 
         DWORD ApplyFlags = STATE_ALL;
         ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
@@ -8094,7 +8114,7 @@ void CPlugin::OnFinishedLoadingPreset()
     // note: only used this if you loaded the preset *intact* (or mostly intact)
 
     SetMenusForPresetVersion( m_pState->m_nWarpPSVersion, m_pState->m_nCompPSVersion );
-    m_nPresetsLoadedTotal++; //only increment this on COMPLETION of the load.
+    ++m_nPresetsLoadedTotal; //only increment this on COMPLETION of the load.
     
     for (int mash=0; mash<MASH_SLOTS; mash++)
         m_nMashPreset[mash] = m_nCurrentPreset;
@@ -8134,7 +8154,7 @@ void CPlugin::LoadPresetTick()
         SafeRelease( m_OldShaders.warp.ptr );
         m_OldShaders = m_shaders;
         m_shaders = m_NewShaders;
-        ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
+        SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
 
         // end slow-preset-load mode
         m_nLoadingPreset = 0;
@@ -8143,7 +8163,7 @@ void CPlugin::LoadPresetTick()
     }
 
     if (m_nLoadingPreset > 0)
-        m_nLoadingPreset++;
+        ++m_nLoadingPreset;
 }
 
 void CPlugin::SeekToPreset(wchar_t cStartChar)
@@ -8194,10 +8214,10 @@ char* NextLine(char* p)
 
     char* s = p;
     while (*s != '\r' && *s != '\n' && *s != 0)
-        s++;
+        ++s;
 
     while (*s == '\r' || *s == '\n')
-        s++;
+        ++s;
 
     if (*s==0)
         return NULL;
@@ -8214,10 +8234,9 @@ static unsigned int WINAPI __UpdatePresetList(void* lpVoid)
     bool bTryReselectCurrentPreset = (flags & 2) ? true : false;
 
     WIN32_FIND_DATAW fd;
-    ZeroMemory(&fd, sizeof(fd));
+    SecureZeroMemory(&fd, sizeof(fd));
     HANDLE h = INVALID_HANDLE_VALUE;
 
-    int nTry = 0;
     bool bRetrying = false;
 
     EnterCriticalSection(&g_cs);
@@ -8242,7 +8261,7 @@ retry:
         h = INVALID_HANDLE_VALUE;
         g_plugin.m_bPresetListReady = false;
         lstrcpyW(g_plugin.m_szUpdatePresetMask, szMask);
-        ZeroMemory(&fd, sizeof(fd));
+        SecureZeroMemory(&fd, sizeof(fd));
 
         g_plugin.m_nPresets = 0;
 	    g_plugin.m_nDirs    = 0;
@@ -8314,7 +8333,7 @@ retry:
 		{
 			// skip normal files not ending in ".milk"
 			int len = lstrlenW(fd.cFileName);
-			if (len < 5 || wcsicmp(fd.cFileName + len - 5, L".milk") != 0)
+			if (len < 5 || _wcsicmp(fd.cFileName + len - 5, L".milk") != 0)
 				bSkip = true;					
 
             // if it is .milk, make sure we know how to run its pixel shaders -
@@ -8359,7 +8378,7 @@ retry:
                         int ps_version = 2;
                         if (p && !strncmp(p, "PSVERSION", 9)) 
                         {
-                            sscanf(&p[10], "%d", &ps_version);
+                            (void)sscanf(&p[10], "%d", &ps_version);
                             if (ps_version > nMaxPSVersion)
                                 bSkip = true;
                             else
@@ -8414,9 +8433,9 @@ retry:
             x.fRatingCum  = fPrevPresetRatingCum + fRating;
             temp_presets.push_back(x);
 
-			temp_nPresets++;
+			++temp_nPresets;
 			if (bIsDir) 
-				temp_nDirs++;
+				++temp_nDirs;
         }
 
     	if (!FindNextFileW(h, &fd))
@@ -8615,8 +8634,8 @@ void CPlugin::MergeSortPresets(int left, int right)
 
 			// merge the sorted arrays; give preference to strings that start with a '*' character
 			int nSpecial = 0;
-			if (m_presets[a].szFilename.c_str()[0] == '*') nSpecial++;
-			if (m_presets[b].szFilename.c_str()[0] == '*') nSpecial++;
+			if (m_presets[a].szFilename.c_str()[0] == '*') ++nSpecial;
+			if (m_presets[b].szFilename.c_str()[0] == '*') ++nSpecial;
 
 			if (nSpecial == 1)
 			{
@@ -8633,18 +8652,18 @@ void CPlugin::MergeSortPresets(int left, int right)
 				for (int k=b; k>a; k--)
 					m_presets[k] = m_presets[k-1];
 				m_presets[a] = temp;
-				mid++;
-				b++;
+				++mid;
+				++b;
 			}
-			a++;
+			++a;
 		}
 	}
 	else if (nItems == 2)
 	{
 		// sort 2 items; give preference to 'special' strings that start with a '*' character
 		int nSpecial = 0;
-		if (m_presets[left].szFilename.c_str()[0] == '*') nSpecial++;
-		if (m_presets[right].szFilename.c_str()[0] == '*') nSpecial++;
+		if (m_presets[left].szFilename.c_str()[0] == '*') ++nSpecial;
+		if (m_presets[right].szFilename.c_str()[0] == '*') ++nSpecial;
 
 		if (nSpecial == 1)
 		{
@@ -8721,7 +8740,7 @@ void CPlugin::WaitString_Copy()
 				m_waitstring.szClipboard[i] = *(ptr + start + i);
 			m_waitstring.szClipboard[chars_to_copy] = 0;
 	        
-			char tmp[64000];
+			char tmp[64000] = {0};
 			ConvertLFCToCRsA(m_waitstring.szClipboard, tmp);
 			copyStringToClipboardA(tmp);
 		}
@@ -8731,7 +8750,7 @@ void CPlugin::WaitString_Copy()
 				m_waitstring.szClipboardW[i] = m_waitstring.szText[start + i];
 			m_waitstring.szClipboardW[chars_to_copy] = 0;
 	        
-			wchar_t tmp[64000];
+			wchar_t tmp[64000] = {0};
 			ConvertLFCToCRsW(m_waitstring.szClipboardW, tmp);
 			copyStringToClipboardW(tmp);
 		}
@@ -8813,21 +8832,21 @@ void CPlugin::WaitString_SeekLeftWord()
 		char* ptr = (char*)m_waitstring.szText;
 		while (m_waitstring.nCursorPos > 0 && 
 			   !IsAlphanumericChar(*(ptr + m_waitstring.nCursorPos-1)))
-			m_waitstring.nCursorPos--;
+			--m_waitstring.nCursorPos;
 
 		while (m_waitstring.nCursorPos > 0 &&
 			   IsAlphanumericChar(*(ptr + m_waitstring.nCursorPos-1)))
-			m_waitstring.nCursorPos--;
+			--m_waitstring.nCursorPos;
 	}
 	else
 	{
 		while (m_waitstring.nCursorPos > 0 && 
 			   !IsAlphanumericChar(m_waitstring.szText[m_waitstring.nCursorPos-1]))
-			m_waitstring.nCursorPos--;
+			--m_waitstring.nCursorPos;
 
 		while (m_waitstring.nCursorPos > 0 &&
 			   IsAlphanumericChar(m_waitstring.szText[m_waitstring.nCursorPos-1]))
-			m_waitstring.nCursorPos--;
+			--m_waitstring.nCursorPos;
 	}
 }
 
@@ -8844,11 +8863,11 @@ void CPlugin::WaitString_SeekRightWord()
 		char* ptr = (char*)m_waitstring.szText;
 		while (m_waitstring.nCursorPos < len &&
 			   IsAlphanumericChar(*(ptr + m_waitstring.nCursorPos)))
-			m_waitstring.nCursorPos++;
+			++m_waitstring.nCursorPos;
 
 		while (m_waitstring.nCursorPos < len &&
 			   !IsAlphanumericChar(*(ptr + m_waitstring.nCursorPos)))
-			m_waitstring.nCursorPos++;
+			++m_waitstring.nCursorPos;
 	}
 	else
 	{
@@ -8856,11 +8875,11 @@ void CPlugin::WaitString_SeekRightWord()
 
 		while (m_waitstring.nCursorPos < len &&
 			   IsAlphanumericChar(m_waitstring.szText[m_waitstring.nCursorPos]))
-			m_waitstring.nCursorPos++;
+			++m_waitstring.nCursorPos;
 
 		while (m_waitstring.nCursorPos < len &&
 			   !IsAlphanumericChar(m_waitstring.szText[m_waitstring.nCursorPos]))
-			m_waitstring.nCursorPos++;
+			++m_waitstring.nCursorPos;
 	}
 }
 
@@ -8872,7 +8891,7 @@ int CPlugin::WaitString_GetCursorColumn()
 		char* ptr = (char*)m_waitstring.szText;
 		while (m_waitstring.nCursorPos - column - 1 >= 0 &&
 			   *(ptr + m_waitstring.nCursorPos - column - 1) != LINEFEED_CONTROL_CHAR)
-			column++;
+			++column;
 
 		return column;
 	}
@@ -8892,13 +8911,13 @@ int	CPlugin::WaitString_GetLineLength()
 		char* ptr = (char*)m_waitstring.szText;
 		while (*(ptr + line_start + line_length) != 0 &&
 			   *(ptr + line_start + line_length) != LINEFEED_CONTROL_CHAR)
-			line_length++;
+			++line_length;
 	}
 	else
 	{
 		while (m_waitstring.szText[line_start + line_length] != 0 &&
 			   m_waitstring.szText[line_start + line_length] != LINEFEED_CONTROL_CHAR)
-			line_length++;
+			++line_length;
 	}
 
 	return line_length;
@@ -8927,7 +8946,7 @@ void CPlugin::WaitString_SeekDownOneLine()
 
 	char* ptr = (char*)m_waitstring.szText;
 	while (*(ptr + newpos) != 0 && *(ptr + newpos) != LINEFEED_CONTROL_CHAR)
-		newpos++;
+		++newpos;
 
 	if (*(ptr + newpos) != 0)
 	{
@@ -8937,8 +8956,8 @@ void CPlugin::WaitString_SeekDownOneLine()
 				*(ptr + m_waitstring.nCursorPos) != LINEFEED_CONTROL_CHAR &&
 				*(ptr + m_waitstring.nCursorPos) != 0)
 		{
-			m_waitstring.nCursorPos++;
-			column--;
+			++m_waitstring.nCursorPos;
+			--column;
 		}
 	}
 }
@@ -8960,7 +8979,7 @@ void CPlugin::SavePresetAs(wchar_t *szNewFile)
         AddError(WASABI_API_LNGSTRINGW(IDS_SAVE_SUCCESSFUL), 3.0f, ERR_NOTIFY, false);
 
 		// update m_pState->m_szDesc with the new name
-		lstrcpyW(m_pState->m_szDesc, m_waitstring.szText);
+		lstrcpynW(m_pState->m_szDesc, m_waitstring.szText, ARRAYSIZE(m_pState->m_szDesc));
 
 		// refresh file listing
 		UpdatePresetList(false,true);
@@ -9022,12 +9041,13 @@ void CPlugin::RenamePresetFile(wchar_t *szOldFile, wchar_t *szNewFile)
 			swprintf(buf, L"%s.milk", m_pState->m_szDesc);
 			if (wcscmp(m_presets[m_nPresetListCurPos].szFilename.c_str(), buf) == 0)
 			{
-				lstrcpyW(m_pState->m_szDesc, m_waitstring.szText);
+				lstrcpynW(m_pState->m_szDesc, m_waitstring.szText, ARRAYSIZE(m_pState->m_szDesc));
 			}
 
 			// refresh file listing & do a trick to make it re-select the renamed file
-            wchar_t buf2[512];
-			lstrcpyW(buf2, m_waitstring.szText);
+			wchar_t buf2[512] = {0};
+			// TODO consider PathCombine(..)
+			lstrcpynW(buf2, m_waitstring.szText, ARRAYSIZE(buf2));
 			lstrcatW(buf2, L".milk");
             m_presets[m_nPresetListCurPos].szFilename = buf2;
 			UpdatePresetList(false,true,false);
@@ -9037,7 +9057,7 @@ void CPlugin::RenamePresetFile(wchar_t *szOldFile, wchar_t *szNewFile)
             wchar_t* p = wcsrchr(szNewFile, L'\\');
             if (p)
             {
-                p++;
+                ++p;
 		        for (int i=m_nDirs; i<m_nPresets; i++)
 				{
                     if (wcscmp(p, m_presets[i].szFilename.c_str())==0) {
@@ -9070,7 +9090,7 @@ void CPlugin::UpdatePresetRatings()
 	    for (k=0; k<m_nDirs; k++)
 	    {
 		    m_presets[m_nRatingReadProgress].fRatingCum = 0.0f;
-            m_nRatingReadProgress++;
+            ++m_nRatingReadProgress;
 	    }
 
         if (!m_bInstaScan)
@@ -9093,7 +9113,7 @@ void CPlugin::UpdatePresetRatings()
 		else
 			m_presets[k].fRatingCum = m_presets[k-1].fRatingCum + f;
 
-        m_nRatingReadProgress++;
+        ++m_nRatingReadProgress;
 	}
 }
 */
@@ -9193,7 +9213,7 @@ void CPlugin::ReadCustomMessages()
 		swprintf(szSectionName, L"font%02d", n);
 
 		// get face, bold, italic, x, y for this custom message FONT
-		GetPrivateProfileStringW(szSectionName,L"face",L"arial",m_CustomMessageFont[n].szFace,sizeof(m_CustomMessageFont[n].szFace), m_szMsgIniFile);
+		GetPrivateProfileStringW(szSectionName,L"face",L"arial",m_CustomMessageFont[n].szFace,ARRAYSIZE(m_CustomMessageFont[n].szFace), m_szMsgIniFile);
 		m_CustomMessageFont[n].bBold	= GetPrivateProfileBoolW(szSectionName,L"bold",m_CustomMessageFont[n].bBold,  m_szMsgIniFile);
 		m_CustomMessageFont[n].bItal	= GetPrivateProfileBoolW(szSectionName,L"ital",m_CustomMessageFont[n].bItal,  m_szMsgIniFile);
 		m_CustomMessageFont[n].nColorR  = GetPrivateProfileIntW (szSectionName,L"r"     ,m_CustomMessageFont[n].nColorR, m_szMsgIniFile);
@@ -9207,7 +9227,7 @@ void CPlugin::ReadCustomMessages()
 		swprintf(szSectionName, L"message%02d", n);
 
 		// get fontID, size, text, etc. for this custom message:
-		GetPrivateProfileStringW(szSectionName,L"text",L"",m_CustomMessage[n].szText,sizeof(m_CustomMessage[n].szText), m_szMsgIniFile);
+		GetPrivateProfileStringW(szSectionName,L"text",L"",m_CustomMessage[n].szText,ARRAYSIZE(m_CustomMessage[n].szText), m_szMsgIniFile);
         if (m_CustomMessage[n].szText[0])
         {
 		    m_CustomMessage[n].nFont	= GetPrivateProfileIntW  (szSectionName,L"font"  ,m_CustomMessage[n].nFont,   m_szMsgIniFile);
@@ -9256,14 +9276,14 @@ void CPlugin::LaunchCustomMessage(int nMsgNum)
 		// choose randomly
 		for (nMsgNum=0; nMsgNum<100; nMsgNum++)
 			if (m_CustomMessage[nMsgNum].szText[0])
-				count++;
+				++count;
 
 		int sel = (warand()%count)+1;
 		count = 0;
 		for (nMsgNum=0; nMsgNum<100; nMsgNum++)
 		{
 			if (m_CustomMessage[nMsgNum].szText[0])
-				count++;
+				++count;
 			if (count==sel)
 				break;
 		}
@@ -9323,10 +9343,10 @@ void CPlugin::LaunchCustomMessage(int nMsgNum)
 			{
 				for (int x=len; x>=pos; x--)
 					m_supertext.szText[x+1] = m_supertext.szText[x];
-				len++;
-				pos++;
+				++len;
+				++pos;
 			}
-			pos++;
+			++pos;
 		}
 	}*/
 
@@ -9356,22 +9376,19 @@ void CPlugin::LaunchSongTitleAnim()
 
 bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 {
-	char initcode[8192], code[8192], sectionA[64];
-	char szTemp[8192];
-	wchar_t img[512], section[64];
+	char initcode[8192] = {0}, code[8192] = {0},
+		 sectionA[64] = {0}, szTemp[8192] = {0};
+	wchar_t img[512] = {0}, section[64] = {0};
 
-	initcode[0] = 0;
-	code[0] = 0;
-	img[0] = 0;
-	swprintf(section, L"img%02d", nSpriteNum);
-	sprintf(sectionA, "img%02d", nSpriteNum);
+	_snwprintf(section, ARRAYSIZE(section), L"img%02d", nSpriteNum);
+	_snprintf(sectionA, ARRAYSIZE(sectionA), "img%02d", nSpriteNum);
 
 	// 1. read in image filename
-	GetPrivateProfileStringW(section, L"img", L"", img, sizeof(img)-1, m_szImgIniFile);
+	GetPrivateProfileStringW(section, L"img", L"", img, ARRAYSIZE(img), m_szImgIniFile);
 	if (img[0] == 0)
 	{
-        wchar_t buf[1024];
-		swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_COULD_NOT_FIND_IMG_OR_NOT_DEFINED), nSpriteNum); 
+		wchar_t buf[1024] = {0};
+		_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_COULD_NOT_FIND_IMG_OR_NOT_DEFINED), nSpriteNum); 
         AddError(buf, 7.0f, ERR_MISC, false);
 		return false;
 	}
@@ -9379,9 +9396,9 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 	if (img[1] != L':')// || img[2] != '\\')
 	{
 		// it's not in the form "x:\blah\billy.jpg" so prepend plugin dir path.
-		wchar_t temp[512];
-		wcscpy(temp, img);
-		swprintf(img, L"%s%s", m_szMilkdrop2Path, temp);
+		wchar_t temp[512] = {0};
+		wcsncpy(temp, img, ARRAYSIZE(temp));
+		_snwprintf(img, ARRAYSIZE(img), L"%s%s", m_szMilkdrop2Path, temp);
 	}
 
 	// 2. get color key
@@ -9395,8 +9412,7 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 	for (int n=0; n<2; n++)
 	{
 		char *pStr = (n==0) ? initcode : code;
-		char szLineName[32];
-		int len;
+		char szLineName[32] = {0};
 
 		int line = 1;
 		int char_pos = 0;
@@ -9405,12 +9421,12 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 		while (!bDone)
 		{
 			if (n==0)
-				sprintf(szLineName, "init_%d", line);
+				_snprintf(szLineName, ARRAYSIZE(szLineName), "init_%d", line);
 			else
-				sprintf(szLineName, "code_%d", line);
+				_snprintf(szLineName, ARRAYSIZE(szLineName), "code_%d", line);
 
-			GetPrivateProfileString(sectionA, szLineName, "~!@#$", szTemp, 8192, AutoCharFn(m_szImgIniFile));	// fixme
-			len = lstrlen(szTemp);
+			GetPrivateProfileStringA(sectionA, szLineName, "~!@#$", szTemp, 8192, AutoCharFn(m_szImgIniFile));	// fixme
+			int len = lstrlenA(szTemp);
 
 			if ((strcmp(szTemp, "~!@#$")==0) ||		// if the key was missing,
 				(len >= 8191-char_pos-1))			// or if we're out of space
@@ -9423,7 +9439,7 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 			}
 		
 			char_pos += len + 1;
-			line++;
+			++line;
 		}
 		pStr[char_pos++] = 0;	// null-terminate
 	}
@@ -9464,11 +9480,11 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 		switch(ret & TEXMGR_WARNING_MASK)
 		{
 		case TEXMGR_WARN_ERROR_IN_INIT_CODE: 
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_WARNING_ERROR_IN_INIT_CODE), nSpriteNum);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_WARNING_ERROR_IN_INIT_CODE), nSpriteNum);
             AddError(buf, 6.0f, ERR_MISC, true);
             break;
 		case TEXMGR_WARN_ERROR_IN_REG_CODE:  
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_WARNING_ERROR_IN_PER_FRAME_CODE), nSpriteNum);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_WARNING_ERROR_IN_PER_FRAME_CODE), nSpriteNum);
             AddError(buf, 6.0f, ERR_MISC, true);
             break;
 		default:
@@ -9477,7 +9493,7 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 		}
 		break;
 	case TEXMGR_ERR_BAD_INDEX:              
-        swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_BAD_SLOT_INDEX), nSpriteNum);
+        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_BAD_SLOT_INDEX), nSpriteNum);
         AddError(buf, 6.0f, ERR_MISC, true);
         break;
 	/*
@@ -9490,11 +9506,11 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 	case TEXMGR_ERR_CORRUPT_JPEG:           sprintf(m_szUserMessage, "sprite #%d error: jpeg is corrupt", nSpriteNum); break;
     */
     case TEXMGR_ERR_BADFILE:                
-        swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_IMAGE_FILE_MISSING_OR_CORRUPT), nSpriteNum); 
+        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_IMAGE_FILE_MISSING_OR_CORRUPT), nSpriteNum); 
         AddError(buf, 6.0f, ERR_MISC, true);
         break;
     case TEXMGR_ERR_OUTOFMEM:               
-        swprintf(buf, WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_OUT_OF_MEM), nSpriteNum); 
+        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_OUT_OF_MEM), nSpriteNum); 
         AddError(buf, 6.0f, ERR_MISC, true);
         break;
 	}
@@ -9523,7 +9539,7 @@ void CPlugin::DoCustomSoundAnalysis()
 	//for (i=0; i<MY_FFT_SAMPLES; i++) fSpecLeft[i] = sqrtf(fSpecLeft[i]*fSpecLeft[i] + fSpecTemp[i]*fSpecTemp[i]);
 
 	// sum spectrum up into 3 bands
-	for (i=0; i<3; i++)
+	for (int i=0; i<3; i++)
 	{
 		// note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
 		int start = MY_FFT_SAMPLES*i/6;
@@ -9537,7 +9553,7 @@ void CPlugin::DoCustomSoundAnalysis()
 	}
 
 	// do temporal blending to create attenuated and super-attenuated versions
-	for (i=0; i<3; i++)
+	for (int i=0; i<3; i++)
 	{
         float rate;
 
@@ -9573,16 +9589,16 @@ void CPlugin::GenWarpPShaderText(char *szShaderText, float decay, bool bWrap)
 {
     // find the pixel shader body and replace it with custom code.
 
-    lstrcpy(szShaderText, m_szDefaultWarpPShaderText);
+    lstrcpyA(szShaderText, m_szDefaultWarpPShaderText);
     char LF = LINEFEED_CONTROL_CHAR;
     char *p = strrchr( szShaderText, '{' );
     if (!p) 
         return;
-    p++;
+    ++p;
     p += sprintf(p, "%c", 1);
 
     p += sprintf(p, "    // sample previous frame%c", LF);
-    p += sprintf(p, "    ret = tex2D( sampler%s_main, uv ).xyz;%c", bWrap ? L"" : L"_fc", LF);
+    p += sprintf(p, "    ret = tex2D( sampler%s_main, uv ).xyz;%c", bWrap ? "" : "_fc", LF);
     p += sprintf(p, "    %c", LF);
     p += sprintf(p, "    // darken (decay) over time%c", LF);
     p += sprintf(p, "    ret *= %.2f; //or try: ret -= 0.004;%c", decay, LF);
@@ -9595,12 +9611,12 @@ void CPlugin::GenCompPShaderText(char *szShaderText, float brightness, float ve_
 {
     // find the pixel shader body and replace it with custom code.
 
-    lstrcpy(szShaderText, m_szDefaultCompPShaderText);
+    lstrcpyA(szShaderText, m_szDefaultCompPShaderText);
     char LF = LINEFEED_CONTROL_CHAR;
     char *p = strrchr( szShaderText, '{' );
     if (!p) 
         return;
-    p++;
+    ++p;
     p += sprintf(p, "%c", 1);
 
     if (ve_alpha > 0.001f) 

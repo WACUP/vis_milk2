@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*****************************************************************************/
 
-FFT::FFT()
+FFT::FFT() : m_ready(0), m_samples_in(0)
 {
     NFREQ = 0;
 
@@ -141,7 +141,7 @@ void FFT::InitEnvelopeTable(float power)
 
 void FFT::InitBitRevTable() 
 {
-    int i,j,m,temp;
+    int i,j,temp;
     bitrevtable = new int[NFREQ];
 
     for (i=0; i<NFREQ; i++) 
@@ -156,7 +156,7 @@ void FFT::InitBitRevTable()
             bitrevtable[j] = temp;
         }
         
-        m = NFREQ >> 1;
+        int m = NFREQ >> 1;
         
         while (m >= 1 && j >= m) 
         {
@@ -174,13 +174,12 @@ void FFT::InitCosSinTable()
 {
 
     int i,dftsize,tabsize;
-    float theta;
 
     dftsize = 2;
     tabsize = 0;
     while (dftsize <= NFREQ) 
     {
-        tabsize++;
+        ++tabsize;
         dftsize <<= 1;
     }
 
@@ -190,10 +189,10 @@ void FFT::InitCosSinTable()
     i = 0;
     while (dftsize <= NFREQ) 
     {
-        theta = (float)(-2.0f*PI/(float)dftsize);
+        float theta = (float)(-2.0f*PI/(float)dftsize);
         cossintable[i][0] = (float)cosf(theta);
         cossintable[i][1] = (float)sinf(theta);
-        i++;
+        ++i;
         dftsize <<= 1;
     }
 }
@@ -239,8 +238,8 @@ void FFT::time_to_frequency_domain(float *in_wavedata, float *out_spectraldata)
     //   of a very high quality, to reduce high-frequency noise that would
     //   otherwise show up in the output.
 
-    int j, m, i, dftsize, hdftsize, t;
-    float wr, wi, wpi, wpr, wtemp, tempr, tempi;
+    int j, m, i, dftsize, t;
+    float wtemp, tempr, tempi;
 
     if (!bitrevtable) return;
     //if (!envelope) return;
@@ -281,11 +280,11 @@ void FFT::time_to_frequency_domain(float *in_wavedata, float *out_spectraldata)
     t = 0;
     while (dftsize <= NFREQ) 
     {
-        wpr = cossintable[t][0];
-        wpi = cossintable[t][1];
-        wr = 1.0f;
-        wi = 0.0f;
-        hdftsize = dftsize >> 1;
+        float wpr = cossintable[t][0];
+        float wpi = cossintable[t][1];
+        float wr = 1.0f;
+        float wi = 0.0f;
+        int hdftsize = dftsize >> 1;
 
         for (m = 0; m < hdftsize; m+=1) 
         {
@@ -305,7 +304,7 @@ void FFT::time_to_frequency_domain(float *in_wavedata, float *out_spectraldata)
         }
 
         dftsize <<= 1;
-        t++;
+        ++t;
     }
 
     // 3. take the magnitude & equalize it (on a log10 scale) for output

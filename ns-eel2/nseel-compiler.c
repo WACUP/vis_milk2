@@ -156,7 +156,7 @@ INT_PTR *EEL_GLUE_set_immediate(void *_p, void *newv)
 // todo 64 bit ppc will take some work
   unsigned int *p=(unsigned int *)_p;
   while ((p[0]&0x0000FFFF) != 0x0000dead && 
-         (p[1]&0x0000FFFF) != 0x0000beef) p++;
+         (p[1]&0x0000FFFF) != 0x0000beef) ++p;
   p[0] = (p[0]&0xFFFF0000) | (((unsigned int)newv)>>16);
   p[1] = (p[1]&0xFFFF0000) | (((unsigned int)newv)&0xFFFF);
 
@@ -262,7 +262,7 @@ static void GLUE_CALL_CODE(INT_PTR bp, INT_PTR cp)
 INT_PTR *EEL_GLUE_set_immediate(void *_p, void *newv)
 {
   char *p=(char*)_p;
-  while (*(INT_PTR *)p != ~(INT_PTR)0) p++;
+  while (*(INT_PTR *)p != ~(INT_PTR)0) ++p;
   *(INT_PTR *)p = (INT_PTR)newv;
   return ((INT_PTR*)p)+1;
 }
@@ -298,7 +298,7 @@ static void *GLUE_realAddress(void *fn, void *fn_e, int *size)
     //  if (*size<0) MessageBox(NULL,"expect poof","a",0);
       return fn;
     }
-    p++;
+    ++p;
   }
 #else
   char *p=(char *)fn_e - sizeof(GLUE_RET);
@@ -632,7 +632,7 @@ void NSEEL_addfunctionex2(const char *name, int nparms, char *code_startaddr, in
     fnTableUser[fnTableUser_size].pProc = (NSEEL_PPPROC) pproc;
     fnTableUser[fnTableUser_size].replptrs[0]=fptr;
     fnTableUser[fnTableUser_size].replptrs[1]=fptr2;
-    fnTableUser_size++;
+    ++fnTableUser_size;
   }
 }
 
@@ -794,7 +794,7 @@ INT_PTR nseel_createCompiledFunction3(compileContext *ctx, int fntype, INT_PTR f
     memcpy(p,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); p+=GLUE_FUNC_ENTER_SIZE;
     memcpy(p,(char*)code3+4,sizes3); p+=sizes3;
     memcpy(p,&GLUE_FUNC_LEAVE,GLUE_FUNC_LEAVE_SIZE); p+=GLUE_FUNC_LEAVE_SIZE;
-    memcpy(p,&GLUE_RET,sizeof(GLUE_RET)); p+=sizeof(GLUE_RET);
+    memcpy(p,&GLUE_RET,sizeof(GLUE_RET));
 
     ctx->l_stats[2]+=sizes2+sizes3+sizeof(GLUE_RET)*2;
     
@@ -810,7 +810,7 @@ INT_PTR nseel_createCompiledFunction3(compileContext *ctx, int fntype, INT_PTR f
     ptr=EEL_GLUE_set_immediate(ptr,newblock2);
     EEL_GLUE_set_immediate(ptr,newblock3);
 
-    ctx->computTableTop++;
+    ++ctx->computTableTop;
 
     return (INT_PTR)block;
 
@@ -855,7 +855,7 @@ INT_PTR nseel_createCompiledFunction3(compileContext *ctx, int fntype, INT_PTR f
       if (repl[3]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[3]);
     }
 
-    ctx->computTableTop++;
+    ++ctx->computTableTop;
 
     return ((INT_PTR)(block));  
   }
@@ -865,8 +865,6 @@ INT_PTR nseel_createCompiledFunction3(compileContext *ctx, int fntype, INT_PTR f
 INT_PTR nseel_createCompiledFunction2(compileContext *ctx, int fntype, INT_PTR fn, INT_PTR code1, INT_PTR code2)
 {
   int size2;
-  unsigned char *outp;
-  void *myfunc;
   int sizes1=((int *)code1)[0];
   int sizes2=((int *)code2)[0];
   if (fntype == MATH_FN && (fn == 1 || fn == 2 || fn == 3)) // special case: LOOP/BOR/BAND
@@ -882,7 +880,7 @@ INT_PTR nseel_createCompiledFunction2(compileContext *ctx, int fntype, INT_PTR f
     memcpy(p,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); p+=GLUE_FUNC_ENTER_SIZE;
     memcpy(p,(char*)code2+4,sizes2); p+=sizes2;
     memcpy(p,&GLUE_FUNC_LEAVE,GLUE_FUNC_LEAVE_SIZE); p+=GLUE_FUNC_LEAVE_SIZE;
-    memcpy(p,&GLUE_RET,sizeof(GLUE_RET)); p+=sizeof(GLUE_RET);
+    memcpy(p,&GLUE_RET,sizeof(GLUE_RET));
 
     ctx->l_stats[2]+=sizes2+2;
     
@@ -905,15 +903,15 @@ INT_PTR nseel_createCompiledFunction2(compileContext *ctx, int fntype, INT_PTR f
     }
 #endif
 
-    ctx->computTableTop++;
+    ++ctx->computTableTop;
     return (INT_PTR)block;
   }
 
   {
-    NSEEL_PPPROC preProc=0;
-    unsigned char *block;
+    NSEEL_PPPROC preProc = 0;
+    unsigned char *outp, *block;
     void **repl;
-    myfunc = nseel_getFunctionAddress(fntype, fn, &size2,&preProc,&repl);
+    void *myfunc = nseel_getFunctionAddress(fntype, fn, &size2,&preProc,&repl);
 
     block=(unsigned char *)newTmpBlock(size2+sizes1+sizes2+sizeof(GLUE_PUSH_EAX)+sizeof(GLUE_POP_EBX));
 
@@ -935,7 +933,7 @@ INT_PTR nseel_createCompiledFunction2(compileContext *ctx, int fntype, INT_PTR f
       if (repl[3]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[3]);
     }
 
-    ctx->computTableTop++;
+    ++ctx->computTableTop;
 
     return ((INT_PTR)(block));
   }
@@ -948,7 +946,6 @@ INT_PTR nseel_createCompiledFunction1(compileContext *ctx, int fntype, INT_PTR f
   NSEEL_PPPROC preProc=0;
   int size,size2;
   char *block;
-  void *myfunc;
   void *func1;
   
   size =((int *)code)[0];
@@ -966,7 +963,7 @@ INT_PTR nseel_createCompiledFunction1(compileContext *ctx, int fntype, INT_PTR f
     memcpy(p,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); p+=GLUE_FUNC_ENTER_SIZE;
     memcpy(p,func1,size); p+=size;
     memcpy(p,&GLUE_FUNC_LEAVE,GLUE_FUNC_LEAVE_SIZE); p+=GLUE_FUNC_LEAVE_SIZE;
-    memcpy(p,&GLUE_RET,sizeof(GLUE_RET)); p+=sizeof(GLUE_RET);
+    memcpy(p,&GLUE_RET,sizeof(GLUE_RET));
 
     ctx->l_stats[2]+=size+2;
     
@@ -978,13 +975,13 @@ INT_PTR nseel_createCompiledFunction1(compileContext *ctx, int fntype, INT_PTR f
     ptr=EEL_GLUE_set_immediate(ptr,newblock2); 
     EEL_GLUE_set_immediate(ptr,&g_closefact); 
 
-    ctx->computTableTop++;
+    ++ctx->computTableTop;
     return (INT_PTR)block;
   }
 
   {
     void **repl;
-	  myfunc = nseel_getFunctionAddress(fntype, fn, &size2,&preProc,&repl);
+	void *myfunc = nseel_getFunctionAddress(fntype, fn, &size2,&preProc,&repl);
 
 	  block=(char *)newTmpBlock(size+size2);
 
@@ -1000,7 +997,7 @@ INT_PTR nseel_createCompiledFunction1(compileContext *ctx, int fntype, INT_PTR f
       if (repl[3]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[3]);
     }
 
-	  ctx->computTableTop++;
+	  ++ctx->computTableTop;
 
 	  return ((INT_PTR)(block));
   }
@@ -1031,7 +1028,7 @@ static char *preprocessCode(compileContext *ctx, char *expression)
       if (expression[1] == '/')
       {
         expression+=2;
-        while (expression[0] && expression[0] != '\n') expression++;
+        while (expression[0] && expression[0] != '\n') ++expression;
 	continue;
       }
       else if (expression[1] == '*')
@@ -1040,7 +1037,7 @@ static char *preprocessCode(compileContext *ctx, char *expression)
         while (expression[0] && (expression[0] != '*' || expression[1] != '/')) 
 	{
 		if (expression[0] == '\n') onCompileNewLine(ctx,expression+1-expression_start,len);
-		expression++;
+		++expression;
 	}
         if (expression[0]) expression+=2; // at this point we KNOW expression[0]=* and expression[1]=/
 	continue;
@@ -1110,8 +1107,8 @@ static char *preprocessCode(compileContext *ctx, char *expression)
       if (c == '\n') onCompileNewLine(ctx,expression-expression_start,len);
       if (isspace(c)) c=' ';
 
-      if (c == '(') semicnt++;
-      else if (c == ')') { semicnt--; if (semicnt < 0) semicnt=0; }
+      if (c == '(') ++semicnt;
+      else if (c == ')') { --semicnt; if (semicnt < 0) semicnt=0; }
       else if (c == ';' && semicnt > 0)
       {
         // convert ; to % if next nonwhitespace char is alnum, otherwise convert to space
@@ -1129,12 +1126,12 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 			if (commentstate == 1 && nc == '\n') commentstate=0;
 			else if (commentstate == 2 && nc == '*' && expression[p+1]=='/')
 			{
-				p++; // skip *
+				++p; // skip *
 				commentstate=0;
 			}
 			else if (!commentstate && !isspace(nc)) break;
 
-			p++;
+			++p;
 		}
 		// fucko, we should look for even more chars, me thinks
         if (nc && (isalnum(nc) 
@@ -1149,7 +1146,7 @@ static char *preprocessCode(compileContext *ctx, char *expression)
       {
         int p=0;
         int nc;
-        while ((nc=expression[p]) && isspace(nc)) p++;
+        while ((nc=expression[p]) && isspace(nc)) ++p;
 		if (nc == ',' || nc == ')') 
 		{
 			expression += p+1;
@@ -1239,10 +1236,10 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 					l_ptr=buf + len - 1;
 					while (l_ptr >= buf)
 					{
-						if (*l_ptr == ')') l_semicnt++;
+						if (*l_ptr == ')') ++l_semicnt;
 						else if (*l_ptr == '(')
 						{
-							l_semicnt--;
+							--l_semicnt;
 							if (l_semicnt < 0) break;
 						}
 						else if (!l_semicnt) 
@@ -1259,21 +1256,21 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 									(l_ptr[0]=='&' && l_ptr[1] == '&')
 									)
 								   ) break;
-								while (*sc && *l_ptr != *sc) sc++;
+								while (*sc && *l_ptr != *sc) ++sc;
 								if (*sc) break;
 							}
 						}
-						l_ptr--;
+						--l_ptr;
 					}
 					buf[len]=0;
 
-					l_ptr++;
+					++l_ptr;
 
 					len = l_ptr - buf;
 
-					l_ptr = strdup(l_ptr); // doesn't need to be preprocessed since it just was
+					l_ptr = _strdup(l_ptr); // doesn't need to be preprocessed since it just was
 	       		}
-				if (preprocSymbols[n].op[1]) expression++;
+				if (preprocSymbols[n].op[1]) ++expression;
 
 				r_ptr=expression;
 				{ 
@@ -1294,15 +1291,15 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 						if (commentstate == 1 && *r_ptr == '\n') commentstate=0;
 						else if (commentstate == 2 && *r_ptr == '*' && r_ptr[1]=='/')
 						{
-							r_ptr++; // skip *
+							++r_ptr; // skip *
 							commentstate=0;
 						}
 						else if (!commentstate)
 						{
-							if (*r_ptr == '(') {hashadch=1; r_semicnt++; }
+							if (*r_ptr == '(') {hashadch=1; ++r_semicnt; }
 							else if (*r_ptr == ')') 
 							{
-								r_semicnt--;
+								--r_semicnt;
 								if (r_semicnt < 0) break;
 							}
 							else if (!r_semicnt)
@@ -1324,23 +1321,23 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 
 								else if (rscan == 3 || rscan == 4)
 								{
-									if (*r_ptr == ':') r_qcnt--;
-									else if (*r_ptr == '?') r_qcnt++;
+									if (*r_ptr == ':') --r_qcnt;
+									else if (*r_ptr == '?') ++r_qcnt;
 
 									if (r_qcnt < 3-rscan) break;
 								}
                 else if (rscan == 5)
                 {
-                  if (*r_ptr == '[') bracketcnt++;
-                  else if (*r_ptr == ']') bracketcnt--;
+                  if (*r_ptr == '[') ++bracketcnt;
+                  else if (*r_ptr == ']') --bracketcnt;
                   if (bracketcnt < 0) break;
                 }
 
-								while (*sc && *r_ptr != *sc) sc++;
+								while (*sc && *r_ptr != *sc) ++sc;
 								if (*sc) break;
 							}
 						}
-						r_ptr++;
+						++r_ptr;
 					}
 					// expression -> r_ptr is our string (not including r_ptr)
 
@@ -1373,8 +1370,8 @@ static char *preprocessCode(compileContext *ctx, char *expression)
           {
             char *lp = l_ptr;
             char *rp = r_ptr;
-      	    while (lp && *lp && isspace(*lp)) lp++;
-      	    while (rp && *rp && isspace(*rp)) rp++;
+      	    while (lp && *lp && isspace(*lp)) ++lp;
+      	    while (rp && *rp && isspace(*rp)) ++rp;
             if (lp && !strncasecmp(lp,"gmem",4) && (!lp[4] || isspace(lp[4])))
             {
               len+=sprintf(buf+len,"_gmem(%s",r_ptr && *r_ptr ? r_ptr : "0");
@@ -1392,7 +1389,7 @@ static char *preprocessCode(compileContext *ctx, char *expression)
             }
 
             // skip the ]
-            if (*expression == ']') expression++;
+            if (*expression == ']') ++expression;
 
           }
 					else if (n == ns-2)
@@ -1410,18 +1407,18 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 						int qcnt=1;
 						while (*rptr2)
 						{
-							if (*rptr2 == '?') qcnt++;
-							else if (*rptr2 == ':') qcnt--;
-							else if (*rptr2 == '(') parcnt++;
-							else if (*rptr2 == ')') parcnt--;
+							if (*rptr2 == '?') ++qcnt;
+							else if (*rptr2 == ':') --qcnt;
+							else if (*rptr2 == '(') ++parcnt;
+							else if (*rptr2 == ')') --parcnt;
 							if (parcnt < 0) break;
 							if (!parcnt && !qcnt && *rptr2 == ':') break;
-							rptr2++;
+							++rptr2;
 						}
 						if (*rptr2) *rptr2++=0;
-						while (isspace(*rptr2)) rptr2++;
+						while (isspace(*rptr2)) ++rptr2;
 
-						while (isspace(*tmp)) tmp++;
+						while (isspace(*tmp)) ++tmp;
 
 						len+=sprintf(buf+len,"_if(%s,%s,%s",l_ptr,*tmp?tmp:"0",*rptr2?rptr2:"0");
 						ctx->l_stats[0]+=6;
@@ -1444,8 +1441,11 @@ static char *preprocessCode(compileContext *ctx, char *expression)
 
 //      if (c != ' ' || (len && buf[len-1] != ' ')) // don't bother adding multiple spaces
       {
-      	buf[len++]=c;
-      	if (c != ' ') ctx->l_stats[0]++;
+        if (buf)
+        {
+          buf[len++]=c;
+        }
+      	if (c != ' ') ++ctx->l_stats[0];
       }
     }
   }
@@ -1477,8 +1477,8 @@ static void movestringover(char *str, int amount)
 
   memcpy(tmp,str,l+1);
 
-  while (l >= 0 && tmp[l]!='\n') l--;
-  l++;
+  while (l >= 0 && tmp[l]!='\n') --l;
+  ++l;
 
   tmp[l]=0;//ensure we null terminate
 
@@ -1527,11 +1527,11 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
 	ctx->computTableTop=0;
 
     // single out segment
-    while (*expression == ';' || isspace(*expression)) expression++;
+    while (*expression == ';' || isspace(*expression)) ++expression;
     if (!*expression) break;
     expr=expression;
 
-    while (*expression && *expression != ';') expression++;
+    while (*expression && *expression != ';') ++expression;
     if (*expression) *expression++ = 0;
 
     // parse
@@ -1598,7 +1598,6 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
   else 
   {
     char *tabptr = (char *)(handle->workTable=calloc(computable_size+64,  sizeof(EEL_F)));
-    unsigned char *writeptr;
     startPtr *p=startpts;
     int size=sizeof(GLUE_RET)+GLUE_FUNC_ENTER_SIZE+GLUE_FUNC_LEAVE_SIZE; // for ret at end :)
 
@@ -1615,7 +1614,7 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
     handle->code = newBlock(size,32);
     if (handle->code)
     {
-      writeptr=(unsigned char *)handle->code;
+      unsigned char *writeptr=(unsigned char *)handle->code;
       memcpy(writeptr,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); writeptr += GLUE_FUNC_ENTER_SIZE;
       p=startpts;
       while (p)
@@ -1630,7 +1629,7 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
         p=p->next;
       }
       memcpy(writeptr,&GLUE_FUNC_LEAVE,GLUE_FUNC_LEAVE_SIZE); writeptr += GLUE_FUNC_LEAVE_SIZE;
-      memcpy(writeptr,&GLUE_RET,sizeof(GLUE_RET)); writeptr += sizeof(GLUE_RET);
+      memcpy(writeptr,&GLUE_RET,sizeof(GLUE_RET)); /*writeptr += sizeof(GLUE_RET);*/
       ctx->l_stats[1]=size;
     }
     handle->blocks = ctx->blocks_head;
@@ -1647,7 +1646,7 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
     nseel_evallib_stats[1]+=ctx->l_stats[1];
     nseel_evallib_stats[2]+=ctx->l_stats[2];
     nseel_evallib_stats[3]+=ctx->l_stats[3];
-    nseel_evallib_stats[4]++;
+    ++nseel_evallib_stats[4];
   }
   memset(ctx->l_stats,0,sizeof(ctx->l_stats));
 
@@ -1671,7 +1670,7 @@ void NSEEL_code_execute(NSEEL_CODEHANDLE code)
 	while (*p != GLUE_RET[0])
 	{
 		printf("instr:%04X:%04X\n",*p>>16,*p&0xffff);
-		p++;
+		++p;
 	}
   }
 #endif
@@ -1703,12 +1702,9 @@ void NSEEL_code_free(NSEEL_CODEHANDLE code)
     nseel_evallib_stats[1]-=h->code_stats[1];
     nseel_evallib_stats[2]-=h->code_stats[2];
     nseel_evallib_stats[3]-=h->code_stats[3];
-    nseel_evallib_stats[4]--;
+    --nseel_evallib_stats[4];
     freeBlocks(&h->blocks);
-
-
   }
-
 }
 
 

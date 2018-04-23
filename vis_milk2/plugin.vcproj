@@ -20,9 +20,10 @@
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -47,11 +48,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="1"
+				Optimization="3"
 				InlineFunctionExpansion="2"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="../Wasabi;dx9sdk_summer04\include\"
+				AdditionalIncludeDirectories="../../;../../sdk;../../sdk/Wasabi;dx9sdk_summer04/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;USE_VIS_HDR_HWND;STRSAFE_NO_DEPRECATE;NSEEL_REENTRANT_EXECUTION;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -81,21 +82,19 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib vms_desktop.lib Shlwapi.lib"
-				OutputFile="$(ProgramFiles)\Winamp\plugins\vis_milk2.dll"
+				AdditionalDependencies="d3d9.lib vms_desktop.lib shlwapi.lib comctl32.lib"
+				OutputFile="$(OutDir)\vis_milk2.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\dx9sdk_summer04\lib"
 				GenerateManifest="false"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="msvcprt.lib"
+				IgnoreDefaultLibraryNames=""
 				DelayLoadDLLs="vms_desktop.dll;d3d9.dll"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary=".\Release/vis_milk2.lib"
 				TargetMachine="1"
 			/>
@@ -104,7 +103,6 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="manifest.xml"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -127,9 +125,9 @@
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -156,7 +154,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../Wasabi;dx9sdk_summer04\include\"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;USE_VIS_HDR_HWND;;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;USE_VIS_HDR_HWND;STRSAFE_NO_DEPRECATE;NSEEL_REENTRANT_EXECUTION;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				ForceConformanceInForLoopScope="false"
@@ -169,7 +167,6 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -184,8 +181,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib vms_desktop.lib Shlwapi.lib"
-				OutputFile="$(ProgramFiles)\Winamp\plugins\vis_milk2.dll"
+				AdditionalDependencies="d3d9.lib vms_desktop.lib shlwapi.lib comctl32.lib"
+				OutputFile="$(OutDir)\vis_milk2.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\dx9sdk_summer04\lib"
@@ -286,10 +283,6 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="plugin_icon.ico"
-				>
 			</File>
 			<File
 				RelativePath="state.cpp"
@@ -529,15 +522,7 @@
 				>
 			</File>
 			<File
-				RelativePath="gstring.h"
-				>
-			</File>
-			<File
 				RelativePath="icon_t.h"
-				>
-			</File>
-			<File
-				RelativePath="plugin.rc"
 				>
 			</File>
 			<File
@@ -653,22 +638,34 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="DOCUMENTATION.TXT"
+		<Filter
+			Name="Resources"
 			>
-		</File>
-		<File
-			RelativePath="milkdrop.nsi"
-			>
-		</File>
-		<File
-			RelativePath="temp.ico"
-			>
-		</File>
-		<File
-			RelativePath=".\text1.bin"
-			>
-		</File>
+			<File
+				RelativePath="DOCUMENTATION.TXT"
+				>
+			</File>
+			<File
+				RelativePath="milkdrop.nsi"
+				>
+			</File>
+			<File
+				RelativePath="plugin.rc"
+				>
+			</File>
+			<File
+				RelativePath="plugin_icon.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\text1.bin"
+				>
+			</File>
+			<File
+				RelativePath=".\text1.bin.gz"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

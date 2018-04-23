@@ -2,7 +2,7 @@
 #define NULLSOFT_APIH
 
 #include <api/service/api_service.h>
-#include "../Agave/Language/api_language.h"
+#include <Agave/Language/api_language.h>
 #include <api/service/waServiceFactory.h>
 #include <api/syscb/callbacks/browsercb.h>
 #include <api/syscb/callbacks/syscb.h>

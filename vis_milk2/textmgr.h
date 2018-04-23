@@ -64,12 +64,12 @@ public:
     void Finish();
 
     // note: pFont must persist until DrawNow() is called!
-    int  DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD flags, DWORD color, bool bBlackBox, DWORD boxColor=0xFF000000); // actually queues the text!
-    int  DrawText(LPD3DXFONT pFont, char* szText, int len, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000) { 
+    int  DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000); // actually queues the text!
+    int  DrawText(LPD3DXFONT pFont, char* szText, int /*len*/, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000) { 
         return DrawTextW(pFont, AutoWide(szText), pRect, flags, color, bBox, boxColor); 
     };
-    int  DrawTextW(LPD3DXFONT pFont, wchar_t* szText, RECT* pRect, DWORD flags, DWORD color, bool bBlackBox, DWORD boxColor=0xFF000000); // actually queues the text!
-    int  DrawTextW(LPD3DXFONT pFont, wchar_t* szText, int len, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000) { 
+    int  DrawTextW(LPD3DXFONT pFont, wchar_t* szText, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000); // actually queues the text!
+    int  DrawTextW(LPD3DXFONT pFont, wchar_t* szText, int /*len*/, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000) { 
         return DrawTextW(pFont, szText, pRect, flags, color, bBox, boxColor); 
     };
     void DrawBox(LPRECT pRect, DWORD boxColor);

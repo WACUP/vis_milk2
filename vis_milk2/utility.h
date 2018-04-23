@@ -65,16 +65,13 @@ void    GuidToText(GUID *pGUID, char *str, int nStrLen);
     void    OutputDebugMessage(char *szStartText, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam); // only available in RELEASE builds!
 #endif
 void    MissingDirectX(HWND hwnd);
-bool    CheckForMMX();
-bool    CheckForSSE();
 void    GetDesktopFolder(char *szDesktopFolder); // should be MAX_PATH len.
 
 #include "icon_t.h"
 #include <shlobj.h>
 #include <list>
 
-BOOL    DoExplorerMenu (HWND hwnd, LPCTSTR pszPath,   POINT point);
-BOOL    DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidl, POINT point);
+BOOL    DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point);
 UINT    GetItemCount (LPITEMIDLIST pidl);
 LPITEMIDLIST GetNextItem (LPITEMIDLIST pidl);
 LPITEMIDLIST DuplicateItem (LPMALLOC pMalloc, LPITEMIDLIST pidl);
@@ -93,8 +90,8 @@ inline void SelectItemByPos(HWND ctrl, int pos) {
 int SelectItemByValue(HWND ctrl, DWORD value);
 bool ReadCBValue(HWND hwnd, DWORD ctrl_id, int* pRetValue);
 
-LRESULT GetWinampVersion(HWND winamp);
-void* GetTextResource(UINT id, int no_fallback);
+//LRESULT GetWinampVersion(HWND winamp);
+//void* GetTextResource(UINT id, int no_fallback);
 
 HMODULE FindD3DX9(HWND winamp);
 

@@ -129,6 +129,8 @@
 #define IDR_TEXT2                       130
 #define IDS_MENU_COLOR_BLUE_TT          130
 #define IDS_MENU_OPACITY                131
+#define IDR_GZ1                         131
+#define IDR_TEXT_GZ                     131
 #define IDS_MENU_OPACITY_TT             132
 #define IDS_MENU_USE_DOTS               133
 #define IDS_MENU_USE_DOTS_TT            134
@@ -869,7 +871,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        131
+#define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         40011
 #define _APS_NEXT_CONTROL_VALUE         1062
 #define _APS_NEXT_SYMED_VALUE           101

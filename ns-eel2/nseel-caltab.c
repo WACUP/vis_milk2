@@ -212,7 +212,7 @@ int nseel_yyparse(compileContext *ctx, char *exp)
    have just been pushed. so pushing a state here evens the stacks.  */
 yynewstate:
 
-  *++yyssp = yystate;
+  *++yyssp = (short)yystate;
 
   if (yyssp >= yyss + yystacksize - 1)
     {
@@ -311,7 +311,7 @@ yynewstate:
   *++yyvsp = ctx->yylval;
 
   /* count tokens shifted since error; after three, turn off error status.  */
-  if (yyerrstatus) yyerrstatus--;
+  if (yyerrstatus) --yyerrstatus;
 
   yystate = yyn;
   goto yynewstate;
@@ -462,7 +462,7 @@ yyerrlab:   /* here on detecting error */
 	  count = 0;
 	  for (x = 0; x < (sizeof(yytname) / sizeof(char *)); x++)
 	    if (yycheck[x + yyn] == x)
-	      size += strlen(yytname[x]) + 15, count++;
+	      size += strlen(yytname[x]) + 15, ++count;
 #error this should not compile
       msg = (char *) xmalloc(size + 15);
 	  strcpy(msg, "syntax error");
@@ -476,7 +476,7 @@ yyerrlab:   /* here on detecting error */
 		    strcat(msg, count == 0 ? ", expecting `" : " or `");
 		    strcat(msg, yytname[x]);
 		    strcat(msg, "'");
-		    count++;
+		    ++count;
 		  }
 	    }
 	  YYERROR(msg);
@@ -518,7 +518,7 @@ yyerrdefault:  /* current state does not do anything special for the error token
 yyerrpop:   /* pop the current state because it cannot handle the error token */
 
   if (yyssp == yyss) YYABORT;
-  yyvsp--;
+  --yyvsp;
   yystate = *--yyssp;
 
 

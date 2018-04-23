@@ -88,7 +88,7 @@ public:
 
 	void	Init(wchar_t *szName);
     void    Finish();
-	void	AddChildMenu(CMilkMenu *pChildMenu);
+	void	AddChildMenu(CMilkMenu *pMenu);
 	void	AddItem(wchar_t *szName, void *var, MENUITEMTYPE type, wchar_t *szToolTip, 
 					float min=0, float max=0, MilkMenuCallbackFnPtr pCallback=NULL, 
                     unsigned int wParam=0, unsigned int lParam=0);
@@ -107,7 +107,7 @@ public:
     const wchar_t* GetName() { return m_szMenuName; }
     void Enable(bool bEnabled) { m_bEnabled = bEnabled; }
     bool IsEnabled() { return m_bEnabled; }
-    bool ItemIsEnabled(int i);
+    bool ItemIsEnabled(int j);
 
 protected:
     void            Reset();

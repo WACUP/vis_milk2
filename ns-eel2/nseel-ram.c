@@ -71,7 +71,7 @@ void NSEEL_VM_freeRAMIfCodeRequested(NSEEL_VMCTX ctx) // check to see if our fre
 						{
 							if (NSEEL_RAM_memused >= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK) 
 								NSEEL_RAM_memused -= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK;
-							else NSEEL_RAM_memused_errors++;
+							else ++NSEEL_RAM_memused_errors;
 						}
        	 		free(blocks[x]);
        	 		blocks[x]=0;
@@ -274,18 +274,18 @@ void NSEEL_VM_freeRAM(NSEEL_VMCTX ctx)
 {
   if (ctx)
   {
-    int x;
     compileContext *c=(compileContext*)ctx;
     if (c->ram_blocks)
     {
       EEL_F **blocks = (EEL_F **)c->ram_blocks;
-      for (x = 0; x < NSEEL_RAM_BLOCKS; x ++)
+	  int x = 0;
+      for (; x < NSEEL_RAM_BLOCKS; x ++)
       {
 	      if (blocks[x])
 	      {
 		      if (NSEEL_RAM_memused >= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK) 
 			      NSEEL_RAM_memused -= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK;
-		      else NSEEL_RAM_memused_errors++;
+		      else ++NSEEL_RAM_memused_errors;
 	      }
         free(blocks[x]);
         blocks[x]=0;
@@ -309,7 +309,7 @@ void NSEEL_VM_FreeGRAM(void **ufd)
 	    {
 		    if (NSEEL_RAM_memused >= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK) 
 			  NSEEL_RAM_memused -= sizeof(EEL_F) * NSEEL_RAM_ITEMSPERBLOCK;
-		    else NSEEL_RAM_memused_errors++;
+		    else ++NSEEL_RAM_memused_errors;
 	    }
       free(blocks[x]);
       blocks[x]=0;

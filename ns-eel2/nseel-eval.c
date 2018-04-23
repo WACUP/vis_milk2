@@ -107,7 +107,7 @@ static INT_PTR register_var(compileContext *ctx, const char *name, EEL_F **ptr)
         break;
       }
       namepos += NSEEL_MAX_VARIABLE_NAMELEN;
-      i++;
+      ++i;
     }
     if (ti < NSEEL_VARS_PER_BLOCK)
       break;
@@ -121,7 +121,7 @@ static INT_PTR register_var(compileContext *ctx, const char *name, EEL_F **ptr)
       ctx->varTable_Values = (EEL_F **)realloc(ctx->varTable_Values,(ctx->varTable_numBlocks+NSEEL_VARS_MALLOC_CHUNKSIZE) * sizeof(EEL_F *));
       ctx->varTable_Names = (char **)realloc(ctx->varTable_Names,(ctx->varTable_numBlocks+NSEEL_VARS_MALLOC_CHUNKSIZE) * sizeof(char *));
     }
-    ctx->varTable_numBlocks++;
+    ++ctx->varTable_numBlocks;
 
     ctx->varTable_Values[wb] = (EEL_F *)calloc(sizeof(EEL_F),NSEEL_VARS_PER_BLOCK);
     ctx->varTable_Names[wb] = (char *)calloc(NSEEL_MAX_VARIABLE_NAMELEN,NSEEL_VARS_PER_BLOCK);
@@ -179,12 +179,12 @@ INT_PTR nseel_setVar(compileContext *ctx, INT_PTR varNum)
 }
 
 //------------------------------------------------------------------------------
-INT_PTR nseel_getVar(compileContext *ctx, INT_PTR i)
+INT_PTR nseel_getVar(compileContext *ctx, INT_PTR varNum)
 {
-  if (i >= 0 && i < (NSEEL_VARS_PER_BLOCK*ctx->varTable_numBlocks))
-    return nseel_createCompiledValue(ctx,0, ctx->varTable_Values[i/NSEEL_VARS_PER_BLOCK] + i%NSEEL_VARS_PER_BLOCK); 
-  if (i >= NSEEL_GLOBALVAR_BASE && i < NSEEL_GLOBALVAR_BASE+100) 
-    return nseel_createCompiledValue(ctx,0, nseel_globalregs+i-NSEEL_GLOBALVAR_BASE);
+  if (varNum >= 0 && varNum < (NSEEL_VARS_PER_BLOCK*ctx->varTable_numBlocks))
+    return nseel_createCompiledValue(ctx,0, ctx->varTable_Values[varNum/NSEEL_VARS_PER_BLOCK] + varNum%NSEEL_VARS_PER_BLOCK); 
+  if (varNum >= NSEEL_GLOBALVAR_BASE && varNum < NSEEL_GLOBALVAR_BASE+100) 
+    return nseel_createCompiledValue(ctx,0, nseel_globalregs+varNum-NSEEL_GLOBALVAR_BASE);
 
   return nseel_createCompiledValue(ctx,0, NULL);
 }
@@ -266,7 +266,7 @@ INT_PTR nseel_lookup(compileContext *ctx, int *typeOfObject)
 			}
 
 			namepos += NSEEL_MAX_VARIABLE_NAMELEN;
-			i++;
+			++i;
 		}
 		if (ti < NSEEL_VARS_PER_BLOCK) break;
 	}

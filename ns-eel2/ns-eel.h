@@ -30,7 +30,7 @@
 #include <stdio.h>
 
 #ifdef _MSC_VER
-#define strcasecmp stricmp
+#define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #endif
 
@@ -77,12 +77,12 @@ typedef void *NSEEL_VMCTX;
 typedef void *NSEEL_CODEHANDLE;
 
 NSEEL_VMCTX NSEEL_VM_alloc(); // return a handle
-void NSEEL_VM_free(NSEEL_VMCTX ctx); // free when done with a VM and ALL of its code have been freed, as well
+void NSEEL_VM_free(NSEEL_VMCTX _ctx); // free when done with a VM and ALL of its code have been freed, as well
 
 void NSEEL_VM_enumallvars(NSEEL_VMCTX ctx, int (*func)(const char *name, EEL_F *val, void *ctx), void *userctx); // return false from func to stop
-void NSEEL_VM_resetvars(NSEEL_VMCTX ctx); // clears all vars to 0.0.
+void NSEEL_VM_resetvars(NSEEL_VMCTX _ctx); // clears all vars to 0.0.
 
-EEL_F *NSEEL_VM_regvar(NSEEL_VMCTX ctx, const char *name); // register a variable (before compilation)
+EEL_F *NSEEL_VM_regvar(NSEEL_VMCTX _ctx, const char *var); // register a variable (before compilation)
 
 void NSEEL_VM_freeRAM(NSEEL_VMCTX ctx); // clears and frees all (VM) RAM used
 void NSEEL_VM_freeRAMIfCodeRequested(NSEEL_VMCTX); // call after code to free the script-requested memory
@@ -103,9 +103,9 @@ void NSEEL_VM_SetCustomFuncThis(NSEEL_VMCTX ctx, void *thisptr);
   // fudge with the string during the compilation (it will always restore it to the 
   // original value though).
 #ifdef __cplusplus
-NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX ctx, char *code, int lineoffs=0);
+NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lineoffs=0);
 #else
-NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX ctx, char *code, int lineoffs);
+NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lineoffs);
 #endif
 
 char *NSEEL_code_getcodeerror(NSEEL_VMCTX ctx);

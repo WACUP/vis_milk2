@@ -66,7 +66,7 @@ void removeHook();
 
 //----------------------------------------------------------------------
 
-typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
+/*typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 bool IsVistaOrLater()
 {
     // adapted from "Getting the System Version" on MSDN - http://msdn2.microsoft.com/en-us/library/ms724429.aspx
@@ -75,8 +75,8 @@ bool IsVistaOrLater()
     PGNSI pGNSI;
     BOOL bOsVersionInfoEx;
 
-    ZeroMemory(&si, sizeof(SYSTEM_INFO));
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    SecureZeroMemory(&si, sizeof(SYSTEM_INFO));
+    SecureZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (bOsVersionInfoEx = GetVersionEx ((OSVERSIONINFO *) &osvi))
     {
@@ -94,20 +94,25 @@ bool IsVistaOrLater()
         }
     }
     return false;
-}
+}*/
 
 int CPluginShell::InitDesktopMode()
 {
     if (m_screenmode != DESKTOP)
         return false;
 
+	// make sure that this has been initialised even if the mode
+	// is then not going to be used to prevent a crash on render
+	InitializeCriticalSection(&m_desktop_cs);
+
     // check for Vista - if Vista, don't try to draw desktop icons.
     // [ vms_desktop.dll's message posts to the desktop listview window cause explorer to crash...
     //   whether it sends WM_NULL or WM_USER+516/517. ]
-    if (m_desktop_show_icons && IsVistaOrLater())
+    if (m_desktop_show_icons/* && IsVistaOrLater()*/)
         m_desktop_show_icons = false;
 
     if (!m_desktop_show_icons)
+		// TODO - DRO CHANGE re: icons + vista
         return true;
 
     // note: we have to explicitly make sure the DLL is present,
@@ -130,8 +135,6 @@ int CPluginShell::InitDesktopMode()
         }
     }
 
-    InitializeCriticalSection(&m_desktop_cs);
-
     m_desktop_icon_state = 0;
     m_desktop_icon_count = 0;
     m_desktop_icon_update_frame = 0;
@@ -152,7 +155,9 @@ int CPluginShell::InitDesktopMode()
     }
     else
     {
-        if (!(m_font_desktop = CreateFont(14, 0, 0, 0, 0, 0, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, "Monotype Sans Serif")))
+        if (!(m_font_desktop = CreateFont(14, 0, 0, 0, 0, 0, FALSE, FALSE, DEFAULT_CHARSET,
+										  OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
+										  DEFAULT_PITCH, TEXT("Monotype Sans Serif"))))
         {
             MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_GDI_DESKTOP_FONT),
 					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -235,8 +240,8 @@ void CPluginShell::CleanUpDesktopMode()
 
     if (m_vms_desktop_loaded)
     {
-        char szVmsDesktopDll[MAX_PATH];
-        sprintf(szVmsDesktopDll, "%s%s", GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
+		wchar_t szVmsDesktopDll[MAX_PATH] = {0};
+        swprintf(szVmsDesktopDll, TEXT("%s%s"), GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
         FreeLibrary(GetModuleHandle(szVmsDesktopDll));
         m_vms_desktop_loaded = 0;
     }
@@ -306,7 +311,7 @@ int CPluginShell::CreateDesktopIconTexture(IDirect3DTexture9** ppTex)
 void CPluginShell::DeselectDesktop()
 {
     IconList::iterator p;
-    for (p = m_icon_list.begin(); p != m_icon_list.end(); p++)
+    for (p = m_icon_list.begin(); p != m_icon_list.end(); ++p)
         p->selected = 0;
 }
 
@@ -327,7 +332,7 @@ void CPluginShell::UpdateDesktopBitmaps()
         return;
 
     IconList::iterator p;
-    for (p = m_icon_list.begin(); p != m_icon_list.end(); p++)
+    for (p = m_icon_list.begin(); p != m_icon_list.end(); ++p)
         p->icon_bitmap_idx = -1;
     
     do
@@ -497,12 +502,12 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
     //   and set 'icon_bitmap_idx'.
     IconList::iterator p = m_icon_list.begin();
     for (i=0; i < iStartIconIdx; i++)
-        p++;
+        ++p;
 
     int bitmap_idx = 0;
     int list_idx   = iStartIconIdx;
 
-    for ( ; p != m_icon_list.end() && bitmap_idx < nAcross*nDown; p++)
+    for ( ; p != m_icon_list.end() && bitmap_idx < nAcross*nDown; ++p)
     {
         // note: 'p' points to the correct icon to start with, 
         //       but 'idx' starts at zero!
@@ -557,15 +562,15 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
         
                         int out_offset = (y0+y)*WIDTH + (x0+x);
                         if (bpp==16)
-                            p16[out_offset] = start | 
-                                (((r >> rshift[0]) & mask[0]) << lshift[0]) | 
-                                (((g >> rshift[1]) & mask[1]) << lshift[1]) | 
-                                (((b >> rshift[2]) & mask[2]) << lshift[2]);                
+                            p16[out_offset] = (unsigned short)(start | 
+                                (((r >> rshift[0]) & mask[0]) << lshift[0]) |
+                                (((g >> rshift[1]) & mask[1]) << lshift[1]) |
+                                (((b >> rshift[2]) & mask[2]) << lshift[2]));
                         else
                             p32[out_offset] = start | 
-                                (((r >> rshift[0]) & mask[0]) << lshift[0]) | 
-                                (((g >> rshift[1]) & mask[1]) << lshift[1]) | 
-                                (((b >> rshift[2]) & mask[2]) << lshift[2]);                                            
+                                (((r >> rshift[0]) & mask[0]) << lshift[0]) |
+                                (((g >> rshift[1]) & mask[1]) << lshift[1]) |
+                                (((b >> rshift[2]) & mask[2]) << lshift[2]);
                     }
                 }
                 else
@@ -633,7 +638,7 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
                 // check for duplicate icon, and if found, reuse it
                 int done = 0;
                 IconList::iterator q;
-                for (q = m_icon_list.begin(); q != m_icon_list.end() && q != p; q++)
+                for (q = m_icon_list.begin(); q != m_icon_list.end() && q != p; ++q)
                 {
                     if (checksum[0] == q->checksum[0] &&
                         checksum[1] == q->checksum[1] &&
@@ -653,7 +658,7 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
                     p->checksum[1] = checksum[1];
                     p->checksum[2] = checksum[2];
 
-                    bitmap_idx++;
+                    ++bitmap_idx;
                 }
 
                 DeleteObject(ii.hbmMask);
@@ -679,7 +684,7 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
             *show_msgs = 0;
         }
 
-        list_idx++;
+        ++list_idx;
     }
 
     ReleaseDC(NULL, hdc);
@@ -701,8 +706,6 @@ void CPluginShell::RenderDesktop()
         return;
     if (m_desktop_icons_disabled)
         return;
-
-    IconList::iterator p;
 
     EnterCriticalSection(&m_desktop_cs);
 
@@ -729,7 +732,7 @@ void CPluginShell::RenderDesktop()
     int invalid_entries = 0;
     if (m_desktop_icon_state >= 2)
     {
-        for (p = m_icon_list.begin(); p != m_icon_list.end() && !invalid_entries; p++)
+        for (IconList::iterator p = m_icon_list.begin(); p != m_icon_list.end() && !invalid_entries; ++p)
         {
             if (p->name[0]==0)
                 invalid_entries = 1;
@@ -759,7 +762,7 @@ void CPluginShell::RenderDesktop()
             LeaveCriticalSection(&m_desktop_cs);
         
             DWORD procid = NULL;
-            DWORD threadid = GetWindowThreadProcessId(m_hWndDesktopListView, &procid);
+            GetWindowThreadProcessId(m_hWndDesktopListView, &procid);
             
             HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_SET_INFORMATION, FALSE, procid);
             DWORD x = GetPriorityClass(hProcess);
@@ -795,7 +798,7 @@ void CPluginShell::RenderDesktop()
     }
     else
     if (m_desktop_icon_state == 1 && 
-        m_icon_list.size() == m_desktop_icon_count)
+        m_icon_list.size() == (size_t)m_desktop_icon_count)
     {
         // done with total refresh
         m_desktop_icon_state = 2;
@@ -900,7 +903,7 @@ void CPluginShell::RenderDesktop()
                 //if (pass2==1)
                     //m_d3dx_desktop_font->Begin();
 
-                for (p = m_icon_list.begin(); p != m_icon_list.end(); p++)
+                for (IconList::iterator p = m_icon_list.begin(); p != m_icon_list.end(); ++p)
                 {
                     if (pass==0 || (p->selected && m_desktop_dragging))
                     {
@@ -991,14 +994,14 @@ void CPluginShell::RenderDesktop()
             int dy = 0;   
             int iTexNum = 0;
     
-            while (m_desktop_icons_texture[iTexNum] && iTexNum < MAX_ICON_TEXTURES)
+            while (iTexNum < MAX_ICON_TEXTURES && m_desktop_icons_texture[iTexNum])
             {
                 HELPVERTEX verts[4];
                 m_lpDX->m_lpDevice->SetVertexShader( NULL );
                 m_lpDX->m_lpDevice->SetFVF( HELP_VERTEX_FORMAT );
                 m_lpDX->m_lpDevice->SetTexture(0, m_desktop_icons_texture[iTexNum]);
 
-                for (p = m_icon_list.begin(); p != m_icon_list.end(); p++)
+                for (IconList::iterator p = m_icon_list.begin(); p != m_icon_list.end(); ++p)
                 {
                     int icon_tex_idx = (p->icon_bitmap_idx==-1) ? 0 : (p->icon_bitmap_idx / (nAcross*nDown));
                     int icon_bitmap_idx = (p->icon_bitmap_idx==-1) ? 0 : (p->icon_bitmap_idx % (nAcross*nDown));
@@ -1042,7 +1045,7 @@ void CPluginShell::RenderDesktop()
                     }
                 }
 
-                iTexNum++;
+                ++iTexNum;
             }
         }
     }

@@ -43,8 +43,6 @@ static unsigned int genrand_int32(void)
 {
 
     unsigned int y;
-    static unsigned int mag01[2]={0x0UL, MATRIX_A};
-    /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
     static unsigned int mt[N]; /* the array for the state vector  */
     static int mti; /* mti==N+1 means mt[N] is not initialized */
@@ -69,6 +67,8 @@ static unsigned int genrand_int32(void)
 
     if (mti >= N) { /* generate N words at one time */
         int kk;
+        static unsigned int mag01[2]={0x0UL, MATRIX_A};
+        /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
         for (kk=0;kk<N-M;kk++) {
             y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);

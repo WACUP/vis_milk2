@@ -37,7 +37,7 @@ static int llinp(compileContext *ctx, char **exp);
 static int lexgetc(char **exp)
 {
   char c= **exp;
-  if (c) (*exp)++;
+  if (c) ++(*exp);
   return( c != 0 ? c : -1);
 }
 static int tst__b(register int c, char tab[])
@@ -60,54 +60,54 @@ int nseel_gettoken(compileContext *ctx, char *lltb, int lltbsiz)
 
 int nseel_yylex(compileContext *ctx, char **exp)
 {
-  register int c, st;
-  int final, l, llk, i;
+  register int c;
+  int l, i;
   register struct lextab *lp;
   char *cp;
 
   while (1)
   {
-    llk = 0;
+    register int st = 0;
+    int llk = 0, final = -1;;
     if (llset(ctx)) return(0);
     st = 0;
-    final = -1;
     lp = &nseel_lextab;
 
     do {
-            if (lp->lllook && (l = lp->lllook[st])) {
-                    for (c=0; c<NBPW; c++)
-                            if (l&(1<<c))
-                                    ctx->llsave[c] = ctx->llp1;
-                    llk++;
-            }
-            if ((i = lp->llfinal[st]) != -1) {
-                    final = i;
-                    ctx->llend = ctx->llp1;
-            }
-            if ((c = llinp(ctx,exp)) < 0)
-                    break;
-            if ((cp = lp->llbrk) && llk==0 && tst__b(c, cp)) {
-                    ctx->llp1--;
-                    break;
-            }
+        if (lp->lllook && (l = lp->lllook[st])) {
+            for (c=0; c<NBPW; c++)
+                if (l&(1<<c))
+                    ctx->llsave[c] = ctx->llp1;
+            ++llk;
+        }
+        if ((i = lp->llfinal[st]) != -1) {
+            final = i;
+            ctx->llend = ctx->llp1;
+        }
+        if ((c = llinp(ctx,exp)) < 0)
+            break;
+        if ((cp = lp->llbrk) && llk==0 && tst__b(c, cp)) {
+            --ctx->llp1;
+            break;
+        }
     } while ((st = (*lp->llmove)(lp, c, st)) != -1);
 
 
     if (ctx->llp2 < ctx->llp1)
             ctx->llp2 = ctx->llp1;
     if (final == -1) {
-            ctx->llend = ctx->llp1;
-            if (st == 0 && c < 0)
-                    return(0);
-            if ((cp = lp->llill) && tst__b(c, cp)) {
-                    continue;
-            }
-            return(YYERRORVAL);
+        ctx->llend = ctx->llp1;
+        if (st == 0 && c < 0)
+                return(0);
+        if ((cp = lp->llill) && tst__b(c, cp)) {
+                continue;
+        }
+        return(YYERRORVAL);
     }
     if ((c = (final >> 11) & 037))
-            ctx->llend = ctx->llsave[c-1];
+        ctx->llend = ctx->llsave[c-1];
     if ((c = (*lp->llactr)(ctx,final&03777)) >= 0)
-            return(c);
+        return(c);
   }
 }
 
@@ -121,7 +121,6 @@ void nseel_llinit(compileContext *ctx)
 
 static int llinp(compileContext *ctx, char **exp)
 {
-        register int c;
         register struct lextab *lp;
         register char *cp;
 
@@ -134,14 +133,14 @@ static int llinp(compileContext *ctx, char **exp)
                  * input character.  Ignore the character if it's in the
                  * ignore class.
                  */
-                c = (ctx->llp1 < ctx->llp2) ? *ctx->llp1 & 0377 : (ctx->lleof) ? EOF : lexgetc(exp);
+                register int c = (ctx->llp1 < ctx->llp2) ? *ctx->llp1 & 0377 : (ctx->lleof) ? EOF : lexgetc(exp);
                 if (c >= 0) {                   /* Got a character?     */
                         if (cp && tst__b(c, cp))
                                 continue;       /* Ignore it            */
                         if (ctx->llp1 >= ctx->llebuf) {   /* No, is there room?   */
                                 return -1;
                         }
-                        *ctx->llp1++ = c;            /* Store in token buff  */
+                        *ctx->llp1++ = (char)c;            /* Store in token buff  */
                 } else
                         ctx->lleof = 1;              /* Set EOF signal       */
                 return(c);
