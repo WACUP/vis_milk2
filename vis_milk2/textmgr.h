@@ -36,7 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "md_defines.h"
-#include "..\nu\AutoWide.h"
+#include <nu\AutoWide.h>
 
 #define MAX_MSGS 4096
 

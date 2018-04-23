@@ -33,7 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 #include "defines.h"
 #include "shell_defines.h"
-#include "vis.h"
+#include <Winamp/vis.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

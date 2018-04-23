@@ -36,7 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define D3D_DEBUG_INFO  // declare this before including d3d9.h
 #endif
 #include <d3d9.h>
-#include "../Winamp/wa_ipc.h"
+#include <Winamp/wa_ipc.h>
 #include "resource.h"
 #include <shellapi.h>
 

@@ -29,7 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "api.h"
 #include <windows.h>
-#include "vis.h"
+#include <Winamp/vis.h>
 #include "plugin.h"
 #include "defines.h"
 #include "resource.h"

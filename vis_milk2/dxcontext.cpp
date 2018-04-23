@@ -43,7 +43,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SKINNED_WS (WS_VISIBLE|WS_CHILDWINDOW/*|WS_OVERLAPPED*/|WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TABSTOP)
 #define MY_WINDOW_STYLE (m_current_mode.m_skin ? SKINNED_WS : ((m_current_mode.screenmode==FAKE_FULLSCREEN || m_current_mode.screenmode==DESKTOP) ? WS_POPUP : WS_OVERLAPPEDWINDOW))   // note: WS_POPUP (by itself) removes all borders, captions, etc.
 
-#include "vis.h"
+#include <Winamp/vis.h>
 extern winampVisModule mod1;
 
 DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPCSTR szWindowCaption,WNDPROC pProc,LONG_PTR uWindowLong, int minimize_winamp, wchar_t* szIniFile)

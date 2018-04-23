@@ -140,7 +140,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "shell_defines.h"
 #include "resource.h"
-#include "vis.h"
+#include <Winamp/vis.h>
 #include <multimon.h>
 #include <Winamp/wa_ipc.h>
 #include <nu/AutoCharFn.h>

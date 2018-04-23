@@ -601,10 +601,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath="vis.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="ns-eel"
