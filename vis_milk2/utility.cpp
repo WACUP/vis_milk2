@@ -121,8 +121,8 @@ bool WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, 
 
 bool WritePrivateProfileIntW(int d, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName)
 {
-    wchar_t szValue[32];
-    swprintf(szValue, L"%d", d);
+	wchar_t szValue[32] = {0};
+	_itow_s(d, szValue, ARRAYSIZE(szValue), 10);
     return (WritePrivateProfileStringW(szSectionName, szKeyName, szValue, szIniFile) != 0);
 }
 

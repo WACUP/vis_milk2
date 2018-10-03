@@ -64,11 +64,12 @@ winampVisModule mod1 =
     0,		// nCh
     0,		// latencyMS - tells winamp how much in advance you want the audio data, 
 			//             in ms.
-    10,		// delayMS - if winamp tells the plugin to render a frame and it takes
+    3/*10*/,// delayMS - if winamp tells the plugin to render a frame and it takes
 			//           less than this # of milliseconds, winamp will sleep (go idle)
             //           for the remainder.  In effect, this limits the framerate of
             //           the plugin.  A value of 10 would cause a fps limit of ~100.
             //           Derivation: (1000 ms/sec) / (10 ms/frame) = 100 fps.
+			//			 this is lower than 10 now to support higher resolutions...
     0,		// spectrumNch
     2,		// waveformNch
     { 0, },	// spectrumData
