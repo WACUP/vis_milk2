@@ -1048,27 +1048,29 @@ static char *preprocessCode(compileContext *ctx, char *expression)
     {
       if (toupper(expression[1]) == 'X')
       {
+        int nLen;
         char *p=expression+2;
         unsigned int v=strtoul(expression+2,&p,16);
         char tmp[64];
         expression=p;
 
-        sprintf(tmp,"%u",v);
-        memcpy(buf+len,tmp,strlen(tmp));
-        len+=strlen(tmp);
-        ctx->l_stats[0]+=strlen(tmp);
+        nLen=_snprintf(tmp,ARRAYSIZE(tmp),"%u",v);
+        memcpy(buf+len,tmp,nLen);
+        len+=nLen;
+        ctx->l_stats[0]+=nLen;
         continue;
 
       }
       if (expression[1]=='\'' && expression[2] && expression[3]=='\'')
       {
+        int nLen;
         char tmp[64];
-        sprintf(tmp,"%u",((unsigned char *)expression)[2]);
+        nLen=_snprintf(tmp,ARRAYSIZE(tmp),"%u",((unsigned char *)expression)[2]);
         expression+=4;
 
-        memcpy(buf+len,tmp,strlen(tmp));
-        len+=strlen(tmp);
-        ctx->l_stats[0]+=strlen(tmp);
+        memcpy(buf+len,tmp,nLen);
+        len+=nLen;
+        ctx->l_stats[0]+=nLen;
         continue;
       }
       if (toupper(expression[1]) == 'P' && toupper(expression[2]) == 'I')
@@ -1379,12 +1381,12 @@ static char *preprocessCode(compileContext *ctx, char *expression)
             }
             else if (rp && *rp && strcmp(rp,"0"))
             {
-  	      len+=sprintf(buf+len,"_mem((%s)+(%s)",lp,rp);
+              len+=sprintf(buf+len,"_mem((%s)+(%s)",lp,rp);
               ctx->l_stats[0]+=strlen(lp)+strlen(rp)+8;
             }
             else 
             {
-	      len+=sprintf(buf+len,"_mem(%s",lp);
+              len+=sprintf(buf+len,"_mem(%s",lp);
               ctx->l_stats[0]+=strlen(lp)+4;
             }
 
@@ -1563,7 +1565,7 @@ NSEEL_CODEHANDLE NSEEL_code_compile(NSEEL_VMCTX _ctx, char *_expression, int lin
       }
       buf[x]=0;
 
-      sprintf(ctx->last_error_string,"Around line %d '%s'",linenumber+lineoffs,buf);
+      _snprintf(ctx->last_error_string,ARRAYSIZE(ctx->last_error_string),"Around line %d '%s'",linenumber+lineoffs,buf);
 
       ctx->last_error_string[sizeof(ctx->last_error_string)-1]=0;
       scode=NULL; 

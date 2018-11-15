@@ -37,6 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <shlwapi.h>
 #include <multimon.h>
 #include <commctrl.h>
 #include <shellapi.h>
@@ -70,7 +71,7 @@ void GetCurrentDisplayMode(D3DDISPLAYMODE *pMode)
     if (!pMode)
         return;
 
-    DEVMODE dm;
+	DEVMODE dm = {0};
     dm.dmSize = sizeof(dm);
     dm.dmDriverExtra = 0;
     if (!EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
@@ -162,12 +163,12 @@ void CPluginShell::UpdateAdapters(int screenmode)
     case FULLSCREEN: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS);
         pGUID = &m_adapter_guid_fullscreen;
-        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_fullscreen);
+        StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_fullscreen);
         break;
     case WINDOWED: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_W);
         pGUID = &m_adapter_guid_windowed;
-        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_windowed);
+        StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_windowed);
         break;
     /*case FAKE_FULLSCREEN: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FFS);
@@ -177,7 +178,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
     case DESKTOP: 
         ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_DMS);
         pGUID = &m_adapter_guid_desktop;
-        StringCbCopyA(deviceName, sizeof(deviceName), m_adapter_devicename_desktop);
+        StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_desktop);
         break;
     }
 
@@ -210,12 +211,12 @@ void CPluginShell::UpdateAdapters(int screenmode)
 			// re-populate it:
 
 			int nDispAdapters = 0;
-			wchar_t szDebugFile[MAX_PATH];
-			StringCbCopyW(szDebugFile, sizeof(szDebugFile), m_szConfigIniFile);
+			wchar_t szDebugFile[MAX_PATH] = {0};
+			StringCchCopyW(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
 			wchar_t* p = wcsrchr(szDebugFile, L'\\');
 			if (p)
 			{
-				lstrcpyW(p+1, ADAPTERSFILE);
+				wcscpy(p+1, ADAPTERSFILE);
 				FILE* f = _wfopen(szDebugFile, L"w");
 				if (f)
 				{
@@ -232,7 +233,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 							// Now get the caps, and filter out any graphics cards that can't
 							// do, say, gouraud shading:
 
-							int adapter_ok = 1;
+							//int adapter_ok = 1;
 
 							/*
 							D3DCAPS9 caps;
@@ -244,29 +245,28 @@ void CPluginShell::UpdateAdapters(int screenmode)
 							}
 							*/
 
-							if (f) {
-								fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
-								fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
-								fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
-								fprintf(f, "    DriverVersion=0x%08X\n",global_adapter_list[nDispAdapters].DriverVersion);
-								fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
-								fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
-								fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
-								fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
-								//fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
-								 char szGuidText[512];
-								 GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, sizeof(szGuidText));
-								fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
-								fprintf(f, "    GUID=%s\n", szGuidText);                   
-							}
+							fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
+							fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
+							fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
+							fprintf(f, "    DriverVersion=0x%08X\n",global_adapter_list[nDispAdapters].DriverVersion);
+							fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
+							fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
+							fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
+							fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
+							//fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
+							char szGuidText[512] = {0};
+							GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, ARRAYSIZE(szGuidText));
+							fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
+							fprintf(f, "    GUID=%s\n", szGuidText);                   
 
-							if (adapter_ok)
-							{
+							/*if (adapter_ok)
+							{*/
 								wchar_t szDesc[1024] = {0};
-								swprintf(szDesc, L"%d. %hs   [%hs]", nDispAdapters+1, global_adapter_list[nDispAdapters].Description, global_adapter_list[nDispAdapters].Driver);
+								_snwprintf(szDesc, ARRAYSIZE(szDesc), L"%d. %hs   [%hs]", nDispAdapters+1,
+										   global_adapter_list[nDispAdapters].Description, global_adapter_list[nDispAdapters].Driver);
 								SendMessageW( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
 								++nDispAdapters;
-							}
+							//}
 						}
 					}    
 					fclose(f);
@@ -301,7 +301,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 
 void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
 {
-    wchar_t szfmt[256], str[256];
+    wchar_t szfmt[256] = {0}, str[256] = {0};
     int i;
     HWND hwnd_listbox = GetDlgItem( g_subwnd, IDC_DISP_MODE );
 
@@ -313,7 +313,7 @@ void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
     if (nVideoModesTotal <= 0 && !g_zero_display_modes_warning_given)
     {
         g_zero_display_modes_warning_given = 1;
-		wchar_t title[64];
+		wchar_t title[64] = {0};
         MessageBoxW(g_config_hwnd, WASABI_API_LNGSTRINGW(IDS_GRAPHICS_SUBSYSTEM_IS_TEMPORARILY_UNSTABLE),
 				   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
 				   MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
@@ -340,20 +340,18 @@ void CPluginShell::UpdateFSAdapterDispModes()   // (fullscreen only)
         {
         default:
         case D3DFMT_UNKNOWN      : WASABI_API_LNGSTRINGW_BUF(IDS_UNKNOWN, szfmt, 256);   bpp=0;  break;
-        case D3DFMT_R8G8B8       : lstrcpynW(szfmt, L"RGB-888", 256);  bpp=32; break;
-        case D3DFMT_A8R8G8B8     : lstrcpynW(szfmt, L"ARGB-8888", 256); bpp=32; break;
-        case D3DFMT_X8R8G8B8     : lstrcpynW(szfmt, L"XRGB-8888", 256); bpp=32; break;
-        case D3DFMT_R5G6B5       : lstrcpynW(szfmt, L"RGB-565", 256);   bpp=16; break;
-        case D3DFMT_X1R5G5B5     : lstrcpynW(szfmt, L"XRGB-1555", 256);  bpp=16; break;
-        case D3DFMT_A1R5G5B5     : lstrcpynW(szfmt, L"ARGB-1555", 256);  bpp=16; break;
-        case D3DFMT_A4R4G4B4     : lstrcpynW(szfmt, L"ARGB-4444", 256);  bpp=16; break;
-        case D3DFMT_X4R4G4B4     : lstrcpynW(szfmt, L"XRGB-4444", 256);  bpp=16; break;
+        case D3DFMT_R8G8B8       : wcsncpy(szfmt, L"RGB-888", 256);  bpp=32; break;
+        case D3DFMT_A8R8G8B8     : wcsncpy(szfmt, L"ARGB-8888", 256); bpp=32; break;
+        case D3DFMT_X8R8G8B8     : wcsncpy(szfmt, L"XRGB-8888", 256); bpp=32; break;
+        case D3DFMT_R5G6B5       : wcsncpy(szfmt, L"RGB-565", 256);   bpp=16; break;
+        case D3DFMT_X1R5G5B5     : wcsncpy(szfmt, L"XRGB-1555", 256);  bpp=16; break;
+        case D3DFMT_A1R5G5B5     : wcsncpy(szfmt, L"ARGB-1555", 256);  bpp=16; break;
+        case D3DFMT_A4R4G4B4     : wcsncpy(szfmt, L"ARGB-4444", 256);  bpp=16; break;
+        case D3DFMT_X4R4G4B4     : wcsncpy(szfmt, L"XRGB-4444", 256);  bpp=16; break;
         }
-        swprintf(str, L" %s,  %4d x %4d,  %3d %s ",
-				 szfmt, g_disp_mode[nAdded].Width,
-				 g_disp_mode[nAdded].Height,
-				 g_disp_mode[nAdded].RefreshRate,
-				 WASABI_API_LNGSTRINGW(IDS_HZ));
+        _snwprintf(str, ARRAYSIZE(str), L" %s,  %4d x %4d,  %3d %s ",
+				   szfmt, g_disp_mode[nAdded].Width, g_disp_mode[nAdded].Height,
+				   g_disp_mode[nAdded].RefreshRate, WASABI_API_LNGSTRINGW(IDS_HZ));
 
         /*
         #ifdef DONT_ALLOW_8BIT_FULLSCREEN
@@ -642,7 +640,7 @@ void CPluginShell::UpdateDispModeMultiSampling(int screenmode)
 					if (i==0)
 						WASABI_API_LNGSTRINGW_BUF(IDS_NONE, str, 256);
 					else
-						StringCbPrintfW(str, sizeof(str), L"%2dX", i+1);
+						StringCchPrintfW(str, ARRAYSIZE(str), L"%2dX", i+1);
 
 					SendMessageW( hwnd_listbox, CB_ADDSTRING, nSampleTypes, (LPARAM)str);
 
@@ -695,11 +693,12 @@ void CPluginShell::UpdateMaxFps(int screenmode)
 		SendMessage( ctrl, CB_RESETCONTENT, 0, 0);
 		for (int j=0; j<=MAX_MAX_FPS; j++)
 		{
-			wchar_t buf[256];
+			wchar_t buf[256] = {0};
 			if (j==0)
 				WASABI_API_LNGSTRINGW_BUF(IDS_UNLIMITED, buf, 256);
 			else 
-				swprintf(buf, WASABI_API_LNGSTRINGW(IDS_X_FRAME_SEC), (j<MAX_MAX_FPS)?(MAX_MAX_FPS+1-j):(MAX_MAX_FPS+1-j));
+				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_X_FRAME_SEC),
+						   (j < MAX_MAX_FPS) ? (MAX_MAX_FPS+1-j) : (MAX_MAX_FPS+1-j));
 
 			SendMessageW( ctrl, CB_ADDSTRING, j, (LPARAM)buf);
 		}
@@ -859,12 +858,12 @@ void CPluginShell::SaveAdapter(int screenmode)
 			{
 			case FULLSCREEN:      
 				m_adapter_guid_fullscreen      = g_disp_adapter_fs[n].DeviceIdentifier; 
-				StringCbCopyA(m_adapter_devicename_fullscreen, sizeof(m_adapter_devicename_fullscreen), g_disp_adapter_fs[n].DeviceName);
+				StringCchCopyA(m_adapter_devicename_fullscreen, ARRAYSIZE(m_adapter_devicename_fullscreen), g_disp_adapter_fs[n].DeviceName);
 				//strcpy(m_adapter_desc_fullscreen, g_disp_adapter_fs[n].Description);
 				break;
 			case WINDOWED:        
 				m_adapter_guid_windowed        = g_disp_adapter_w[n].DeviceIdentifier;  
-				StringCbCopyA(m_adapter_devicename_windowed, sizeof(m_adapter_devicename_windowed), g_disp_adapter_fs[n].DeviceName);
+				StringCchCopyA(m_adapter_devicename_windowed, ARRAYSIZE(m_adapter_devicename_windowed), g_disp_adapter_fs[n].DeviceName);
 				//strcpy(m_adapter_desc_windowed, g_disp_adapter_fs[n].Description);
 				break;
 			//case FAKE_FULLSCREEN: 
@@ -873,7 +872,7 @@ void CPluginShell::SaveAdapter(int screenmode)
 				//break; // [sic]
 			case DESKTOP:         
 				m_adapter_guid_desktop         = g_disp_adapter_dm[n].DeviceIdentifier;  
-				StringCbCopyA(m_adapter_devicename_desktop, sizeof(m_adapter_devicename_desktop), g_disp_adapter_fs[n].DeviceName);
+				StringCchCopyA(m_adapter_devicename_desktop, ARRAYSIZE(m_adapter_devicename_desktop), g_disp_adapter_fs[n].DeviceName);
 				//strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
 				break; 
 			}
@@ -918,7 +917,7 @@ INT_PTR CALLBACK CPluginShell::TabCtrlProc(HWND hwnd,UINT msg,WPARAM wParam,LPAR
     if (msg==WM_INITDIALOG && lParam > 0 && GetWindowLongPtr(hwnd,GWLP_USERDATA)==0)
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
 
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
 
     if (p && g_nTab >= 0 && g_nTab < MAX_PROPERTY_PAGES)
     {
@@ -973,7 +972,7 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 EnableWindow(skin, 0);
 				wchar_t buf[256] = {0};
                 GetWindowText(skin, buf, 255);
-                StringCbCat(buf, sizeof(buf), TEXT(" 2.90+"));
+                StringCchCat(buf, ARRAYSIZE(buf), TEXT(" 2.90+"));
                 SetWindowText(skin, buf);
             }
 
@@ -1158,22 +1157,21 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
         if (lParam)
         {
             HELPINFO *ph = (HELPINFO*)lParam;
-            wchar_t title[1024];
-            wchar_t buf[2048];
-            wchar_t ctrl_name[1024];
-            GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, sizeof(ctrl_name)/sizeof(*ctrl_name));
+            wchar_t title[1024] = {0};
+            wchar_t buf[2048] = {0};
+            wchar_t ctrl_name[1024] = {0};
+            GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
             RemoveSingleAmpersands(ctrl_name);
-            buf[0] = 0;
             
             switch(ph->iCtrlId)
             {
             case ID_FONTS:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FONTS_HELP, buf, 2048);
                 break;
 
             case ID_DUALHEAD:
-				StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_DUAL_HEAD_HELP, buf, 2048);
                 break;
 
@@ -1234,17 +1232,17 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             case IDC_CB_FSPT:
             case IDC_CB_DMSPT:
             //case IDC_CB_FFSPT:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_HELP_ON_X_CHECKBOX_HELP, buf, 2048);
                 break;
 
             case IDC_CB_FS:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FORCE_INTO_FS_MODE_HELP, buf, 2048);
                 break;
 
             case IDC_CB_DMS:
-				StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FORCE_INTO_DESKTOP_MODE_HELP, buf, 2048);
                 break;
 
@@ -1254,7 +1252,7 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 break;
 
             case IDC_CB_SKIN:
-				StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_CB_SKIN_HELP, buf, 2048);
                 break;
 
@@ -1279,22 +1277,22 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 break;
 
             case IDC_DMS_LABEL:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_DMS_LABEL_HELP, buf, 2048);
                 break;
 
             case IDC_FS_LABEL:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_FS_LABEL_HELP, buf, 2048);
                 break;
                 
             case IDC_W_LABEL:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_W_LABEL_HELP, buf, 2048);
                 break;
 
             case ID_DM_MORE:
-                StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_DM_MORE_HELP, buf, 2048);
                 break;
             }
@@ -1314,7 +1312,7 @@ BOOL CALLBACK CPluginShell::ConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LP
     if (msg==WM_INITDIALOG && lParam > 0 && GetWindowLongPtr(hwnd,GWLP_USERDATA)==0)
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
 
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
 
     if (p)
         return p->PluginShellConfigDialogProc(hwnd, msg, wParam, lParam);
@@ -1339,7 +1337,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             // Initialize all config panel global variables:
             if (!InitConfig(hwnd))
             {
-				wchar_t title[64];
+				wchar_t title[64] = {0};
                 MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_INITCONFIG_FAILED),
 						    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 						    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
@@ -1400,7 +1398,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             #endif
 
             // set contents of IDC_SZ_ABOUT
-			wchar_t about[256];
+			wchar_t about[256] = {0};
 			StringCchPrintfW(about, 256, WASABI_API_LNGSTRINGW(IDS_ABOUT_STRING), LONGNAMEW, AUTHOR_NAME, COPYRIGHT);
             SetDlgItemTextW(hwnd, IDC_SZ_ABOUT, about);
 
@@ -1417,7 +1415,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                     !AddButton(6, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_7)) ||
                     !AddButton(7, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_8)))
                 {
-					wchar_t title[64];
+					wchar_t title[64] = {0};
                     MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_LOAD_TABS),
 							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 							    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
@@ -1476,30 +1474,28 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
 
             case ID_DOCS:
                 {
-                    wchar_t szPath[512], szFile[512];
-                    lstrcpyW(szPath, m_szPluginsDirPath);
-                    lstrcpyW(szFile, szPath);
-                    lstrcatW(szFile, DOCFILE);
-					
+                    wchar_t szFile[512] = {0};
+					PathCombine(szFile, m_szPluginsDirPath, DOCFILE);
+
 					intptr_t ret = myOpenURL(0,szFile);
                     if (ret <= 32)
                     {
-                        wchar_t buf[1024];
+                        wchar_t buf[1024] = {0};
                         switch(ret)
                         {
                         case SE_ERR_FNF:
                         case SE_ERR_PNF:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_DOCUMENTATION_FILE_NOT_FOUND), szFile);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_DOCUMENTATION_FILE_NOT_FOUND), szFile);
                             break;
                         case SE_ERR_ACCESSDENIED:
                         case SE_ERR_SHARE:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED), szFile);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED), szFile);
                             break;
                         case SE_ERR_NOASSOC:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC), szFile);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC), szFile);
                             break;
                         default:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X), szFile, ret);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X), szFile, ret);
                             break;
                         }
                         MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_DOCUMENTATION), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
@@ -1512,22 +1508,22 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                     intptr_t ret = myOpenURL(NULL, PLUGIN_WEB_URL);
                     if (ret <= 32)
                     {
-                        wchar_t buf[1024];
+                        wchar_t buf[1024] = {0};
                         switch(ret)
                         {
                         case SE_ERR_FNF:
                         case SE_ERR_PNF:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), PLUGIN_WEB_URL);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), PLUGIN_WEB_URL);
                             break;
                         case SE_ERR_ACCESSDENIED:
                         case SE_ERR_SHARE:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), PLUGIN_WEB_URL);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), PLUGIN_WEB_URL);
                             break;
                         case SE_ERR_NOASSOC:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), PLUGIN_WEB_URL);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), PLUGIN_WEB_URL);
                             break;
                         default:
-                            StringCbPrintfW(buf, sizeof(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), PLUGIN_WEB_URL, ret);
+                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), PLUGIN_WEB_URL, ret);
                             break;
                         }
                         MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
@@ -1536,7 +1532,8 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                 break;
 
             case ID_DEFAULTS:
-				wchar_t title[64];
+			{
+				wchar_t title[64] = {0};
                 if (IDYES == MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_RESTORE_ALL_DEFAULTS),
 										 WASABI_API_LNGSTRINGW_BUF(IDS_RESTORE_ALL_DEFAULTS_TITLE, title, 64),
 										 MB_YESNO|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL))
@@ -1546,7 +1543,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                     EndDialog(hwnd,id);
                 }
                 break;
-
+			}
             default:
                 return 0;
             }
@@ -1557,36 +1554,36 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
         if (lParam)
 				{
 					HELPINFO *ph = (HELPINFO*)lParam;
-					wchar_t title[1024];
-					wchar_t buf[2048];
-					wchar_t ctrl_name[1024];
-					GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, sizeof(ctrl_name)/sizeof(*ctrl_name));
+					wchar_t title[1024] = {0};
+					wchar_t buf[2048] = {0};
+					wchar_t ctrl_name[1024] = {0};
+					GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
 					RemoveSingleAmpersands(ctrl_name);
-					buf[0] = 0;
+
 					switch(ph->iCtrlId)
 					{
 					case IDOK:
-						StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_OK_HELP, buf, 2048);
 						break;
 
 					case IDCANCEL:
-						StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_CANCEL_HELP, buf, 2048);
 						break;
 
 					case ID_DEFAULTS:
-						StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_RESTORE_DEFAULTS_HELP, buf, 2048);
 						break;
 
 					case ID_DOCS:
-						StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_DOCUMENTATION_BUTTON_HELP, buf, 2048);
 						break;
 
 					case ID_WEB:
-						StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_VIEW_ONLINE_DOCS_HELP, buf, 2048);
 						break;
 

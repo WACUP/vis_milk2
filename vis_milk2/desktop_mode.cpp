@@ -33,6 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 #include "defines.h"
 #include <shellapi.h>
+#include <shlwapi.h>
 
 //----------------------------------------------------------------------
 
@@ -117,14 +118,14 @@ int CPluginShell::InitDesktopMode()
 
     // note: we have to explicitly make sure the DLL is present,
     // since we're delay-loading it; otherwise, calling setHook, etc. will crash it.
-    wchar_t szVmsDesktopDll[MAX_PATH];
-    swprintf(szVmsDesktopDll, L"%s%s", GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
+    wchar_t szVmsDesktopDll[MAX_PATH] = {0};
+    PathCombine(szVmsDesktopDll, GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
     if (!GetModuleHandleW(szVmsDesktopDll))
     {
         if (!LoadLibraryW(szVmsDesktopDll))
         {
-            wchar_t buf[2048];
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_COULD_NOT_FIND_FILE_FOR_DESKTOP_MODE_X), szVmsDesktopDll);
+            wchar_t buf[2048] = {0};
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_COULD_NOT_FIND_FILE_FOR_DESKTOP_MODE_X), szVmsDesktopDll);
             MessageBoxW(GetPluginWindow(),buf,WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR_FILE_MISSING), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
             //return false;
             m_desktop_icons_disabled = 1;
@@ -142,7 +143,7 @@ int CPluginShell::InitDesktopMode()
 
     // GDI font for desktop mode:
 	LOGFONT lf = {0};
-	wchar_t title[64];
+	wchar_t title[64] = {0};
     if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0))
     {
         if (!(m_font_desktop = CreateFontIndirect(&lf)))
@@ -241,7 +242,7 @@ void CPluginShell::CleanUpDesktopMode()
     if (m_vms_desktop_loaded)
     {
 		wchar_t szVmsDesktopDll[MAX_PATH] = {0};
-        swprintf(szVmsDesktopDll, TEXT("%s%s"), GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
+        PathCombine(szVmsDesktopDll, GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
         FreeLibrary(GetModuleHandle(szVmsDesktopDll));
         m_vms_desktop_loaded = 0;
     }
@@ -343,7 +344,7 @@ void CPluginShell::UpdateDesktopBitmaps()
 
 	if (idx > 0)
 	{
-		wchar_t title[64];
+		wchar_t title[64] = {0};
         MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW(IDS_ERROR_UPDATING_ICON_BITMAPS),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -362,7 +363,7 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
     if (m_screenmode != DESKTOP)
         return 0;
 
-	wchar_t title[64];
+	wchar_t title[64] = {0};
     if (!m_desktop_icons_texture[iTexNum])
     {
         int ret = CreateDesktopIconTexture(&m_desktop_icons_texture[iTexNum]);
@@ -524,7 +525,7 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
                 int y0 = (bitmap_idx/nAcross)*m_desktop_icon_size;
                 int checksum[3] = { 0, 0, 0 };
 
-                BITMAPINFO bmi;
+				BITMAPINFO bmi = {0};
 
                 // pass 1: get the colors 
 
@@ -828,7 +829,7 @@ void CPluginShell::RenderDesktop()
     }
 
     // get horz. spacing between icons (...determines width of labels)
-    ICONMETRICS icm;
+	ICONMETRICS icm = {0};
     icm.cbSize = sizeof(icm);
     if (!SystemParametersInfo(SPI_GETICONMETRICS, sizeof(icm), &icm, 0))
         icm.iHorzSpacing = 68;
@@ -893,7 +894,7 @@ void CPluginShell::RenderDesktop()
             m_lpDX->m_lpDevice->SetVertexShader( NULL );
             m_lpDX->m_lpDevice->SetFVF( SIMPLE_VERTEX_FORMAT );
             m_lpDX->m_lpDevice->SetTexture(0, NULL);
-            SIMPLEVERTEX verts[4];
+            SIMPLEVERTEX verts[4] = {0};
 
             // pass2==0: draw text labels
             // pass2==1: draw text overtop
@@ -996,7 +997,7 @@ void CPluginShell::RenderDesktop()
     
             while (iTexNum < MAX_ICON_TEXTURES && m_desktop_icons_texture[iTexNum])
             {
-                HELPVERTEX verts[4];
+                HELPVERTEX verts[4] = {0};
                 m_lpDX->m_lpDevice->SetVertexShader( NULL );
                 m_lpDX->m_lpDevice->SetFVF( HELP_VERTEX_FORMAT );
                 m_lpDX->m_lpDevice->SetTexture(0, m_desktop_icons_texture[iTexNum]);
@@ -1056,7 +1057,7 @@ void CPluginShell::RenderDesktop()
         m_lpDX->m_lpDevice->SetVertexShader( NULL );
         m_lpDX->m_lpDevice->SetFVF( SIMPLE_VERTEX_FORMAT );
         m_lpDX->m_lpDevice->SetTexture(0, NULL);
-        SIMPLEVERTEX verts[5];        
+        SIMPLEVERTEX verts[5] = {0};        
         for (int i=0; i<4; i++)
         {
             verts[i].x = (i==1||i==2) ? (float)(-m_lpDX->m_client_width/2 + m_desktop_drag_startpos.x) : (float)(-m_lpDX->m_client_width/2 + m_desktop_drag_curpos.x);

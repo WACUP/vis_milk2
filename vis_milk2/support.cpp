@@ -99,8 +99,7 @@ void PrepareFor3DDrawing(
         // if the window is not square, instead of distorting the scene,
         // clip it so that the longer dimension of the window has the
         // regular FOV, and the shorter dimension has a reduced FOV.
-        float fov_x = fov_in_degrees * 3.1415927f/180.0f;
-        float fov_y = fov_in_degrees * 3.1415927f/180.0f;
+        float fov_x = fov_in_degrees * 3.1415927f/180.0f, fov_y = fov_x;
         float aspect = (float)viewport_height / (float)viewport_width;
         if (aspect < 1)
             fov_y *= aspect;
@@ -250,31 +249,31 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
 void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, int nSize)
 {
     szSongTitle[0] = 0;
-	lstrcpynW(szSongTitle, (wchar_t*)SendMessage(hWndWinamp, WM_WA_IPC,
-									 SendMessage(hWndWinamp, WM_WA_IPC, 0 , IPC_GETLISTPOS),
-									 IPC_GETPLAYLISTTITLEW), nSize);
+	wcsncpy(szSongTitle, (wchar_t*)SendMessage(hWndWinamp, WM_WA_IPC,
+								   SendMessage(hWndWinamp, WM_WA_IPC, 0 , IPC_GETLISTPOS),
+											   IPC_GETPLAYLISTTITLEW), nSize);
 }
 
-void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos)
+void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, int nSongPos)
 {
     // note: size(szSongPos[]) must be at least 64.
     szSongPos[0] = 0;
 	int nSongPosMS = SendMessage(hWndWinamp,WM_USER,0,105);
     if (nSongPosMS > 0)
     {
-		wchar_t tmp[16];
+		wchar_t tmp[16] = {0};
 		float time_s = nSongPosMS*0.001f;
 		int minutes = (int)(time_s/60);
 		time_s -= minutes*60;
 		int seconds = (int)time_s;
 		time_s -= seconds;
 		int dsec = (int)(time_s*100);
-		swprintf(tmp, L"%.02f", dsec/100.0f);
-		swprintf(szSongPos, L"%d:%02d%s", minutes, seconds, tmp+1);
+		_snwprintf(tmp, ARRAYSIZE(tmp), L"%.02f", dsec/100.0f);
+		_snwprintf(szSongPos, nSongPos, L"%d:%02d%s", minutes, seconds, tmp+1);
     }
 }
 
-void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen)
+void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, int nSongLen)
 {
     // note: size(szSongLen[]) must be at least 64.
     szSongLen[0] = 0;
@@ -284,7 +283,7 @@ void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen)
 		int len_s = nSongLenMS/1000;
 		int minutes = len_s/60;
 		int seconds = len_s - minutes*60;
-		swprintf(szSongLen, L"%d:%02d", minutes, seconds);
+		_snwprintf(szSongLen, nSongLen, L"%d:%02d", minutes, seconds);
     }    
 }
 

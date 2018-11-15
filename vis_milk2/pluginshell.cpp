@@ -297,7 +297,7 @@ void CPluginShell::CleanUpNondx9Stuff()
 
 int CPluginShell::InitGDIStuff()
 {
-	wchar_t title[64];
+	wchar_t title[64] = {0};
 	// note: messagebox parent window should be NULL here, because lpDX is still NULL!
 	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
 	{
@@ -490,9 +490,8 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 
 
 		// Create the device
-		D3DPRESENT_PARAMETERS pres_param;
-		SecureZeroMemory(&pres_param,sizeof(pres_param));
-		pres_param.BackBufferCount = 0;
+		D3DPRESENT_PARAMETERS pres_param = {0};
+		//pres_param.BackBufferCount = 0;
 		pres_param.BackBufferFormat = dm.Format;
 		pres_param.BackBufferWidth  = rect.right - rect.left;
 		pres_param.BackBufferHeight = rect.bottom - rect.top;
@@ -501,8 +500,8 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		pres_param.EnableAutoDepthStencil = FALSE;
 		pres_param.SwapEffect = D3DSWAPEFFECT_DISCARD;
 		pres_param.MultiSampleType = D3DMULTISAMPLE_NONE;
-		pres_param.Flags = 0;
-		pres_param.FullScreen_RefreshRateInHz = 0;
+		//pres_param.Flags = 0;
+		//pres_param.FullScreen_RefreshRateInHz = 0;
 		pres_param.PresentationInterval       = D3DPRESENT_INTERVAL_IMMEDIATE;//D3DPRESENT_INTERVAL_ONE;//D3DPRESENT_INTERVAL_IMMEDIATE;//m_current_mode.allow_page_tearing ? D3DPRESENT_INTERVAL_IMMEDIATE : D3DPRESENT_INTERVAL_ONE;//D3DPRESENT_INTERVAL_IMMEDIATE;//D3DPRESENT_INTERVAL_ONE;
 		//pres_param.FullScreen_PresentationInterval = 0;
 		pres_param.Windowed = TRUE;
@@ -601,7 +600,7 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 		                   &m_d3dx_font[i]
 		                  ) != D3D_OK)
 		{
-			wchar_t title[64];
+			wchar_t title[64] = {0};
 			MessageBoxW(m_lpDX ? m_lpDX->GetHwnd() : NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_D3DX_FONTS), 
 					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -742,8 +741,7 @@ void CPluginShell::OnUserResizeTextWindow()
 	GetWindowRect(m_hTextWnd, &w);
 	GetClientRect(m_hTextWnd, &c);
 
-	WINDOWPLACEMENT wp;
-	SecureZeroMemory(&wp, sizeof(wp));
+	WINDOWPLACEMENT wp = {0};
 	wp.length = sizeof(wp);
 	GetWindowPlacement(m_hTextWnd, &wp);
 
@@ -787,8 +785,7 @@ void CPluginShell::OnUserResizeWindow()
 	GetWindowRect(m_lpDX->GetHwnd(), &w);
 	GetClientRect(m_lpDX->GetHwnd(), &c);
 
-	WINDOWPLACEMENT wp;
-	SecureZeroMemory(&wp, sizeof(wp));
+	WINDOWPLACEMENT wp = {0};
 	wp.length = sizeof(wp);
 	GetWindowPlacement(m_lpDX->GetHwnd(), &wp);
 
@@ -978,7 +975,7 @@ int CPluginShell::InitDirectX()
 
 	if (!m_lpDX)
 	{
-		wchar_t title[64];
+		wchar_t title[64] = {0};
 		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_INIT_DXCONTEXT),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -1106,7 +1103,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_disp_mode_fs.Format = D3DFMT_UNKNOWN;
 	m_disp_mode_fs.RefreshRate = 60;
 	// better yet - in case there is no config INI file saved yet, use the current display mode (if detectable) as the default fullscreen res:
-	DEVMODE dm;
+	DEVMODE dm = {0};
 	dm.dmSize = sizeof(dm);
 	dm.dmDriverExtra = 0;
 	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
@@ -1147,7 +1144,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	    && (p = (wchar_t *)SendMessage(hWinampWnd, WM_WA_IPC, 0, IPC_GETPLUGINDIRECTORYW))
 	    && p != (wchar_t *)1)
 	{
-		swprintf(m_szPluginsDirPath, L"%s\\", p);
+		_snwprintf(m_szPluginsDirPath, ARRAYSIZE(m_szPluginsDirPath), L"%s\\", p);
 	}
 	else
 	{
@@ -1164,10 +1161,10 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	{
 		// load settings as well as coping with moving old settings to a contained folder
 		wchar_t m_szOldConfigIniFile[MAX_PATH] = {0}, temp[MAX_PATH] = {0}, temp2[MAX_PATH] = {0};
-		swprintf(m_szOldConfigIniFile, L"%s\\Plugins\\%s", p, INIFILE);
-		swprintf(m_szConfigIniFile, L"%s\\Plugins\\%s%s", p, SUBDIR, INIFILE);
-		swprintf(temp, L"%s\\Plugins\\%s", p, SUBDIR);
-		swprintf(temp2, L"%s\\Plugins\\", p);
+		_snwprintf(m_szOldConfigIniFile, ARRAYSIZE(m_szOldConfigIniFile), L"%s\\Plugins\\%s", p, INIFILE);
+		_snwprintf(m_szConfigIniFile, ARRAYSIZE(m_szConfigIniFile), L"%s\\Plugins\\%s%s", p, SUBDIR, INIFILE);
+		_snwprintf(temp, ARRAYSIZE(temp), L"%s\\Plugins\\%s", p, SUBDIR);
+		_snwprintf(temp2, ARRAYSIZE(temp2), L"%s\\Plugins\\", p);
 		CreateDirectoryW(temp, NULL);
 
 		if (PathFileExistsW(m_szOldConfigIniFile) && !PathFileExistsW(m_szConfigIniFile))
@@ -1177,12 +1174,12 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 			wchar_t m_szMsgIniFile[MAX_PATH] = {0}, m_szNewMsgIniFile[MAX_PATH] = {0},
 					m_szImgIniFile[MAX_PATH] = {0}, m_szNewImgIniFile[MAX_PATH] = {0},
 					m_szAdaptersFile[MAX_PATH] = {0}, m_szNewAdaptersFile[MAX_PATH] = {0};
-   			swprintf(m_szMsgIniFile, L"%s%s", temp2, MSG_INIFILE);
-			swprintf(m_szNewMsgIniFile, L"%s%s", temp, MSG_INIFILE);
-			swprintf(m_szImgIniFile, L"%s%s", temp2, IMG_INIFILE);
-			swprintf(m_szNewImgIniFile, L"%s%s", temp, IMG_INIFILE);
-			swprintf(m_szAdaptersFile, L"%s%s", temp2, ADAPTERSFILE);
-			swprintf(m_szNewAdaptersFile, L"%s%s", temp, ADAPTERSFILE);
+   			PathCombine(m_szMsgIniFile, temp2, MSG_INIFILE);
+			PathCombine(m_szNewMsgIniFile, temp, MSG_INIFILE);
+			PathCombine(m_szImgIniFile, temp2, IMG_INIFILE);
+			PathCombine(m_szNewImgIniFile, temp, IMG_INIFILE);
+			PathCombine(m_szAdaptersFile, temp2, ADAPTERSFILE);
+			PathCombine(m_szNewAdaptersFile, temp, ADAPTERSFILE);
 
 			MoveFileW(m_szImgIniFile, m_szNewImgIniFile);
 			MoveFileW(m_szMsgIniFile, m_szNewMsgIniFile);
@@ -1191,9 +1188,9 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	}
 	else
 	{
-		swprintf(m_szConfigIniFile, L"%s%s", m_szPluginsDirPath, INIFILE);
+		PathCombine(m_szConfigIniFile, m_szPluginsDirPath, INIFILE);
 	}
-	lstrcpynA(m_szConfigIniFileA,AutoCharFn(m_szConfigIniFile),MAX_PATH);
+	strncpy(m_szConfigIniFileA,AutoCharFn(m_szConfigIniFile),MAX_PATH);
 
 	// PRIVATE CONFIG PANEL SETTINGS
 	m_multisample_fullscreen = D3DMULTISAMPLE_NONE;
@@ -1339,7 +1336,7 @@ void CPluginShell::PluginQuit()
 
 wchar_t* BuildSettingName(wchar_t* name, int number){
 static wchar_t temp[64];
-	swprintf(temp, L"%s%d", name, number);
+	_snwprintf(temp, ARRAYSIZE(temp), L"%s%d", name, number);
 	return temp;
 }
 
@@ -1372,16 +1369,16 @@ void CPluginShell::ReadConfig()
 	//GUID m_adapter_guid_fullscreen
 	//GUID m_adapter_guid_desktop
 	//GUID m_adapter_guid_windowed
-	char str[256];
-	GetPrivateProfileStringA("settings","adapter_guid_fullscreen","",str,sizeof(str)-1,m_szConfigIniFileA);
+	char str[256] = {0};
+	GetPrivateProfileStringA("settings","adapter_guid_fullscreen","",str,ARRAYSIZE(str)-1,m_szConfigIniFileA);
 	TextToGuid(str, &m_adapter_guid_fullscreen);
-	GetPrivateProfileStringA("settings","adapter_guid_desktop","",str,sizeof(str)-1,m_szConfigIniFileA);
+	GetPrivateProfileStringA("settings","adapter_guid_desktop","",str,ARRAYSIZE(str)-1,m_szConfigIniFileA);
 	TextToGuid(str, &m_adapter_guid_desktop);
-	GetPrivateProfileStringA("settings","adapter_guid_windowed","",str,sizeof(str)-1,m_szConfigIniFileA);
+	GetPrivateProfileStringA("settings","adapter_guid_windowed","",str,ARRAYSIZE(str)-1,m_szConfigIniFileA);
 	TextToGuid(str, &m_adapter_guid_windowed);
-	GetPrivateProfileStringA("settings","adapter_devicename_fullscreen","",m_adapter_devicename_fullscreen,sizeof(m_adapter_devicename_fullscreen)-1,m_szConfigIniFileA);
-	GetPrivateProfileStringA("settings","adapter_devicename_desktop",   "",m_adapter_devicename_desktop   ,sizeof(m_adapter_devicename_desktop)-1,m_szConfigIniFileA);
-	GetPrivateProfileStringA("settings","adapter_devicename_windowed",  "",m_adapter_devicename_windowed  ,sizeof(m_adapter_devicename_windowed)-1,m_szConfigIniFileA);
+	GetPrivateProfileStringA("settings","adapter_devicename_fullscreen","",m_adapter_devicename_fullscreen,ARRAYSIZE(m_adapter_devicename_fullscreen)-1,m_szConfigIniFileA);
+	GetPrivateProfileStringA("settings","adapter_devicename_desktop",   "",m_adapter_devicename_desktop   ,ARRAYSIZE(m_adapter_devicename_desktop)-1,m_szConfigIniFileA);
+	GetPrivateProfileStringA("settings","adapter_devicename_windowed",  "",m_adapter_devicename_windowed  ,ARRAYSIZE(m_adapter_devicename_windowed)-1,m_szConfigIniFileA);
 
 	// FONTS
 	READ_FONT(0);
@@ -1457,12 +1454,12 @@ void CPluginShell::WriteConfig()
 	//GUID m_adapter_guid_fullscreen
 	//GUID m_adapter_guid_desktop
 	//GUID m_adapter_guid_windowed
-	char str[256];
-	GuidToText(&m_adapter_guid_fullscreen, str, sizeof(str));
+	char str[256] = {0};
+	GuidToText(&m_adapter_guid_fullscreen, str, ARRAYSIZE(str));
 	WritePrivateProfileStringA("settings","adapter_guid_fullscreen",str,m_szConfigIniFileA);
-	GuidToText(&m_adapter_guid_desktop, str, sizeof(str));
+	GuidToText(&m_adapter_guid_desktop, str, ARRAYSIZE(str));
 	WritePrivateProfileStringA("settings","adapter_guid_desktop",str,m_szConfigIniFileA);
-	GuidToText(&m_adapter_guid_windowed,   str, sizeof(str));
+	GuidToText(&m_adapter_guid_windowed, str, ARRAYSIZE(str));
 	WritePrivateProfileStringA("settings","adapter_guid_windowed"  ,str,m_szConfigIniFileA);
 	WritePrivateProfileStringA("settings","adapter_devicename_fullscreen",m_adapter_devicename_fullscreen,m_szConfigIniFileA);
 	WritePrivateProfileStringA("settings","adapter_devicename_desktop"   ,m_adapter_devicename_desktop   ,m_szConfigIniFileA);
@@ -2011,7 +2008,7 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 
 	int i;
 
-	float temp_wave[2][576];
+	float temp_wave[2][576] = {0};
 
 	int old_i = 0;
 	for (i=0; i<576; i++)
@@ -2081,8 +2078,8 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 	    {
 	        if (m_frame%FRAMES_PER_SONG == 0)
 	        {
-	            char buf[256];
-	            sprintf(buf, "%.4f, %.4f, %.4f     (%d samples / ~%d songs)\n",
+	            char buf[256] = {0};
+	            _snprintf(buf, ARRAYSIZE(buf), "%.4f, %.4f, %.4f     (%d samples / ~%d songs)\n",
 	                sum[0]/(float)(count),
 	                sum[1]/(float)(count),
 	                sum[2]/(float)(count),
@@ -2231,7 +2228,7 @@ void CPluginShell::DrawDarkTranslucentBox(RECT* pr)
 	m_lpDX->m_lpDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE);
 
 	// set up a quad
-	SIMPLEVERTEX verts[4];
+	SIMPLEVERTEX verts[4] = {0};
 	for (int i=0; i<4; i++)
 	{
 		verts[i].x = (i%2==0) ? (float)(-m_lpDX->m_client_width /2  + pr->left)  :
@@ -2338,8 +2335,9 @@ void CPluginShell::RenderPlaylist()
 					{
 						// clip max len. of song name to 240 chars, to prevent overflows
 						wchar_t buf[1024] = {0};
-						lstrcpynW(buf, (wchar_t*)SendMessage(m_hWndWinamp, WM_USER, j, IPC_GETPLAYLISTTITLEW), 240);
-						wsprintfW(m_playlist[i], L"%d. %s ", j+1, buf);  // leave an extra space @ end, so italicized fonts don't get clipped
+						wcsncpy(buf, (wchar_t*)SendMessage(m_hWndWinamp, WM_USER, j, IPC_GETPLAYLISTTITLEW), 240);
+						// leave an extra space @ end, so italicized fonts don't get clipped
+						_snwprintf(m_playlist[i], ARRAYSIZE(m_playlist[i]), L"%d. %s ", j+1, buf);
 					}
 				}
 			}
@@ -2362,7 +2360,7 @@ void CPluginShell::RenderPlaylist()
 						// clip max len. of song name to 240 chars, to prevent overflows
 						//strcpy(buf, (char*)SendMessage(m_hWndWinamp, WM_USER, j, 212));
 						//buf[240] = 0;
-						//sprintf(m_playlist[i], "%d. %s ", j+1, buf);  // leave an extra space @ end, so italicized fonts don't get clipped
+						//_snprintf(m_playlist[i], ARRAYSIZE(m_playlist[i]), "%d. %s ", j+1, buf);  // leave an extra space @ end, so italicized fonts don't get clipped
 
 						SetRect(&r, 0, 0, max_w, 1024);
 						m_d3dx_font[PLAYLIST_FONT]->DrawTextW(NULL, m_playlist[i], -1, &r, dwFlags | DT_CALCRECT, 0xFFFFFFFF);
@@ -2403,7 +2401,7 @@ void CPluginShell::RenderPlaylist()
 
 				if (m_lpDX->GetBitDepth() == 8)
 					color = (i==m_playlist_pos) ?
-					        (i==now_playing ? 0xFFFFFFFF : 0xFFFFFFFF) :
+					        (/*i==now_playing ? 0xFFFFFFFF :*/ 0xFFFFFFFF) :
 							        (i==now_playing ? 0xFFFFFFFF : 0xFF707070);
 				else
 					color = (i==m_playlist_pos) ?
@@ -2425,7 +2423,7 @@ void CPluginShell::SuggestHowToFreeSomeMem()
 	//   suggest how to free up some video memory, based on what settings
 	//   they've chosen.
 
-	wchar_t str[1024];
+	wchar_t str[1024] = {0};
 
 	if (m_lpDX->m_current_mode.multisamp != D3DMULTISAMPLE_NONE)
 	{
@@ -2456,7 +2454,7 @@ LRESULT CALLBACK CPluginShell::WindowProc(HWND hWnd, unsigned uMsg, WPARAM wPara
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)create->lpCreateParams);
 	}
 
-	CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+	CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hWnd,GWLP_USERDATA));
 	if (p)
 		return p->PluginShellWindowProc(hWnd, uMsg, wParam, lParam);
 	else
@@ -2483,7 +2481,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		int seconds = (int)time;
 		time -= seconds;
 		int dsec = (int)(time*100);
-		sprintf(caption, "WndProc: frame %d, t=%dh:%02dm:%02d.%02ds, ", m_frame, hours, minutes, seconds, dsec);
+		_snprintf(caption, ARRAYSIZE(caption), "WndProc: frame %d, t=%dh:%02dm:%02d.%02ds, ", m_frame, hours, minutes, seconds, dsec);
 	}
 
 	if (uMsg != WM_MOUSEMOVE &&
@@ -3056,7 +3054,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 					m_playlist_pos += inc;
 
-					char buf[32];
+					char buf[32] = {0};
 					strncpy(buf, (char*)SendMessage(m_hWndWinamp, WM_USER, m_playlist_pos, 212), 31);
 					buf[31] = 0;
 
@@ -3124,9 +3122,9 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			case 's':
 			case 'S':
 				//if (SendMessage(m_hWndWinamp,WM_USER,0,250))
-				//    sprintf(m_szUserMessage, "shuffle is now OFF");    // shuffle was on
+				//    _snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "shuffle is now OFF");    // shuffle was on
 				//else
-				//    sprintf(m_szUserMessage, "shuffle is now ON");    // shuffle was off
+				//    _snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "shuffle is now ON");    // shuffle was off
 
 				// toggle shuffle
 				PostMessage(m_hWndWinamp,WM_COMMAND,40023,0);
@@ -3321,7 +3319,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 LRESULT CALLBACK CPluginShell::DesktopWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
 {
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hWnd,GWLP_USERDATA));
 	if (p)
 		return p->PluginShellDesktopWndProc(hWnd, uMsg, wParam, lParam);
 	else
@@ -3373,13 +3371,13 @@ void CPluginShell::AlignWaves()
 	for (int ch=0; ch<2; ch++)
 	{
 		// only worry about matching the lower 'nSamples' samples
-		float temp_new[MAX_OCTAVES][576];
-		float temp_old[MAX_OCTAVES][576];
+		float temp_new[MAX_OCTAVES][576] = {0};
+		float temp_old[MAX_OCTAVES][576] = {0};
 		static float temp_weight[MAX_OCTAVES][576];
 		static int   first_nonzero_weight[MAX_OCTAVES];
 		static int   last_nonzero_weight[MAX_OCTAVES];
-		int spls[MAX_OCTAVES];
-		int space[MAX_OCTAVES];
+		int spls[MAX_OCTAVES] = {0};
+		int space[MAX_OCTAVES] = {0};
 
 		memcpy(temp_new[0], m_sound.fWaveform[ch], sizeof(float)*576);
 		memcpy(temp_old[0], &m_oldwave[ch][m_prev_align_offset[ch]], sizeof(float)*nSamples);
@@ -3502,21 +3500,21 @@ void CPluginShell::AlignWaves()
 
 LRESULT CALLBACK CPluginShell::VJModeWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
 {
-  CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+  CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hWnd,GWLP_USERDATA));
 	if (p)
 		return p->PluginShellVJModeWndProc(hWnd, uMsg, wParam, lParam);
 	else
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
-	if (message != WM_MOUSEMOVE &&
-	    message != WM_NCHITTEST &&
-	    message != WM_SETCURSOR &&
-	    message != WM_COPYDATA &&
-	    message != WM_USER)
+	if (uMsg != WM_MOUSEMOVE &&
+	    uMsg != WM_NCHITTEST &&
+	    uMsg != WM_SETCURSOR &&
+	    uMsg != WM_COPYDATA &&
+	    uMsg != WM_USER)
 	{
 		char caption[256] = "VJWndProc: frame 0, ";
 		if (m_frame > 0)
@@ -3529,13 +3527,13 @@ LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hwnd, UINT message, WPARAM w
 			int seconds = (int)time;
 			time -= seconds;
 			int dsec = (int)(time*100);
-			sprintf(caption, "VJWndProc: frame %d, t=%dh:%02dm:%02d.%02ds, ", m_frame, hours, minutes, seconds, dsec);
+			_snprintf(caption, ARRAYSIZE(caption), "VJWndProc: frame %d, t=%dh:%02dm:%02d.%02ds, ", m_frame, hours, minutes, seconds, dsec);
 		}
-		OutputDebugMessage(caption, hwnd, message, wParam, lParam);
+		OutputDebugMessage(caption, hWnd, uMsg, wParam, lParam);
 	}
 #endif
 
-	switch (message)
+	switch (uMsg)
 	{
 	case WM_KEYDOWN:
 	case WM_KEYUP:
@@ -3544,7 +3542,7 @@ LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hwnd, UINT message, WPARAM w
 	case WM_SYSKEYUP:
 	case WM_SYSCHAR:
 		// pass keystrokes on to plugin!
-		return PluginShellWindowProc(GetPluginWindow(),message,wParam,lParam);
+		return PluginShellWindowProc(GetPluginWindow(),uMsg,wParam,lParam);
 
 	case WM_ERASEBKGND:
 		// Repaint window when song is paused and image needs to be repainted:
@@ -3682,5 +3680,5 @@ LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hwnd, UINT message, WPARAM w
 		break;
 	}
 
-	return DefWindowProc(hwnd, message, wParam, lParam);
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

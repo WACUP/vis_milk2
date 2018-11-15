@@ -240,8 +240,8 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
     if (!lpDevice)
         return false;
 
-	wchar_t szTextToDraw[512];
-	swprintf(szTextToDraw, L" %s ", m_supertext.szTextW);  //add a space @ end for italicized fonts; and at start, too, because it's centered!
+	wchar_t szTextToDraw[512] = {0};
+	_snwprintf(szTextToDraw, ARRAYSIZE(szTextToDraw), L" %s ", m_supertext.szTextW);  //add a space @ end for italicized fonts; and at start, too, because it's centered!
 	
     // Remember the original backbuffer and zbuffer
     LPDIRECT3DSURFACE9 pBackBuffer=NULL;//, pZBuffer=NULL;
@@ -275,12 +275,12 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
         lpDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
 
         // set up a quad
-        WFVERTEX verts[4];
+        WFVERTEX verts[4] = {0};
         for (int i=0; i<4; i++)
         {
             verts[i].x = (i%2==0) ? -1.f : 1.f;
             verts[i].y = (i/2==0) ? -1.f : 1.f;
-            verts[i].z = 0;
+            //verts[i].z = 0;
             verts[i].Diffuse = 0xFF000000;
         }
 
@@ -301,7 +301,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
         clip_chars = (int)(MAX_CHARS - (MAX_CHARS-MIN_CHARS)*t);
 
 		if ((int)strlen(szTextToDraw) > clip_chars+3)
-			lstrcpy(&szTextToDraw[clip_chars], "...");
+			strcpy(&szTextToDraw[clip_chars], "...");
 	}*/
 
     bool ret = true;
@@ -321,7 +321,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
         LPD3DXFONT d3dx_font = NULL;
 
         int lo = 0;
-	    int hi = sizeof(g_title_font_sizes)/sizeof(int) - 1;
+	    int hi = ARRAYSIZE(g_title_font_sizes) - 1;
     
         // limit the size of the font used:
 
@@ -433,7 +433,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
             int len = wcslen(str);
             float fPercentToKeep = 0.91f * m_nTitleTexSizeX / (float)(temp.right-temp.left);
             if (len > 8)
-                lstrcpyW( &str[ (int)(len*fPercentToKeep) ], L"...");            
+                wcscpy( &str[ (int)(len*fPercentToKeep) ], L"...");            
             break;
         }
 
@@ -660,10 +660,7 @@ void CPlugin::RunPerFrameEquations(int code)
 #ifndef _NO_EXPR_
 		if (pState->m_pf_codehandle)
 		{
-			if (pState->m_pf_codehandle)
-			{
-				NSEEL_code_execute(pState->m_pf_codehandle);
-			}
+			NSEEL_code_execute(pState->m_pf_codehandle);
 		}
 #endif
 
@@ -771,8 +768,8 @@ void CPlugin::RenderFrame(int bRedraw)
 		fDeltaT = (fDeltaT)*0.2f + 0.8f*(1.0f/m_fps);
 		if (fDeltaT > 2.0f/m_fps)
 		{
-			char buf[64];
-			sprintf(buf, "fixing time gap of %5.3f seconds", fDeltaT);
+			char buf[64] = {0};
+			_snprintf(buf, ARRAYSIZE(buf), "fixing time gap of %5.3f seconds", fDeltaT);
 			dumpmsg(buf);
 
 			fDeltaT = 1.0f/m_fps;
@@ -840,7 +837,7 @@ void CPlugin::RenderFrame(int bRedraw)
 		if (m_fFPSLimitSleep < 0) m_fFPSLimitSleep = 0;
 		if (m_fFPSLimitSleep > 100) m_fFPSLimitSleep = 100;
 
-		//sprintf(m_szUserMessage, "sleep=%f", m_fFPSLimitSleep);
+		//_snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "sleep=%f", m_fFPSLimitSleep);
 		//m_fShowUserMessageUntilThisTime = GetTime() + 3.0f;
 	}
 
@@ -1226,8 +1223,8 @@ void CPlugin::RenderFrame(int bRedraw)
     float fNewTime = (float)((double)m_last_raw_time/(double)m_high_perf_timer_freq.QuadPart);
     float dt = fNewTime-fOldTime;
     if (m_nLoadingPreset != 0) {
-        char buf[256];
-        sprintf(buf, "m_nLoadingPreset==%d: dt=%d ms\n", m_nLoadingPreset, (int)(dt*1000) );
+        char buf[256] = {0};
+        _snprintf(buf, ARRAYSIZE(buf), "m_nLoadingPreset==%d: dt=%d ms\n", m_nLoadingPreset, (int)(dt*1000) );
         OutputDebugString(buf);
     }
     fOldTime = fNewTime;
@@ -1295,8 +1292,7 @@ void CPlugin::DrawMotionVectors()
 			float inv_texsize = 1.0f/(float)m_nTexSizeX;
 			float min_len = 1.0f*inv_texsize;
 
-			WFVERTEX v[(64+1)*2];
-			SecureZeroMemory(v, sizeof(WFVERTEX)*(64+1)*2);
+			WFVERTEX v[(64+1)*2] = {0};
 			v[0].Diffuse = D3DCOLOR_RGBA_01((float)*m_pState->var_pf_mv_r,(float)*m_pState->var_pf_mv_g,(float)*m_pState->var_pf_mv_b,(float)*m_pState->var_pf_mv_a);
 			for (int x=1; x<(nX+1)*2; x++)
 				v[x].Diffuse = v[0].Diffuse;
@@ -1391,8 +1387,8 @@ void CPlugin::UpdateSongInfo()
 {
 	if (m_bShowSongTitle || m_bSongTitleAnims)
 	{
-		char szOldSongMessage[512];
-		lstrcpy(szOldSongMessage, m_szSongMessage);
+		char szOldSongMessage[512] = {0};
+		strcpy(szOldSongMessage, m_szSongMessage);
 
 		if (::GetWindowText(m_hWndParent, m_szSongMessage, sizeof(m_szSongMessage)))
 		{
@@ -1454,8 +1450,8 @@ void CPlugin::UpdateSongInfo()
 				/*
 				m_supertext.bRedrawSuperText = true;
 				m_supertext.bIsSongTitle = true;
-				lstrcpy(m_supertext.szText, m_szSongMessage);
-				lstrcpy(m_supertext.nFontFace, m_szTitleFontFace);
+				strcpy(m_supertext.szText, m_szSongMessage);
+				strcpy(m_supertext.nFontFace, m_szTitleFontFace);
 				m_supertext.fFontSize   = (float)m_nTitleFontSize;
 				m_supertext.bBold       = m_bTitleFontBold;
 				m_supertext.bItal       = m_bTitleFontItalic;
@@ -1473,7 +1469,7 @@ void CPlugin::UpdateSongInfo()
 		}
 		else
 		{
-			sprintf(m_szSongMessage, "<couldn't get song title>");
+			_snprintf(m_szSongMessage, ARRAYSIZE(m_szSongMessage), "<couldn't get song title>");
 		}
 	}
 
@@ -1490,7 +1486,7 @@ void CPlugin::UpdateSongInfo()
 		time_s -= seconds;
 		int dsec = (int)(time_s*100);
 
-		sprintf(m_szSongTime, "%d:%02d.%02d", minutes, seconds, dsec);
+		_snprintf(m_szSongTime, ARRAYSIZE(m_szSongTime), "%d:%02d.%02d", minutes, seconds, dsec);
 	}
 
 	// append song length
@@ -1500,9 +1496,9 @@ void CPlugin::UpdateSongInfo()
 		int minutes = len_s/60;
 		int seconds = len_s - minutes*60;
 
-		char buf[512];
-		sprintf(buf, " / %d:%02d", minutes, seconds);
-		lstrcat(m_szSongTime, buf);
+		char buf[512] = {0};
+		_snprintf(buf, ARRAYSIZE(buf), " / %d:%02d", minutes, seconds);
+		strncat(m_szSongTime, buf, ARRAYSIZE(buf));
 	}
 }
 */
@@ -1620,7 +1616,7 @@ void CPlugin::BlurPasses()
             lpDevice->SetTexture(i, NULL);
 
         // set up fullscreen quad
-        MYVERTEX v[4];
+        MYVERTEX v[4] = {0};
     
         v[0].x = -1; 
         v[0].y = -1;
@@ -1642,11 +1638,11 @@ void CPlugin::BlurPasses()
 
         const float w[8] = { 4.0f, 3.8f, 3.5f, 2.9f, 1.9f, 1.2f, 0.7f, 0.3f };  //<- user can specify these
         float edge_darken = (float)*m_pState->var_pf_blur1_edge_darken;
-        float blur_min[3], blur_max[3];
+        float blur_min[3] = {0}, blur_max[3] = {0};
         GetSafeBlurMinMax(m_pState, blur_min, blur_max);
 
-        float fscale[3];
-        float fbias[3];
+        float fscale[3] = {0};
+        float fbias[3] = {0};
 
         // figure out the progressive scale & bias needed, at each step, 
         // to go from one [min..max] range to the next.
@@ -1777,7 +1773,7 @@ void CPlugin::ComputeGridAlphaValues()
 	// warp stuff
 	float fWarpTime = GetTime() * m_pState->m_fWarpAnimSpeed;
 	float fWarpScaleInv = 1.0f / m_pState->m_fWarpScale.eval(GetTime());
-	float f[4];
+	float f[4] = {0};
 	f[0] = 11.68f + 4.0f*cosf(fWarpTime*1.413f + 10);
 	f[1] =  8.77f + 3.0f*cosf(fWarpTime*1.113f + 7);
 	f[2] = 10.54f + 3.0f*cosf(fWarpTime*1.233f + 3);
@@ -2033,8 +2029,8 @@ void CPlugin::WarpedBlit_NoShaders(int nPass, bool bAlphaBlend, bool bFlipAlpha,
     //  drivers out there.  
     // If we're blending, we'll skip any polygon that is all alpha-blended out.
     // This also respects the MaxPrimCount limit of the video card.
-    MYVERTEX tempv[1024 * 3];
-    int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (sizeof(tempv)/sizeof(tempv[0]))/3) - 4;
+    MYVERTEX tempv[1024 * 3] = {0};
+    int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (ARRAYSIZE(tempv))/3) - 4;
     int primCount = m_nGridX*m_nGridY*2;  
     int src_idx = 0;
     while (src_idx < primCount*3)
@@ -2107,7 +2103,7 @@ void CPlugin::WarpedBlit_NoShaders(int nPass, bool bAlphaBlend, bool bFlipAlpha,
         if (bFlipCulling)
             nAlphaTestValue = 1-nAlphaTestValue;
 
-        int idx[2048];
+        int idx[2048] = {0};
 	    for (int y=0; y<m_nGridY; y++)
 	    {
             // copy verts & flip sign on Y
@@ -2235,8 +2231,8 @@ void CPlugin::WarpedBlit_Shaders(int nPass, bool bAlphaBlend, bool bFlipAlpha, b
         //  the 'ang' values along the angle-wrap seam, halfway through the draw.
         // If we're blending, we'll skip any polygon that is all alpha-blended out.
         // This also respects the MaxPrimCount limit of the video card.
-        MYVERTEX tempv[1024 * 3];
-        int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (sizeof(tempv)/sizeof(tempv[0]))/3) - 4;
+        MYVERTEX tempv[1024 * 3] = {0};
+        int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (ARRAYSIZE(tempv))/3) - 4;
         for (int half=0; half<2; half++)
         {
             // hack / restore the ang values along the angle-wrap [0 <-> 2pi] seam...
@@ -2368,8 +2364,8 @@ void CPlugin::DrawCustomShapes()
                     lpDevice->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
                     lpDevice->SetRenderState(D3DRS_DESTBLEND, ((int)(*pState->m_shape[i].var_pf_additive) != 0) ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
 
-                    SPRITEVERTEX v[512];  // for textured shapes (has texcoords)
-                    WFVERTEX v2[512];     // for untextured shapes + borders
+                    SPRITEVERTEX v[512] = {0};  // for textured shapes (has texcoords)
+                    WFVERTEX v2[512] = {0};     // for untextured shapes + borders
 
                     v[0].x = (float)(*pState->m_shape[i].var_pf_x* 2-1);// * ASPECT;
                     v[0].y = (float)(*pState->m_shape[i].var_pf_y*-2+1);
@@ -2662,7 +2658,7 @@ void CPlugin::DrawCustomWaves()
 
                     // to do:
                     //  -add any of the m_wave[i].xxx menu-accessible vars to the code?
-                    WFVERTEX v[1024];
+                    WFVERTEX v[1024] = {0};
                     float j_mult = 1.0f/(float)(nSamples-1); 
                     for (j=0; j<nSamples; j++)
                     {
@@ -2708,7 +2704,7 @@ void CPlugin::DrawCustomWaves()
                     */
 
                     // 3. smooth it
-                    WFVERTEX v2[2048];
+                    WFVERTEX v2[2048] = {0};
                     WFVERTEX *pVerts = v;
                     if (!pState->m_wave[i].bUseDots) 
                     {
@@ -2764,7 +2760,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
     lpDevice->SetFVF( WFVERTEX_FORMAT );
 
 	int i;
-	WFVERTEX v1[576+1], v2[576+1];
+	WFVERTEX v1[576+1] = {0}, v2[576+1] = {0};
 
     /*
 	m_lpD3DDev->SetRenderState(D3DRENDERSTATE_SHADEMODE, D3DSHADE_GOURAUD); //D3DSHADE_FLAT
@@ -3120,7 +3116,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
 				float dx  = cosf(ang);
 				float dy  = sinf(ang);
 
-				float edge_x[2], edge_y[2];
+				float edge_x[2] = {0}, edge_y[2] = {0};
 
 				//edge_x[0] = fWavePosX - dx*3.0f;
 				//edge_y[0] = fWavePosY - dy*3.0f;
@@ -3307,7 +3303,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
 
     // TESSELLATE - smooth the wave, one time.
     WFVERTEX* pVerts = v1;
-    WFVERTEX vTess[(576+3)*2];
+    WFVERTEX vTess[(576+3)*2] = {0};
     if (1)
     {
         if (nBreak1==-1)
@@ -3385,8 +3381,7 @@ void CPlugin::DrawSprites()
 		lpDevice->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);//SRCALPHA);
 		lpDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-		WFVERTEX v3[6];
-		SecureZeroMemory(v3, sizeof(WFVERTEX)*6);
+		WFVERTEX v3[6] = {0};
 
 		// colors:
 		v3[0].Diffuse = D3DCOLOR_RGBA_01(0, 0, 0, 3.0f/32.0f);
@@ -3429,8 +3424,7 @@ void CPlugin::DrawSprites()
 
 		for (int it=0; it<2; it++)
 		{
-			WFVERTEX v3[4];
-			SecureZeroMemory(v3, sizeof(WFVERTEX)*4);
+			WFVERTEX v3[4] = {0};
 
 			// colors:
 			float r = (it==0) ? (float)*m_pState->var_pf_ob_r : (float)*m_pState->var_pf_ib_r;
@@ -3595,8 +3589,7 @@ void CPlugin::DrawUserSprites()	// from system memory, to back buffer.
 			if (lpDevice->SetTexture(0, m_texmgr.m_tex[iSlot].pSurface) != D3D_OK) 
 				return;
 
-			SPRITEVERTEX v3[4];
-			SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
+			SPRITEVERTEX v3[4] = {0};
 
             /*
             int dest_w, dest_h;
@@ -3896,7 +3889,7 @@ void CPlugin::ApplyShaderParams(CShaderParams* p, LPD3DXCONSTANTTABLE pCT, CStat
     //if (p->texbind_noise   >= 0) lpDevice->SetTexture( p->texbind_noise, m_pTexNoise );        
 
     // bind textures
-    for (int i=0; i<sizeof(p->m_texture_bindings)/sizeof(p->m_texture_bindings[0]); i++) 
+    for (int i=0; i<ARRAYSIZE(p->m_texture_bindings); i++) 
     {    
         if (p->m_texcode[i] == TEX_VS)
             lpDevice->SetTexture(i, m_lpVS[0]);
@@ -3946,7 +3939,7 @@ void CPlugin::ApplyShaderParams(CShaderParams* p, LPD3DXCONSTANTTABLE pCT, CStat
     else
         aspect_x = GetWidth()/(float)GetHeight();
     
-    float blur_min[3], blur_max[3];
+    float blur_min[3] = {0}, blur_max[3] = {0};
     GetSafeBlurMinMax(pState, blur_min, blur_max);
 
     // bind float4's
@@ -3985,7 +3978,7 @@ void CPlugin::ApplyShaderParams(CShaderParams* p, LPD3DXCONSTANTTABLE pCT, CStat
     if (h[13]) pCT->SetVector( lpDevice, h[13], &D3DXVECTOR4( blur_min[1], blur_max[1], blur_min[2], blur_max[2] ));
 
     // write q vars
-    int num_q_float4s = sizeof(p->q_const_handles)/sizeof(p->q_const_handles[0]);
+    int num_q_float4s = ARRAYSIZE(p->q_const_handles);
     for (int i=0; i<num_q_float4s; i++)
     {
         if (p->q_const_handles[i]) 
@@ -4068,8 +4061,7 @@ void CPlugin::ShowToUser_NoShaders()//int bRedraw, int nPassOverride)
     lpDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
     lpDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
-	SPRITEVERTEX v3[4];
-	SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
+	SPRITEVERTEX v3[4] = {0};
 
 	// extend the poly we draw by 1 pixel around the viewable image area, 
 	//  in case the video card wraps u/v coords with a +0.5-texel offset 
@@ -4503,9 +4495,9 @@ void CPlugin::ShowToUser_Shaders(int nPass, bool bAlphaBlend, bool bFlipAlpha, b
         //  drivers out there.  Not a big deal - only ~800 polys / 24kb of data.
         // If we're blending, we'll skip any polygon that is all alpha-blended out.
         // This also respects the MaxPrimCount limit of the video card.
-        MYVERTEX tempv[1024 * 3];
+        MYVERTEX tempv[1024 * 3] = {0};
         int primCount = (FCGSX-2)*(FCGSY-2)*2;  // although, some might not be drawn!
-        int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (sizeof(tempv)/sizeof(tempv[0]))/3) - 4;
+        int max_prims_per_batch = min( GetCaps()->MaxPrimitiveCount, (ARRAYSIZE(tempv))/3) - 4;
         int src_idx = 0;
         while (src_idx < primCount*3)
         {
@@ -4563,8 +4555,7 @@ void CPlugin::ShowSongTitleAnim(int w, int h, float fProgress)
 	lpDevice->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_ONE);
 	lpDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
 
-	SPRITEVERTEX v3[128];
-	SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*128);
+	SPRITEVERTEX v3[128] = {0};
 
 	if (m_supertext.bIsSongTitle)
 	{
@@ -4703,7 +4694,7 @@ void CPlugin::ShowSongTitleAnim(int w, int h, float fProgress)
 		}
 	}
 
-	WORD indices[7*15*6];
+	WORD indices[7*15*6] = {0};
 	i = 0;	
 	for (y=0; y<7; y++)
 	{

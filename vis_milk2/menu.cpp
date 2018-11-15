@@ -312,18 +312,18 @@ void CMilkMenu::DrawMenu(RECT rect, int xR, int yB, int bCalcRect, RECT* pCalcRe
 			size_t addr = pItem->m_var_offset + (size_t)g_plugin.m_pState;
 			if (i >= nStart)
 			{
-				wchar_t szItemText[256];
+				wchar_t szItemText[256] = {0};
 				switch(pItem->m_type)
 				{
 				case MENUITEMTYPE_STRING:
-					lstrcpyW(szItemText, pItem->m_szName);
+					wcsncpy(szItemText, pItem->m_szName, ARRAYSIZE(szItemText));
 					break;
 				case MENUITEMTYPE_BOOL:
-					swprintf(szItemText, L"%s [%s]", pItem->m_szName,
-							 WASABI_API_LNGSTRINGW(*((bool *)(addr)) ? IDS_ON : IDS_OFF));
+					_snwprintf(szItemText, ARRAYSIZE(szItemText), L"%s [%s]", pItem->m_szName,
+							   WASABI_API_LNGSTRINGW(*((bool *)(addr)) ? IDS_ON : IDS_OFF));
 					break;
 				default:
-					lstrcpyW(szItemText, pItem->m_szName);
+					wcsncpy(szItemText, pItem->m_szName, ARRAYSIZE(szItemText));
 					break;
 				}
 
@@ -358,27 +358,27 @@ void CMilkMenu::DrawMenu(RECT rect, int xR, int yB, int bCalcRect, RECT* pCalcRe
 			pItem = pItem->m_pNext;
 		size_t addr = pItem->m_var_offset + (size_t)g_plugin.m_pState;
 
-		wchar_t buf[256];
+		wchar_t buf[256] = {0};
 
         MyMenuTextOut(SIMPLE_FONT, WASABI_API_LNGSTRINGW(IDS_USE_UP_DOWN_ARROW_KEYS), MENU_COLOR, &rect, bCalcRect, pCalcRect);
-		swprintf(buf, WASABI_API_LNGSTRINGW(IDS_CURRENT_VALUE_OF_X), pItem->m_szName);
+		_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_CURRENT_VALUE_OF_X), pItem->m_szName);
         MyMenuTextOut(SIMPLE_FONT, buf, MENU_COLOR, &rect, bCalcRect, pCalcRect);
 
 		switch(pItem->m_type)
 		{
 		case MENUITEMTYPE_INT:
-			swprintf(buf, L" %d ", *((int*)(addr)) );
+			_snwprintf(buf, ARRAYSIZE(buf), L" %d ", *((int*)(addr)) );
 			break;
 		case MENUITEMTYPE_FLOAT: 
 		case MENUITEMTYPE_LOGFLOAT:
-			swprintf(buf, L" %5.3f ", *((float*)(addr)) );
+			_snwprintf(buf, ARRAYSIZE(buf), L" %5.3f ", *((float*)(addr)) );
 			break;
 		case MENUITEMTYPE_BLENDABLE:
 		case MENUITEMTYPE_LOGBLENDABLE:
-			swprintf(buf, L" %5.3f ", ((CBlendableFloat*)addr)->eval(-1) );
+			_snwprintf(buf, ARRAYSIZE(buf), L" %5.3f ", (reinterpret_cast<CBlendableFloat*>(addr))->eval(-1) );
 			break;
 		default:
-			lstrcpyW(buf, L" ? ");
+			wcsncpy(buf, L" ? ", ARRAYSIZE(buf));
 			break;
 		}
 
@@ -405,7 +405,7 @@ void CMilkMenu::OnWaitStringAccept(wchar_t *szNewString)
 	assert(pItem->m_type == MENUITEMTYPE_STRING);
 
 	// apply the edited string 
-	lstrcpyW((wchar_t *)(addr), szNewString);
+	wcscpy((wchar_t *)(addr), szNewString);
 
 	// if user gave us a callback function pointer, call it now
 	if (pItem->m_pCallbackFn)
@@ -515,8 +515,8 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			            g_plugin.m_waitstring.bFilterBadChars = false;
 			            g_plugin.m_waitstring.bDisplayAsCode = false;
 			            g_plugin.m_waitstring.nSelAnchorPos = -1;
-			            g_plugin.m_waitstring.nMaxLen = min(sizeof(g_plugin.m_waitstring.szText)-1, MAX_PATH - wcslen(g_plugin.GetPresetDir()) - 6);	// 6 for the extension + null char.    We set this because win32 LoadFile, MoveFile, etc. barf if the path+filename+ext are > MAX_PATH chars.
-						swprintf(g_plugin.m_waitstring.szText, L"%sfile.dat", g_plugin.m_szPresetDir);
+			            g_plugin.m_waitstring.nMaxLen = min(ARRAYSIZE(g_plugin.m_waitstring.szText)-1, MAX_PATH - wcslen(g_plugin.GetPresetDir()) - 6);	// 6 for the extension + null char.    We set this because win32 LoadFile, MoveFile, etc. barf if the path+filename+ext are > MAX_PATH chars.
+						_snwprintf(g_plugin.m_waitstring.szText, ARRAYSIZE(g_plugin.m_waitstring.szText), L"%sfile.dat", g_plugin.m_szPresetDir);
                         if (g_plugin.m_UI_mode==UI_IMPORT_WAVE || g_plugin.m_UI_mode==UI_IMPORT_SHAPE)
 							WASABI_API_LNGSTRINGW_BUF(IDS_LOAD_FROM_FILE,g_plugin.m_waitstring.szPrompt,512);
                         else
@@ -543,7 +543,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 					{
 						//CBlendableFloat *p = (CBlendableFloat*)(pItem->m_pVariable);
 						//*p = 0.99f;
-						fTemp = ((CBlendableFloat*)addr)->eval(-1);//p->eval(-1);
+						fTemp = (reinterpret_cast<CBlendableFloat*>(addr))->eval(-1);//p->eval(-1);
 					}
 					pItem->m_original_value = (LPARAM)(fTemp*10000L);
 					break;
@@ -556,11 +556,11 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 					g_plugin.m_waitstring.bDisplayAsCode = true;
 					g_plugin.m_waitstring.nSelAnchorPos = -1;
                     g_plugin.m_waitstring.nMaxLen = pItem->m_wParam ? pItem->m_wParam : 8190;
-                    g_plugin.m_waitstring.nMaxLen = min(g_plugin.m_waitstring.nMaxLen, sizeof(g_plugin.m_waitstring.szText)-16);
-					//lstrcpyW(g_plugin.m_waitstring.szText, (wchar_t *)addr);
-					lstrcpyA((char*)g_plugin.m_waitstring.szText, (char*)addr);
-					swprintf(g_plugin.m_waitstring.szPrompt, WASABI_API_LNGSTRINGW(IDS_ENTER_THE_NEW_STRING), pItem->m_szName);
-					lstrcpyW(g_plugin.m_waitstring.szToolTip, pItem->m_szToolTip);
+                    g_plugin.m_waitstring.nMaxLen = min(g_plugin.m_waitstring.nMaxLen, ARRAYSIZE(g_plugin.m_waitstring.szText)-16);
+					//wcscpy(g_plugin.m_waitstring.szText, (wchar_t *)addr);
+					strncpy((char*)g_plugin.m_waitstring.szText, (char*)addr, ARRAYSIZE(g_plugin.m_waitstring.szText));
+					_snwprintf(g_plugin.m_waitstring.szPrompt, ARRAYSIZE(g_plugin.m_waitstring.szPrompt), WASABI_API_LNGSTRINGW(IDS_ENTER_THE_NEW_STRING), pItem->m_szName);
+					wcsncpy(g_plugin.m_waitstring.szToolTip, pItem->m_szToolTip, ARRAYSIZE(g_plugin.m_waitstring.szToolTip));
 					g_plugin.m_waitstring.nCursorPos = strlen/*wcslen*/((char*)g_plugin.m_waitstring.szText);
 					if (pItem->m_nLastCursorPos < g_plugin.m_waitstring.nCursorPos)
 						g_plugin.m_waitstring.nCursorPos = pItem->m_nLastCursorPos;
@@ -612,11 +612,11 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 				break;
 			case MENUITEMTYPE_BLENDABLE:	
 				m_bEditingCurSel = false;
-				*((CBlendableFloat *)(addr)) = ((float)(pItem->m_original_value))*0.0001f;  
+				*(reinterpret_cast<CBlendableFloat *>(addr)) = ((float)(pItem->m_original_value))*0.0001f;  
 				break;
 			case MENUITEMTYPE_LOGBLENDABLE:	
 				m_bEditingCurSel = false;
-				*((CBlendableFloat *)(addr)) = ((float)(pItem->m_original_value))*0.0001f;  
+				*(reinterpret_cast<CBlendableFloat *>(addr)) = ((float)(pItem->m_original_value))*0.0001f;  
 				break;
 			//case MENUITEMTYPE_STRING:  
 				// won't ever happen - see OnWaitStringCancel()
@@ -679,7 +679,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 				break;
 			case MENUITEMTYPE_BLENDABLE: 
 				{
-					CBlendableFloat *pBlend = ((CBlendableFloat *)addr);
+					CBlendableFloat *pBlend = (reinterpret_cast<CBlendableFloat *>(addr));
 					float fInc = (pItem->m_fMax - pItem->m_fMin)*0.01f*fMult;
 					(*pBlend) += (bDec) ? -fInc : fInc;
 					if (pBlend->eval(-1) < pItem->m_fMin) *pBlend = pItem->m_fMin;
@@ -688,7 +688,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 				break;
 			case MENUITEMTYPE_LOGBLENDABLE:
 				{
-					CBlendableFloat *pBlend = ((CBlendableFloat *)addr);
+					CBlendableFloat *pBlend = (reinterpret_cast<CBlendableFloat *>(addr));
 					(*pBlend) *= (bDec) ? powf(1.0f/1.01f, fMult) : powf(1.01f, fMult);
 					if (pBlend->eval(-1) < pItem->m_fMin) *pBlend = pItem->m_fMin;
 					if (pBlend->eval(-1) > pItem->m_fMax) *pBlend = pItem->m_fMax;

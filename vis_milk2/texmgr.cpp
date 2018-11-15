@@ -259,7 +259,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 			break;
 		}
 		
-		sprintf(buf, "texmgr: w=%d, h=%d, channels=%d", w_img, h_img, img_color_channels);
+		_snprintf(buf, ARRAYSIZE(buf), "texmgr: w=%d, h=%d, channels=%d", w_img, h_img, img_color_channels);
 		//g_dumpmsg(buf);
 
 		m_tex[iSlot].img_w = w_img;
@@ -293,7 +293,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 		unsigned int h_tex   = m_tex[iSlot].tex_h;
 		unsigned int bpp_tex = m_tex[iSlot].ddpf.dwRGBBitCount;
 
-		sprintf(buf, "texmgr: created ddraw surface; %d x %d x %d", w_tex, h_tex, bpp_tex);
+		_snprintf(buf, ARRAYSIZE(buf), "texmgr: created ddraw surface; %d x %d x %d", w_tex, h_tex, bpp_tex);
 		//g_dumpmsg(buf);
 
 		DDSURFACEDESC2 ddsd;
@@ -352,8 +352,8 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 			unsigned int new_h_img = min(h_tex, h_img);
 
 			{
-				char buf[256];
-				sprintf(buf, "texmgr: downsampling image from %dx%d to %dx%d and storing in %dx%d texture.", w_img,h_img, new_w_img,new_h_img, w_tex,h_tex);
+				char buf[256] = {0};
+				_snprintf(buf, ARRAYSIZE(buf), "texmgr: downsampling image from %dx%d to %dx%d and storing in %dx%d texture.", w_img,h_img, new_w_img,new_h_img, w_tex,h_tex);
 				//g_dumpmsg(buf);
 			}
 
@@ -668,7 +668,7 @@ bool texmgr::RecompileExpressions(int iSlot)
 
 	// replace linefeed control characters with spaces, so they don't mess up the code compiler,
 	// and strip out any comments ('//') before sending to CompileCode().
-	char buf[sizeof(m_tex[iSlot].m_szExpr)];
+	char buf[sizeof(m_tex[iSlot].m_szExpr)] = {0};
 	StripLinefeedCharsAndComments(expr, buf);
 
 	if (buf[0])
@@ -681,7 +681,7 @@ bool texmgr::RecompileExpressions(int iSlot)
 			{
 				//g_dumpmsg(" -error!");
 				//MessageBox( NULL, "error in per-frame code", "MILKDROP ERROR", MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
-				//sprintf(pg->m_szUserMessage, "warning: preset \"%s\": error in 'per_frame' code", m_szDesc);
+				//_snprintf(pg->m_szUserMessage, ARRAYSIZE(pg->m_szUserMessage), "warning: preset \"%s\": error in 'per_frame' code", m_szDesc);
 				//pg->m_fShowUserMessageUntilThisTime = pg->m_fAnimTime + 6.0f;
 			}
 			else

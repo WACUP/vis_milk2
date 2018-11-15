@@ -90,15 +90,15 @@ typedef struct _SPRITEVERTEX
 #define SPRITEVERTEX_FORMAT (D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE2(0) )
 
 void    GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, int nSize);
-void    GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos);
-void    GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen);
+void    GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, int nSongPos);
+void    GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, int nSongLen);
 float   GetWinampSongPos(HWND hWndWinamp);      // returns answer in seconds
 float   GetWinampSongLen(HWND hWndWinamp);      // returns answer in seconds
 
 //#define PROFILING
 #ifdef PROFILING
     #define PROFILE_BEGIN    LARGE_INTEGER tx, freq, ty; QueryPerformanceCounter(&tx); QueryPerformanceFrequency(&freq);
-    #define PROFILE_END(s)   { QueryPerformanceCounter(&ty); float dt = (float)((double)(ty.QuadPart - tx.QuadPart) / (double)freq.QuadPart); char buf[256]; sprintf(buf, "  %s = %.1f ms\n", s, dt*1000 ); OutputDebugString(buf); tx = ty; }
+    #define PROFILE_END(s)   { QueryPerformanceCounter(&ty); float dt = (float)((double)(ty.QuadPart - tx.QuadPart) / (double)freq.QuadPart); char buf[256]; _snprintf(buf, ARRAYSIZE(buf), "  %s = %.1f ms\n", s, dt*1000 ); OutputDebugString(buf); tx = ty; }
 #else
     #define PROFILE_BEGIN
     #define PROFILE_END(s)

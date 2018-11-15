@@ -587,8 +587,10 @@ public:
         char        m_szBlurPSY[32768];
         //const char* GetDefaultWarpShadersText() { return m_szDefaultWarpShaderText; }
         //const char* GetDefaultCompShadersText() { return m_szDefaultCompShaderText; }
-        void        GenWarpPShaderText(char *szShaderText, float decay, bool bWrap);
-        void        GenCompPShaderText(char *szShaderText, float brightness, float ve_alpha, float ve_zoom, int ve_orient, float hue_shader, bool bBrighten, bool bDarken, bool bSolarize, bool bInvert);
+        void        GenWarpPShaderText(char *szShaderText, int szShaderTextLen, float decay, bool bWrap);
+        void        GenCompPShaderText(char *szShaderText, int szShaderTextLen, float brightness,
+									   float ve_alpha, float ve_zoom, int ve_orient, float hue_shader,
+									   bool bBrighten, bool bDarken, bool bSolarize, bool bInvert);
 
    //====[ 2. methods added: ]=====================================================================================
         

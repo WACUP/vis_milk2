@@ -66,7 +66,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_truly_exiting = 0;
 	m_bpp = 0;
 	m_frame_delay = 0;
-	StringCbCopyW(m_szIniFile, sizeof(m_szIniFile), szIniFile);
+	StringCchCopyW(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
 	memset(&myWindowState,0,sizeof(myWindowState));
 	m_szDriver[0] = 0;
 	m_szDesc[0] = 0;
@@ -103,7 +103,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_classAtom = RegisterClassW(&wc);
 	if (!m_classAtom)
 	{
-		wchar_t title[64];
+		wchar_t title[64] = {0};
 		m_lastErr = DXC_ERR_REGWIN;
 		MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_REGISTER_WINDOW_CLASS),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -112,7 +112,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 		return;
 	}
 
-	StringCbCopyA(m_szWindowCaption, sizeof(m_szWindowCaption), szWindowCaption);
+	StringCchCopyA(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
 	m_hInstance = hInstance;
 	m_uWindowLong = uWindowLong;
 }
@@ -148,13 +148,13 @@ void DXContext::Internal_CleanUp()
 		}
 	}
 
-	if (myWindowState.me)
+	if (IsWindow(myWindowState.me))
 	{
 		DestroyWindow(myWindowState.me);
 		myWindowState.me = NULL;
 		m_hwnd = NULL;
 	}
-	else if (m_hwnd)
+	else if (IsWindow(m_hwnd))
 	{
 		DestroyWindow(m_hwnd);
 		m_hwnd = NULL;
@@ -218,7 +218,7 @@ int DXContext::CheckAndCorrectFullscreenDispMode(int ordinal_adapter, D3DDISPLAY
 
 
 #define MAX_DISPLAY_MODES 4096
-	D3DDISPLAYMODE list[MAX_DISPLAY_MODES];
+	D3DDISPLAYMODE list[MAX_DISPLAY_MODES] = {0};
 	int nCount = min(m_lpD3D->GetAdapterModeCount(ordinal_adapter, D3DFMT_A8R8G8B8), MAX_DISPLAY_MODES);
 	int nValid = 0;
 	for (int i=0; i<nCount; i++)
@@ -364,7 +364,7 @@ int DXContext::GetWindowedModeAutoSize(int iteration)
 		x /= 2;
 
 		// move window to same display that Winamp is on:
-		WINDOWPLACEMENT wp;
+		WINDOWPLACEMENT wp = {0};
 		wp.length = sizeof(wp);
 		if (GetWindowPlacement(m_hwnd_winamp, &wp))
 		{
@@ -381,7 +381,7 @@ int DXContext::GetWindowedModeAutoSize(int iteration)
 		y /= 2;
 
 		// move window to same display that Winamp is on:
-		WINDOWPLACEMENT wp;
+		WINDOWPLACEMENT wp = {0};
 		wp.length = sizeof(wp);
 		if (GetWindowPlacement(m_hwnd_winamp, &wp))
 		{
@@ -500,8 +500,8 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (m_lpD3D->GetAdapterIdentifier(m_ordinal_adapter, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &temp) == D3D_OK)
 		{
-			StringCbCopyA(m_szDriver, sizeof(m_szDriver), temp.Driver);
-			StringCbCopyA(m_szDesc, sizeof(m_szDesc), temp.Description);
+			StringCchCopyA(m_szDriver, ARRAYSIZE(m_szDriver), temp.Driver);
+			StringCchCopyA(m_szDesc, ARRAYSIZE(m_szDesc), temp.Description);
 		}
 
 		int caps_ok = 0;
@@ -571,7 +571,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 			if (m_current_mode.display_mode.Format==D3DFMT_UNKNOWN)
 			{
-				wchar_t title[64];
+				wchar_t title[64] = {0};
 				m_lastErr = DXC_ERR_FORMAT;
 				MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED),
 						    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -610,7 +610,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				}
 				else
 				{
-					wchar_t title[64];
+					wchar_t title[64] = {0};
 					m_lastErr = DXC_ERR_CAPSFAIL;
 					MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DXC_ERR_CAPSFAIL),
 							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -627,7 +627,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (changed_fs_disp_mode)
 		{
-			wchar_t title[64];
+			wchar_t title[64] = {0};
 			MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_FS_DISPLAY_MODE_SELECTED_IS_INVALID),
 					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
 					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -686,7 +686,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			{
 				myWindowState.flags |= EMBED_FLAGS_SCALEABLE_WND;
 				m_current_mode.parent_window = e(&myWindowState);
-				if (m_current_mode.parent_window)
+				if (IsWindow(m_current_mode.parent_window))
 				{
 					SetWindowTextA(m_current_mode.parent_window, m_szWindowCaption);
 					success = 1;
@@ -730,7 +730,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (!m_hwnd)
 		{
-			wchar_t title[64];
+			wchar_t title[64] = {0};
 			m_lastErr = DXC_ERR_CREATEWIN;
 			MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_CREATEWINDOW_FAILED),
 					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
@@ -902,7 +902,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			// test #1
 			if (x >= y*2 || y > x*4/3)     // tackle problem of vert/horz spans
 			{
-				wchar_t title[64];
+				wchar_t title[64] = {0};
 				int ret = MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS),
 									  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
 									  MB_OKCANCEL|MB_SETFOREGROUND|MB_TOPMOST);
@@ -916,7 +916,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			// test #2
 			if ((cx >= cy*2 && x < y*2) || (cy > cx*4/3 && y <= x*4/3))
 			{
-				wchar_t title[64];
+				wchar_t title[64] = {0};
 				int ret = MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS_2),
 									  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
 									  MB_OKCANCEL|MB_SETFOREGROUND|MB_TOPMOST);
@@ -1102,13 +1102,13 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				{
 					m_lastErr = DXC_ERR_CREATEDEV_NOT_AVAIL;
 
-					wchar_t str[2048];
+					wchar_t str[2048] = {0};
 					WASABI_API_LNGSTRINGW_BUF(IDS_UNABLE_TO_CREATE_DIRECTX_DEVICE, str, 2048);
 
 					if (m_current_mode.screenmode == FULLSCREEN)
-						StringCbCatW(str, sizeof(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION));
+						StringCchCatW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION));
 					else
-						StringCbCatW(str, sizeof(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2));
+						StringCchCatW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2));
 
 					MessageBoxW(m_hwnd,str,
 							   WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
@@ -1121,10 +1121,10 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				}
 				else if (m_current_mode.screenmode != WINDOWED || m_client_width <= 64)
 				{
-					wchar_t str[2048];
+					wchar_t str[2048] = {0};
 					// usually, code==2154 here, which is D3DERR_OUTOFVIDEOMEMORY
 					m_lastErr = DXC_ERR_CREATEDEV_PROBABLY_OUTOFVIDEOMEMORY;
-					StringCbPrintfW(str, sizeof(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
+					StringCchPrintfW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
 
 					// NOTE: *A 'SUGGESTION' SCREEN SHOULD APPEAR NEXT, PROVIDED BY THE CALLER*
 					MessageBoxW(m_hwnd, str,
@@ -1183,7 +1183,7 @@ BOOL DXContext::StartOrRestartDevice(DXCONTEXT_PARAMS *pParams)
 	// note: for windowed mode, 'pParams->disp_mode' (w/h/r/f) is ignored.
 
 	// destroy old window
-	if (myWindowState.me)
+	if (IsWindow(myWindowState.me))
 	{
 		m_ignore_wm_destroy = 1;
 		if (m_current_mode.screenmode == WINDOWED)
@@ -1193,7 +1193,7 @@ BOOL DXContext::StartOrRestartDevice(DXCONTEXT_PARAMS *pParams)
 		m_ignore_wm_destroy = 0;
 		m_hwnd=0;
 	}
-	else if (m_hwnd)
+	else if (IsWindow(m_hwnd))
 	{
 		SendMessage(m_hwnd_winamp, WM_WA_IPC, NULL, IPC_SETVISWND);
 		m_ignore_wm_destroy = 1;
@@ -1253,7 +1253,7 @@ BOOL DXContext::OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect)
 	{
 		WriteSafeWindowPos();
 
-		wchar_t title[64];
+		wchar_t title[64] = {0};
 		MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_WINDOW_RESIZE_FAILED),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_OUT_OF_VIDEO_MEMORY, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);

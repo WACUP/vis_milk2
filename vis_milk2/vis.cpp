@@ -39,7 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CPlugin  g_plugin;
 _locale_t g_use_C_locale = 0;
-char keyMappings[8];
+char keyMappings[8] = {0};
 bool g_bFullyExited = true;
 
 // wasabi based services for localisation support
@@ -64,7 +64,7 @@ winampVisModule mod1 =
     0,		// nCh
     0,		// latencyMS - tells winamp how much in advance you want the audio data, 
 			//             in ms.
-    3/*10*/,// delayMS - if winamp tells the plugin to render a frame and it takes
+    3/*/10/**/,// delayMS - if winamp tells the plugin to render a frame and it takes
 			//           less than this # of milliseconds, winamp will sleep (go idle)
             //           for the remainder.  In effect, this limits the framerate of
             //           the plugin.  A value of 10 would cause a fps limit of ~100.
@@ -110,7 +110,7 @@ static HINSTANCE GetMyInstance()
 #ifdef __cplusplus
 extern "C" {
 #endif
-	__declspec( dllexport ) winampVisHeader *winampVisGetHeader(HWND hwndParent)
+	__declspec(dllexport) winampVisHeader *winampVisGetHeader(HWND hwndParent)
 	{
 		if(!WASABI_API_LNG_HINST)
 		{
@@ -166,7 +166,7 @@ bool WaitUntilPluginFinished(HWND hWndWinamp)
 
     if (!g_bFullyExited)
     {
-		wchar_t title[64];
+		wchar_t title[64] = {0};
         MessageBoxW(hWndWinamp, WASABI_API_LNGSTRINGW(IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -226,7 +226,7 @@ int init(struct winampVisModule *this_mod)
 
         if (ret != 1)
         {
-			wchar_t title[64];
+			wchar_t title[64] = {0};
             MessageBoxW(this_mod->hwndParent, WASABI_API_LNGSTRINGW(IDS_THIS_PLUGIN_NEEDS_MUSIC_TO_RUN),
 					   WASABI_API_LNGSTRINGW_BUF(IDS_NO_MUSIC_PLAYING, title, 64),
 					   MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL );

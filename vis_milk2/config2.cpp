@@ -68,8 +68,8 @@ void SaveFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
 	t = SendMessage( sizebox, CB_GETCURSEL, 0, 0);
     if (t != CB_ERR)
     {
-        int nMax = sizeof(g_nFontSize)/sizeof(int);
-        fi->nSize =g_nFontSize[nMax-1 - t]; 
+        int nMax = ARRAYSIZE(g_nFontSize);
+        fi->nSize = g_nFontSize[nMax-1 - t]; 
     }
 
 	// font options
@@ -91,8 +91,8 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
     if (namebox && szFontName && szFontName[0])
     {
         ShowWindow(namebox, SW_NORMAL);
-        wchar_t buf[256];
-        StringCbPrintfW(buf, sizeof(buf), L"%s:", szFontName);
+        wchar_t buf[256] = {0};
+        StringCchPrintfW(buf, ARRAYSIZE(buf), L"%s:", szFontName);
         SetWindowTextW(GetDlgItem(hwnd,ctrl4), buf);
     }
 
@@ -104,12 +104,12 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
 
 	//---------font size box-------------------
     int nSel = 0;
-    int nMax = sizeof(g_nFontSize)/sizeof(int);
+    int nMax = ARRAYSIZE(g_nFontSize);
     for (int i=0; i<nMax; i++)
     {
-        wchar_t buf[256];
+        wchar_t buf[256] = {0};
         int s = g_nFontSize[nMax-1 - i];
-        StringCbPrintfW(buf, sizeof(buf), L" %2d ", s);
+        StringCchPrintfW(buf, ARRAYSIZE(buf), L" %2d ", s);
 		SendMessageW(sizebox, CB_ADDSTRING, i, (LPARAM)buf);
         if (s == fi->nSize)
             nSel = i;
@@ -135,7 +135,7 @@ BOOL CALLBACK CPluginShell::FontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPAR
     if (msg==WM_INITDIALOG && lParam > 0 && GetWindowLongPtr(hwnd,GWLP_USERDATA)==0)
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
 
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
 
     if (p)
         return p->PluginShellFontDialogProc(hwnd, msg, wParam, lParam);
@@ -258,7 +258,7 @@ BOOL CALLBACK CPluginShell::DesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM w
     if (msg==WM_INITDIALOG && lParam > 0 && GetWindowLongPtr(hwnd,GWLP_USERDATA)==0)
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
 
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
 
     if (p)
         return p->PluginShellDesktopOptionsDialogProc(hwnd, msg, wParam, lParam);
@@ -323,40 +323,39 @@ BOOL CPluginShell::PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM
         if (lParam)
         {
             HELPINFO *ph = (HELPINFO*)lParam;
-            wchar_t title[1024];
-            wchar_t buf[2048];
-            wchar_t ctrl_name[1024];
-            GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, sizeof(ctrl_name)/sizeof(*ctrl_name));
+            wchar_t title[1024] = {0};
+            wchar_t buf[2048] = {0};
+            wchar_t ctrl_name[1024] = {0};
+            GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
             RemoveSingleAmpersands(ctrl_name);
-						buf[0] = 0;
 
-						switch(ph->iCtrlId)
-						{
-						case IDC_DM_ALPHA_FIX:
-						case IDC_DM_ALPHA_FIX_CAPTION:
-							WASABI_API_LNGSTRINGW_BUF(IDS_NO_ALPHA_FALLBACK, title, 1024);
-							WASABI_API_LNGSTRINGW_BUF(IDS_NO_ALPHA_FALLBACK_HELP, buf, 2048);
-							break;
+			switch(ph->iCtrlId)
+			{
+			case IDC_DM_ALPHA_FIX:
+			case IDC_DM_ALPHA_FIX_CAPTION:
+				WASABI_API_LNGSTRINGW_BUF(IDS_NO_ALPHA_FALLBACK, title, 1024);
+				WASABI_API_LNGSTRINGW_BUF(IDS_NO_ALPHA_FALLBACK_HELP, buf, 2048);
+				break;
 
-						case IDC_CB_SHOW_ICONS:
-							StringCbPrintfW(title, sizeof(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
-							WASABI_API_LNGSTRINGW_BUF(IDS_CB_SHOW_ICONS_HELP, buf, 2048);
-							break;
+			case IDC_CB_SHOW_ICONS:
+				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				WASABI_API_LNGSTRINGW_BUF(IDS_CB_SHOW_ICONS_HELP, buf, 2048);
+				break;
 
-						case IDC_CB_BOX:
-							WASABI_API_LNGSTRINGW_BUF(IDS_CB_BOX, title, 1024);
-							WASABI_API_LNGSTRINGW_BUF(IDS_CB_BOX_HELP, buf, 2048);
-							break;
+			case IDC_CB_BOX:
+				WASABI_API_LNGSTRINGW_BUF(IDS_CB_BOX, title, 1024);
+				WASABI_API_LNGSTRINGW_BUF(IDS_CB_BOX_HELP, buf, 2048);
+				break;
 
-						case IDC_CB_MANUAL_SCOOT:
-							WASABI_API_LNGSTRINGW_BUF(IDS_CB_MANUAL_SCOOT, title, 1024);
-							WASABI_API_LNGSTRINGW_BUF(IDS_CB_MANUAL_SCOOT_HELP, buf, 2048);
-							break;
-						}
+			case IDC_CB_MANUAL_SCOOT:
+				WASABI_API_LNGSTRINGW_BUF(IDS_CB_MANUAL_SCOOT, title, 1024);
+				WASABI_API_LNGSTRINGW_BUF(IDS_CB_MANUAL_SCOOT_HELP, buf, 2048);
+				break;
+			}
 
-						if (buf[0])
-							MessageBoxW(hwnd, buf, title, MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
-				}
+			if (buf[0])
+				MessageBoxW(hwnd, buf, title, MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+		}
         break;
     } 
     return 0;
@@ -367,7 +366,7 @@ BOOL CALLBACK CPluginShell::DualheadDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
     if (msg==WM_INITDIALOG && lParam > 0 && GetWindowLongPtr(hwnd,GWLP_USERDATA)==0)
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
 
-    CPluginShell* p = (CPluginShell*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+    CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
 
     if (p)
         return p->PluginShellDualheadDialogProc(hwnd, msg, wParam, lParam);

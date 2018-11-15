@@ -81,7 +81,7 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
 
         // scan each line in the file for "szVarName=value" pairs, and store info about them.
         #define MAX_VARNAME_LEN 128
-        char szThisLineVarName[MAX_VARNAME_LEN];
+        char szThisLineVarName[MAX_VARNAME_LEN] = {0};
         while (1) 
         {
             char ch;
@@ -178,7 +178,7 @@ bool _GetLineByName(FILE* f, const char* szVarName, char* szRet, int nMaxRetChar
 
 int GetFastInt   (const char* szVarName, int   def, FILE* f)
 {
-    char buf[256];
+    char buf[256] = {0};
     if (!_GetLineByName(f, szVarName, buf, 255))
         return def;
     int ret;
@@ -189,7 +189,7 @@ int GetFastInt   (const char* szVarName, int   def, FILE* f)
 
 float GetFastFloat (const char* szVarName, float def, FILE* f)
 {
-    char buf[256];
+    char buf[256] = {0};
     if (!_GetLineByName(f, szVarName, buf, 255))
         return def;
     float ret;
@@ -294,8 +294,8 @@ void CState::RegisterBuiltInVariables(int flags)
 	    var_pf_wave_mode = NSEEL_VM_regvar(m_pf_eel, "wave_mode");
         for (int vi=0; vi<NUM_Q_VAR; vi++)
         {
-            char buf[16];
-            sprintf(buf, "q%d", vi+1);
+            char buf[16] = {0};
+            _snprintf(buf, ARRAYSIZE(buf), "q%d", vi+1);
             var_pf_q[vi] = NSEEL_VM_regvar(m_pf_eel, buf);
         }
 	    var_pf_progress = NSEEL_VM_regvar(m_pf_eel, "progress");
@@ -377,8 +377,8 @@ void CState::RegisterBuiltInVariables(int flags)
 	    var_pv_ang		= NSEEL_VM_regvar(m_pv_eel, "ang");		// i
         for (int vi=0; vi<NUM_Q_VAR; vi++)
         {
-            char buf[16];
-            sprintf(buf, "q%d", vi+1);
+            char buf[16] = {0};
+            _snprintf(buf, ARRAYSIZE(buf), "q%d", vi+1);
             var_pv_q[vi] = NSEEL_VM_regvar(m_pv_eel, buf);
         }
 	    var_pv_progress = NSEEL_VM_regvar(m_pv_eel, "progress");
@@ -401,14 +401,14 @@ void CState::RegisterBuiltInVariables(int flags)
 	        m_wave[i].var_pf_progress   = NSEEL_VM_regvar(m_wave[i].m_pf_eel, "progress");  // i
             for (int vi=0; vi<NUM_Q_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "q%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "q%d", vi+1);
                 m_wave[i].var_pf_q[vi] = NSEEL_VM_regvar(m_wave[i].m_pf_eel, buf);
             }
             for (int vi=0; vi<NUM_T_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "t%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "t%d", vi+1);
                 m_wave[i].var_pf_t[vi] = NSEEL_VM_regvar(m_wave[i].m_pf_eel, buf);
             }
 	        m_wave[i].var_pf_bass		= NSEEL_VM_regvar(m_wave[i].m_pf_eel, "bass");		// i
@@ -430,14 +430,14 @@ void CState::RegisterBuiltInVariables(int flags)
 	        m_wave[i].var_pp_progress   = NSEEL_VM_regvar(m_wave[i].m_pp_eel, "progress");  // i
             for (int vi=0; vi<NUM_Q_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "q%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "q%d", vi+1);
                 m_wave[i].var_pp_q[vi] = NSEEL_VM_regvar(m_wave[i].m_pp_eel, buf);
             }
             for (int vi=0; vi<NUM_T_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "t%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "t%d", vi+1);
                 m_wave[i].var_pp_t[vi] = NSEEL_VM_regvar(m_wave[i].m_pp_eel, buf);
             }
 	        m_wave[i].var_pp_bass		= NSEEL_VM_regvar(m_wave[i].m_pp_eel, "bass");		// i
@@ -469,14 +469,14 @@ void CState::RegisterBuiltInVariables(int flags)
 	        m_shape[i].var_pf_progress   = NSEEL_VM_regvar(m_shape[i].m_pf_eel, "progress");  // i
             for (int vi=0; vi<NUM_Q_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "q%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "q%d", vi+1);
                 m_shape[i].var_pf_q[vi] = NSEEL_VM_regvar(m_shape[i].m_pf_eel, buf);
             }
             for (int vi=0; vi<NUM_T_VAR; vi++)
             {
-                char buf[16];
-                sprintf(buf, "t%d", vi+1);
+                char buf[16] = {0};
+                _snprintf(buf, ARRAYSIZE(buf), "t%d", vi+1);
                 m_shape[i].var_pf_t[vi] = NSEEL_VM_regvar(m_shape[i].m_pf_eel, buf);
             }
 	        m_shape[i].var_pf_bass		= NSEEL_VM_regvar(m_shape[i].m_pf_eel, "bass");		// i
@@ -521,9 +521,7 @@ void CState::Default(DWORD ApplyFlags)
          (ApplyFlags & STATE_WAVE)        // updates the name, but mash-ups don't.
         )
     {
-        lstrcpyW(m_szDesc, INVALID_PRESET_DESC);
-	    //lstrcpy(m_szSection, "n/a");
-
+        wcsncpy(m_szDesc, INVALID_PRESET_DESC, ARRAYSIZE(m_szDesc));
         m_fPresetStartTime = -1;
     }
 
@@ -742,25 +740,25 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 	/*
 	//for (int e=0; e<MAX_EVALS; e++)
 	{
-		char szTemp[MAX_BIGSTRING_LEN];
+		char szTemp[MAX_BIGSTRING_LEN] = {0};
 
-		lstrcpy(szTemp, m_szPerFrameExpr);
-		lstrcpy(m_szPerFrameExpr, s_to->m_szPerFrameExpr);
-		lstrcpy(s_to->m_szPerFrameExpr, szTemp);
+		strcpy(szTemp, m_szPerFrameExpr);
+		strcpy(m_szPerFrameExpr, s_to->m_szPerFrameExpr);
+		strcpy(s_to->m_szPerFrameExpr, szTemp);
 
-		lstrcpy(szTemp, m_szPerPixelExpr);
-		lstrcpy(m_szPerPixelExpr, s_to->m_szPerPixelExpr);
-		lstrcpy(s_to->m_szPerPixelExpr, szTemp);
+		strcpy(szTemp, m_szPerPixelExpr);
+		strcpy(m_szPerPixelExpr, s_to->m_szPerPixelExpr);
+		strcpy(s_to->m_szPerPixelExpr, szTemp);
 
-		lstrcpy(szTemp, m_szPerFrameInit);
-		lstrcpy(m_szPerFrameInit, s_to->m_szPerFrameInit);
-		lstrcpy(s_to->m_szPerFrameInit, szTemp);
+		strcpy(szTemp, m_szPerFrameInit);
+		strcpy(m_szPerFrameInit, s_to->m_szPerFrameInit);
+		strcpy(s_to->m_szPerFrameInit, szTemp);
 	}
 	RecompileExpressions();
 	s_to->RecompileExpressions();
 
-	lstrcpy(m_szDesc,    s_to->m_szDesc);
-	//lstrcpy(m_szSection, s_to->m_szSection);
+	strcpy(m_szDesc,    s_to->m_szDesc);
+	//strcpy(m_szSection, s_to->m_szSection);
 	*/
 	
 	// CBlendableFloats & SuperValues blend over time 
@@ -850,7 +848,7 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 
 void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostrophe = false)
 {
-	char szLineName[32];
+	char szLineName[32] = {0};
 	int line = 1;
 	int start_pos = 0;
 	int char_pos = 0;
@@ -861,7 +859,7 @@ void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostro
 				pStr[char_pos] != LINEFEED_CONTROL_CHAR)
 			++char_pos;
 
-		sprintf(szLineName, "%s%d", prefix, line);
+		_snprintf(szLineName, ARRAYSIZE(szLineName), "%s%d", prefix, line);
 
 		char ch = pStr[char_pos];
 		pStr[char_pos] = 0;
@@ -875,9 +873,9 @@ void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostro
 	}
 }
 
-bool CState::Export(const wchar_t *szFile)
+bool CState::Export(const wchar_t *szIniFile)
 {
-	FILE *fOut = _wfopen(szFile, L"w");
+	FILE *fOut = _wfopen(szIniFile, L"w");
 	if (!fOut) return false;
 
     // IMPORTANT: THESE MUST BE THE FIRST TWO LINES.  Otherwise it is assumed to be a MilkDrop 1-era preset.
@@ -1012,10 +1010,10 @@ int  CWave::Export(FILE* f, const wchar_t *szFile, int i)
 	fprintf(f2, "wavecode_%d_%s=%.3f\n", i, "a",          a);
 
     // READ THE CODE IN
-    char prefix[64];
-    sprintf(prefix, "wave_%d_init",      i); WriteCode(f2, i, m_szInit,     prefix);
-    sprintf(prefix, "wave_%d_per_frame", i); WriteCode(f2, i, m_szPerFrame, prefix);
-    sprintf(prefix, "wave_%d_per_point", i); WriteCode(f2, i, m_szPerPoint, prefix);
+    char prefix[64] = {0};
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_init",      i); WriteCode(f2, i, m_szInit,     prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_frame", i); WriteCode(f2, i, m_szPerFrame, prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_point", i); WriteCode(f2, i, m_szPerPoint, prefix);
 
     if (!f)
 	    fclose(f2); // [sic]
@@ -1023,10 +1021,10 @@ int  CWave::Export(FILE* f, const wchar_t *szFile, int i)
     return 1;
 }
 
-int  CShape::Export(FILE* fOut, const wchar_t *szFile, int i)
+int  CShape::Export(FILE* f, const wchar_t *szFile, int i)
 {
-    FILE* f2 = fOut;
-    if (!fOut)
+    FILE* f2 = f;
+    if (!f)
     {
 	    f2 = _wfopen(szFile, L"w");
         if (!f2) return 0;
@@ -1058,12 +1056,12 @@ int  CShape::Export(FILE* fOut, const wchar_t *szFile, int i)
 	fprintf(f2, "shapecode_%d_%s=%.3f\n", i, "border_b",   border_b);
 	fprintf(f2, "shapecode_%d_%s=%.3f\n", i, "border_a",   border_a);
 
-    char prefix[64];
-    sprintf(prefix, "shape_%d_init",      i); WriteCode(f2, i, m_szInit,     prefix);
-    sprintf(prefix, "shape_%d_per_frame", i); WriteCode(f2, i, m_szPerFrame, prefix);
-    //sprintf(prefix, "shape_%d_per_point", i); WriteCode(f2, i, m_szPerPoint, prefix);
+    char prefix[64] = {0};
+    _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_init",      i); WriteCode(f2, i, m_szInit,     prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_per_frame", i); WriteCode(f2, i, m_szPerFrame, prefix);
+    //_snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_per_point", i); WriteCode(f2, i, m_szPerPoint, prefix);
 
-    if (!fOut)
+    if (!f)
 	    fclose(f2); // [sic]
 
     return 1;
@@ -1085,7 +1083,7 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
 
 	while (!bDone)
 	{
-		sprintf(szLineName, "%s%d", prefix, line); 
+		_snprintf(szLineName, ARRAYSIZE(szLineName), "%s%d", prefix, line); 
 
 		GetFastString(szLineName, "~!@#$", szLine, MAX_BIGSTRING_LEN, f);	// fixme
 		int len = strlen(szLine);
@@ -1113,9 +1111,9 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
 	for (int n=0; n<n2; n++)
 	{
 		char *pStr;
-        char prefix[64];
-		char szLineName[32];
-		char szLine[MAX_BIGSTRING_LEN];
+        char prefix[64] = {0};
+		char szLineName[32] = {0};
+		char szLine[MAX_BIGSTRING_LEN] = {0};
 		int len;
 
 		int line = 1;
@@ -1134,9 +1132,9 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
                 int j = (n-3) % 3;
                 switch(j)
                 {
-                case 0: pStr = m_wave[i].m_szInit;     sprintf(prefix, "wave_%d_init",      i); break;
-                case 1: pStr = m_wave[i].m_szPerFrame; sprintf(prefix, "wave_%d_per_frame", i); break;
-                case 2: pStr = m_wave[i].m_szPerPoint; sprintf(prefix, "wave_%d_per_point", i); break;
+                case 0: pStr = m_wave[i].m_szInit;     _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_init",      i); break;
+                case 1: pStr = m_wave[i].m_szPerFrame; _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_frame", i); break;
+                case 2: pStr = m_wave[i].m_szPerPoint; _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_point", i); break;
                 }
             }
             else
@@ -1145,15 +1143,15 @@ void ReadCode(FILE* f, char* pStr, char* prefix)
                 int j = (n-3-3*MAX_CUSTOM_WAVES) % 2;
                 switch(j)
                 {
-                case 0: pStr = m_shape[i].m_szInit;     sprintf(prefix, "shape_%d_init",      i); break;
-                case 1: pStr = m_shape[i].m_szPerFrame; sprintf(prefix, "shape_%d_per_frame", i); break;
+                case 0: pStr = m_shape[i].m_szInit;     _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_init",      i); break;
+                case 1: pStr = m_shape[i].m_szPerFrame; _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_per_frame", i); break;
                 }
             }
 		}
 		
 		while (!bDone)
 		{
-			sprintf(szLineName, "%s%d", prefix, line); 
+			_snprintf(szLineName, ARRAYSIZE(szLineName), "%s%d", prefix, line); 
 
 			GetPrivateProfileString(szSectionName, szLineName, "~!@#$", szLine, MAX_BIGSTRING_LEN, szIniFile);	// fixme
 			len = strlen(szLine);
@@ -1186,26 +1184,26 @@ int CWave::Import(FILE* f, const wchar_t* szFile, int i)
         GetFast_CLEAR();
     }
 
-    char buf[64];
-    sprintf(buf, "wavecode_%d_%s", i, "enabled"   ); enabled    = GetFastInt  (buf, enabled   , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "samples"   ); samples    = GetFastInt  (buf, samples   , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "sep"       ); sep        = GetFastInt  (buf, sep       , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "bSpectrum" ); bSpectrum  = GetFastInt  (buf, bSpectrum , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "bUseDots"  ); bUseDots   = GetFastInt  (buf, bUseDots  , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "bDrawThick"); bDrawThick = GetFastInt  (buf, bDrawThick, f2);
-    sprintf(buf, "wavecode_%d_%s", i, "bAdditive" ); bAdditive  = GetFastInt  (buf, bAdditive , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "scaling"   ); scaling    = GetFastFloat(buf, scaling   , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "smoothing" ); smoothing  = GetFastFloat(buf, smoothing , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "r"         ); r          = GetFastFloat(buf, r         , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "g"         ); g          = GetFastFloat(buf, g         , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "b"         ); b          = GetFastFloat(buf, b         , f2);
-    sprintf(buf, "wavecode_%d_%s", i, "a"         ); a          = GetFastFloat(buf, a         , f2);
+    char buf[64] = {0};
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "enabled"   ); enabled    = GetFastInt  (buf, enabled   , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "samples"   ); samples    = GetFastInt  (buf, samples   , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "sep"       ); sep        = GetFastInt  (buf, sep       , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "bSpectrum" ); bSpectrum  = GetFastInt  (buf, bSpectrum , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "bUseDots"  ); bUseDots   = GetFastInt  (buf, bUseDots  , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "bDrawThick"); bDrawThick = GetFastInt  (buf, bDrawThick, f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "bAdditive" ); bAdditive  = GetFastInt  (buf, bAdditive , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "scaling"   ); scaling    = GetFastFloat(buf, scaling   , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "smoothing" ); smoothing  = GetFastFloat(buf, smoothing , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "r"         ); r          = GetFastFloat(buf, r         , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "g"         ); g          = GetFastFloat(buf, g         , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "b"         ); b          = GetFastFloat(buf, b         , f2);
+    _snprintf(buf, ARRAYSIZE(buf), "wavecode_%d_%s", i, "a"         ); a          = GetFastFloat(buf, a         , f2);
 
     // READ THE CODE IN
-    char prefix[64];
-    sprintf(prefix, "wave_%d_init",      i); ReadCode(f2, m_szInit,     prefix);
-    sprintf(prefix, "wave_%d_per_frame", i); ReadCode(f2, m_szPerFrame, prefix);
-    sprintf(prefix, "wave_%d_per_point", i); ReadCode(f2, m_szPerPoint, prefix);
+    char prefix[64] = {0};
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_init",      i); ReadCode(f2, m_szInit,     prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_frame", i); ReadCode(f2, m_szPerFrame, prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "wave_%d_per_point", i); ReadCode(f2, m_szPerPoint, prefix);
 
     if (!f)
 	    fclose(f2); // [sic]
@@ -1223,36 +1221,36 @@ int  CShape::Import(FILE* f, const wchar_t* szFile, int i)
         GetFast_CLEAR();
     }
 
-    char buf[64];
-	sprintf(buf, "shapecode_%d_%s", i, "enabled"     ); enabled      = GetFastInt  (buf, enabled     , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "sides"       ); sides        = GetFastInt  (buf, sides       , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "additive"    ); additive     = GetFastInt  (buf, additive    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "thickOutline"); thickOutline = GetFastInt  (buf, thickOutline, f2);
-	sprintf(buf, "shapecode_%d_%s", i, "textured"    ); textured     = GetFastInt  (buf, textured    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "num_inst"   ); instances    = GetFastInt  (buf, instances   , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "x"           ); x            = GetFastFloat(buf, x           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "y"           ); y            = GetFastFloat(buf, y           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "rad"         ); rad          = GetFastFloat(buf, rad         , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "ang"         ); ang          = GetFastFloat(buf, ang         , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "tex_ang"     ); tex_ang      = GetFastFloat(buf, tex_ang     , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "tex_zoom"    ); tex_zoom     = GetFastFloat(buf, tex_zoom    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "r"           ); r            = GetFastFloat(buf, r           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "g"           ); g            = GetFastFloat(buf, g           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "b"           ); b            = GetFastFloat(buf, b           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "a"           ); a            = GetFastFloat(buf, a           , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "r2"          ); r2           = GetFastFloat(buf, r2          , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "g2"          ); g2           = GetFastFloat(buf, g2          , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "b2"          ); b2           = GetFastFloat(buf, b2          , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "a2"          ); a2           = GetFastFloat(buf, a2          , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "border_r"    ); border_r     = GetFastFloat(buf, border_r    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "border_g"    ); border_g     = GetFastFloat(buf, border_g    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "border_b"    ); border_b     = GetFastFloat(buf, border_b    , f2);
-	sprintf(buf, "shapecode_%d_%s", i, "border_a"    ); border_a     = GetFastFloat(buf, border_a    , f2);
+    char buf[64] = {0};
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "enabled"     ); enabled      = GetFastInt  (buf, enabled     , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "sides"       ); sides        = GetFastInt  (buf, sides       , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "additive"    ); additive     = GetFastInt  (buf, additive    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "thickOutline"); thickOutline = GetFastInt  (buf, thickOutline, f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "textured"    ); textured     = GetFastInt  (buf, textured    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "num_inst"   ); instances    = GetFastInt  (buf, instances   , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "x"           ); x            = GetFastFloat(buf, x           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "y"           ); y            = GetFastFloat(buf, y           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "rad"         ); rad          = GetFastFloat(buf, rad         , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "ang"         ); ang          = GetFastFloat(buf, ang         , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "tex_ang"     ); tex_ang      = GetFastFloat(buf, tex_ang     , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "tex_zoom"    ); tex_zoom     = GetFastFloat(buf, tex_zoom    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "r"           ); r            = GetFastFloat(buf, r           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "g"           ); g            = GetFastFloat(buf, g           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "b"           ); b            = GetFastFloat(buf, b           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "a"           ); a            = GetFastFloat(buf, a           , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "r2"          ); r2           = GetFastFloat(buf, r2          , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "g2"          ); g2           = GetFastFloat(buf, g2          , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "b2"          ); b2           = GetFastFloat(buf, b2          , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "a2"          ); a2           = GetFastFloat(buf, a2          , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "border_r"    ); border_r     = GetFastFloat(buf, border_r    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "border_g"    ); border_g     = GetFastFloat(buf, border_g    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "border_b"    ); border_b     = GetFastFloat(buf, border_b    , f2);
+	_snprintf(buf, ARRAYSIZE(buf), "shapecode_%d_%s", i, "border_a"    ); border_a     = GetFastFloat(buf, border_a    , f2);
 
     // READ THE CODE IN
-    char prefix[64];
-    sprintf(prefix, "shape_%d_init",      i); ReadCode(f2, m_szInit,     prefix);
-    sprintf(prefix, "shape_%d_per_frame", i); ReadCode(f2, m_szPerFrame, prefix);
+    char prefix[64] = {0};
+    _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_init",      i); ReadCode(f2, m_szInit,     prefix);
+    _snprintf(prefix, ARRAYSIZE(prefix), "shape_%d_per_frame", i); ReadCode(f2, m_szPerFrame, prefix);
 
     if (!f)
 	    fclose(f2); // [sic]
@@ -1295,7 +1293,7 @@ bool CState::Import(const wchar_t *szIniFile, float fTime, CState* pOldState, DW
 		    // copy get the filename (without the path)
 		    const wchar_t *p = wcsrchr(szIniFile, '\\');
 		    if (p==NULL) p = szIniFile;
-		    lstrcpyW(m_szDesc, p+1);		
+		    wcsncpy(m_szDesc, p+1, ARRAYSIZE(m_szDesc));
 
 		    // next remove the extension
 		    RemoveExtension(m_szDesc);
@@ -1431,7 +1429,8 @@ bool CState::Import(const wchar_t *szIniFile, float fTime, CState* pOldState, DW
         //m_szWarpShadersText[0] = 0;
         ReadCode(f, m_szWarpShadersText, "warp_");
         if (!m_szWarpShadersText[0]) 
-            g_plugin.GenWarpPShaderText(m_szWarpShadersText, m_fDecay.eval(-1), m_bTexWrap);
+            g_plugin.GenWarpPShaderText(m_szWarpShadersText, ARRAYSIZE(m_szWarpShadersText),
+										m_fDecay.eval(-1), m_bTexWrap);
         m_nWarpPSVersion = nWarpPSVersionInFile;
     }
     
@@ -1441,7 +1440,10 @@ bool CState::Import(const wchar_t *szIniFile, float fTime, CState* pOldState, DW
         //m_szCompShadersText[0] = 0;
         ReadCode(f, m_szCompShadersText, "comp_");
         if (!m_szCompShadersText[0])
-            g_plugin.GenCompPShaderText(m_szCompShadersText, m_fGammaAdj.eval(-1), m_fVideoEchoAlpha.eval(-1), m_fVideoEchoZoom.eval(-1), m_nVideoEchoOrientation, m_fShader.eval(-1), m_bBrighten, m_bDarken, m_bSolarize, m_bInvert);
+            g_plugin.GenCompPShaderText(m_szCompShadersText, ARRAYSIZE(m_szCompShadersText),
+										m_fGammaAdj.eval(-1), m_fVideoEchoAlpha.eval(-1),
+										m_fVideoEchoZoom.eval(-1), m_nVideoEchoOrientation,
+										m_fShader.eval(-1), m_bBrighten, m_bDarken, m_bSolarize, m_bInvert);
         m_nCompPSVersion = nCompPSVersionInFile;
     }
 
@@ -1459,12 +1461,16 @@ bool CState::Import(const wchar_t *szIniFile, float fTime, CState* pOldState, DW
 void CState::GenDefaultWarpShader()
 {
     if (m_nWarpPSVersion>0)
-        g_plugin.GenWarpPShaderText(m_szWarpShadersText, m_fDecay.eval(-1), m_bTexWrap);
+        g_plugin.GenWarpPShaderText(m_szWarpShadersText, ARRAYSIZE(m_szWarpShadersText),
+									m_fDecay.eval(-1), m_bTexWrap);
 }
 void CState::GenDefaultCompShader()
 {
     if (m_nCompPSVersion>0)
-        g_plugin.GenCompPShaderText(m_szCompShadersText, m_fGammaAdj.eval(-1), m_fVideoEchoAlpha.eval(-1), m_fVideoEchoZoom.eval(-1), m_nVideoEchoOrientation, m_fShader.eval(-1), m_bBrighten, m_bDarken, m_bSolarize, m_bInvert);
+        g_plugin.GenCompPShaderText(m_szCompShadersText, ARRAYSIZE(m_szCompShadersText),
+									m_fGammaAdj.eval(-1), m_fVideoEchoAlpha.eval(-1),
+									m_fVideoEchoZoom.eval(-1), m_nVideoEchoOrientation,
+									m_fShader.eval(-1), m_bBrighten, m_bDarken, m_bSolarize, m_bInvert);
 }
 
 void CState::FreeVarsAndCode(bool bFree)
@@ -1657,7 +1663,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
     	// clear any old error msg.:
     	//g_plugin.m_fShowUserMessageUntilThisTime = g_plugin.GetTime();	
 
-	    char buf[MAX_BIGSTRING_LEN*3];
+	    char buf[MAX_BIGSTRING_LEN*3] = {0};
 
         if (flags & RECOMPILE_PRESET_CODE)
         {
@@ -1784,8 +1790,8 @@ void CState::RecompileExpressions(int flags, int bReInit)
                 {
 			        if ( ! (m_wave[i].m_pp_codehandle = NSEEL_code_compile(m_wave[i].m_pp_eel, buf)))
 			        {
-                        wchar_t buffer[1024];
-				        swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_POINT_CODE), m_szDesc, i);
+                        wchar_t buffer[1024] = {0};
+				        _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_PER_POINT_CODE), m_szDesc, i);
                         g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			        }
                 }
@@ -1806,7 +1812,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
 			            if ( ! (codehandle_temp = NSEEL_code_compile(m_shape[i].m_pf_eel, buf)))
 			            {
 							wchar_t buffer[1024] = {0};
-				            swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_INIT_CODE), m_szDesc, i);
+				            _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_INIT_CODE), m_szDesc, i);
                             g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 
                             for (int vi=0; vi<NUM_Q_VAR; vi++)
@@ -1843,7 +1849,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
 			            if ( ! (m_shape[i].m_pf_codehandle = NSEEL_code_compile(m_shape[i].m_pf_eel, buf)))
 			            {
 							wchar_t buffer[1024] = {0};
-				            swprintf(buffer, WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_PER_FRAME_CODE), m_szDesc, i);
+				            _snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_WARNING_PRESET_X_ERROR_IN_SHAPE_X_PER_FRAME_CODE), m_szDesc, i);
                             g_plugin.AddError(buffer, 6.0f, ERR_PRESET, true);
 			            }
 		            #endif
@@ -1858,7 +1864,7 @@ void CState::RecompileExpressions(int flags, int bReInit)
 		            #ifndef _NO_EXPR_
 			            if ( ! (m_shape[i].m_pp_codehandle = compileCode(buf)))
 			            {
-				            sprintf(g_plugin.m_szUserMessage, "warning: preset \"%s\": error in shape %d per-point code", m_szDesc, i);
+							_snprintf(g_plugin.m_szUserMessage, ARRAYSIZE(g_plugin.m_szUserMessage), "warning: preset \"%s\": error in shape %d per-point code", m_szDesc, i);
 				            g_plugin.m_fShowUserMessageUntilThisTime = g_plugin.GetTime() + 6.0f;
                             g_plugin.m_bUserMessageIsError = true;
 			            }
@@ -1895,7 +1901,7 @@ void CState::RandomizePresetVars()
             ++k;
         }
     }
-    while (k < sizeof(m_xlate)/sizeof(m_xlate[0]));
+    while (k < ARRAYSIZE(m_xlate));
 }
 
 CBlendableFloat::CBlendableFloat()

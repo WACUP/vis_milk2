@@ -33,7 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_MSG_CHARS (65536*2)
 #define SafeRelease(x) { if (x) {x->Release(); x=NULL;} } 
-wchar_t g_szMsgPool[2][MAX_MSG_CHARS];
+wchar_t g_szMsgPool[2][MAX_MSG_CHARS] = {0};
 
 /*
     NOTES ON CTextManager
@@ -437,7 +437,7 @@ void CTextManager::DrawNow()
             m_lpDevice->SetVertexShader( NULL );
             m_lpDevice->SetFVF( WFVERTEX_FORMAT );
             m_lpDevice->SetPixelShader( NULL );
-	        WFVERTEX v3[4];
+	        WFVERTEX v3[4] = {0};
             if (bRedrawText==2)
             {
                 DWORD clearcolor = m_msg[m_b][j].bgColor;//0xFF000000;// | ((rand()%32)<<16) | ((rand()%32)<<8) | ((rand()%32));
@@ -609,7 +609,7 @@ void CTextManager::DrawNow()
                         m_msg[m_b][i].pfont->DrawTextW(NULL, m_msg[m_b][i].msg, -1, &m_msg[m_b][i].rect, m_msg[m_b][i].flags, m_msg[m_b][i].color);
                     else if (m_msg[m_b][i].added || bRedrawText==2 || !bRTT)
                     {
-	                    WFVERTEX v3[4];
+	                    WFVERTEX v3[4] = {0};
                         float x0 = -1.0f + 2.0f*m_msg[m_b][i].rect.left/(float)desc_text_surface.Width;
                         float x1 = -1.0f + 2.0f*m_msg[m_b][i].rect.right/(float)desc_text_surface.Width;
                         float y0 = -1.0f + 2.0f*m_msg[m_b][i].rect.top/(float)desc_text_surface.Height;
@@ -644,8 +644,7 @@ void CTextManager::DrawNow()
             m_lpDevice->SetPixelShader( NULL );
             m_lpDevice->SetFVF( SPRITEVERTEX_FORMAT );
 
-	        SPRITEVERTEX v3[4];
-	        SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
+	        SPRITEVERTEX v3[4] = {0};
             float fx = desc_text_surface.Width  / (float)desc_backbuf.Width ;
             float fy = desc_text_surface.Height / (float)desc_backbuf.Height;
             for (int i=0; i<4; i++)
@@ -658,7 +657,7 @@ void CTextManager::DrawNow()
                 v3[i].Diffuse = 0xFFFFFFFF;
             }
         
-            DWORD oldblend[3];
+            DWORD oldblend[3] = {0};
             //m_lpDevice->GetTextureStageState(0, D3DTSS_MAGFILTER, &oldblend[0]);
             //m_lpDevice->GetTextureStageState(1, D3DTSS_MINFILTER, &oldblend[1]);
             //m_lpDevice->GetTextureStageState(2, D3DTSS_MIPFILTER, &oldblend[2]);

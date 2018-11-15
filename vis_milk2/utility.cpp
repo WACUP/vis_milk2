@@ -99,11 +99,11 @@ float AdjustRateToFPS(float per_frame_decay_rate_at_fps1, float fps1, float actu
 
 float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float fDefault, wchar_t *szIniFile)
 {
-    wchar_t string[64];
-    wchar_t szDefault[64];
+    wchar_t string[64] = {0};
+    wchar_t szDefault[64] = {0};
     float ret = fDefault;
 
-    _swprintf_l(szDefault, L"%f", g_use_C_locale, fDefault);
+    _snwprintf_l(szDefault, ARRAYSIZE(szDefault), L"%f", g_use_C_locale, fDefault);
 
     if (GetPrivateProfileStringW(szSectionName, szKeyName, szDefault, string, 64, szIniFile) > 0)
     {
@@ -114,8 +114,8 @@ float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float 
 
 bool WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName)
 {
-    wchar_t szValue[32];
-    _swprintf_l(szValue, L"%f", g_use_C_locale, f);
+    wchar_t szValue[32] = {0};
+    _snwprintf_l(szValue, ARRAYSIZE(szValue), L"%f", g_use_C_locale, f);
     return (WritePrivateProfileStringW(szSectionName, szKeyName, szValue, szIniFile) != 0);
 }
 
@@ -182,7 +182,7 @@ void TextToGuid(char *str, GUID *pGUID)
     if (!str) return;
     if (!pGUID) return;
 
-    DWORD d[11];
+    DWORD d[11] = {0};
     
     (void)sscanf(str, "%X %X %X %X %X %X %X %X %X %X %X", &d[0], &d[1],
 				 &d[2], &d[3], &d[4], &d[5], &d[6], &d[7], &d[8], &d[9], &d[10]);
@@ -221,8 +221,8 @@ void GuidToText(GUID *pGUID, char *str, int nStrLen)
     d[9]  = (DWORD)pGUID->Data4[6];
     d[10] = (DWORD)pGUID->Data4[7];
 
-    sprintf(str, "%08X %04X %04X %02X %02X %02X %02X %02X %02X %02X %02X", 
-        d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10]);
+    _snprintf(str, nStrLen, "%08X %04X %04X %02X %02X %02X %02X %02X %02X %02X %02X", 
+			  d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10]);
 }
 
 /*
@@ -309,10 +309,10 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
         //    return;
 
         #ifdef _DEBUG
-            char buf[64];
+            char buf[64] = {0};
             int matched = 1;
 
-            sprintf(buf, "WM_");
+            _snprintf(buf, ARRAYSIZE(buf), "WM_");
     
             switch(msg)
             {
@@ -559,7 +559,7 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
             case 0x038F: strcat(buf, "PENWINLAST"); break;
 
             default: 
-                sprintf(buf, "unknown"); 
+                _snprintf(buf, ARRAYSIZE(buf), "unknown"); 
                 matched = 0;
                 break;
             }
@@ -574,11 +574,11 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
                 buf[desired_len] = 0;
             }      
 
-            char buf2[256];
+            char buf2[256] = {0};
             if (matched)
-                sprintf(buf2, "%shwnd=%08x, msg=%s, w=%08x, l=%08x\n", szStartText, hwnd, buf, wParam, lParam);
+                _snprintf(buf2, ARRAYSIZE(buf2), "%shwnd=%08x, msg=%s, w=%08x, l=%08x\n", szStartText, hwnd, buf, wParam, lParam);
             else
-                sprintf(buf2, "%shwnd=%08x, msg=unknown/0x%08x, w=%08x, l=%08x\n", szStartText, hwnd, msg, wParam, lParam);
+                _snprintf(buf2, ARRAYSIZE(buf2), "%shwnd=%08x, msg=unknown/0x%08x, w=%08x, l=%08x\n", szStartText, hwnd, msg, wParam, lParam);
             OutputDebugStringA(buf2);
         #endif
     }
@@ -586,26 +586,26 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
 
 void DownloadDirectX(HWND hwnd)
 {
-    wchar_t szUrl[] = L"http://www.microsoft.com/download/details.aspx?id=35";
+    wchar_t szUrl[] = L"https://www.microsoft.com/en-us/download/details.aspx?id=35";
     intptr_t ret = myOpenURL(NULL, szUrl);
     if (ret <= 32)
     {
-        wchar_t buf[1024];
+        wchar_t buf[1024] = {0};
         switch(ret)
         {
         case SE_ERR_FNF:
         case SE_ERR_PNF:
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), szUrl);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), szUrl);
             break;
         case SE_ERR_ACCESSDENIED:
         case SE_ERR_SHARE:
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), szUrl);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), szUrl);
             break;
         case SE_ERR_NOASSOC:
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), szUrl);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), szUrl);
             break;
         default:
-            swprintf(buf, WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), szUrl, ret);
+            _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), szUrl, ret);
             break;
         }
         MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL),
@@ -616,7 +616,7 @@ void DownloadDirectX(HWND hwnd)
 void MissingDirectX(HWND hwnd)
 {
     // DIRECTX MISSING OR CORRUPT -> PROMPT TO GO TO WEB.
-	wchar_t title[128];
+	wchar_t title[128] = {0};
     int ret = MessageBoxW(hwnd, 
         #ifndef D3D_SDK_VERSION
             --- error; you need to #include <d3d9.h> ---
@@ -665,9 +665,8 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
     // (szPathAndFile).
 
     char szVerb[] = "open";
-    char szFilename2[MAX_PATH];
-
-    sprintf(szFilename2, "%s.lnk", szPathAndFile);
+    char szFilename2[MAX_PATH] = {0};
+    _snprintf(szFilename2, ARRAYSIZE(szFilename2), "%s.lnk", szPathAndFile);
 
     // -without the "no-verb" pass,
     //   certain icons still don't work (like shortcuts
@@ -721,7 +720,7 @@ LRESULT CALLBACK HookWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp,
 							 UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
    //UINT uItem;
-   //TCHAR szBuf[MAX_PATH];
+   //TCHAR szBuf[MAX_PATH] = {0};
 
    switch (msg) 
    { 
@@ -761,9 +760,8 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
     LPITEMIDLIST pidlItem, pidlNextItem;
     LPCONTEXTMENU pContextMenu;
     CMINVOKECOMMANDINFO ici;
-    UINT nCount, nCmd;
+    UINT nCount;
     BOOL bResult;
-    HMENU hMenu;
 
     //
     // Get pointers to the shell's IMalloc interface and the desktop's
@@ -854,7 +852,7 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                 level = 2;
             }
 
-            hMenu = CreatePopupMenu ();
+            HMENU hMenu = CreatePopupMenu ();
             if (SUCCEEDED (pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_EXPLORE))) 
             {
                 ClientToScreen (hwnd, &point);
@@ -873,7 +871,7 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                 //
                 // Display the context menu.
                 //
-                nCmd = TrackPopupMenu (hMenu, TPM_LEFTALIGN |
+                UINT nCmd = TrackPopupMenu (hMenu, TPM_LEFTALIGN |
                     TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
                     point.x, point.y, 0, hwnd, NULL);
 
@@ -1063,7 +1061,7 @@ int GetDesktopIconSize()
     int ret = 32;
 
     // reads the key: HKEY_CURRENT_USER\Control Panel, Desktop\WindowMetrics\Shell Icon Size
-    unsigned char buf[64];
+    unsigned char buf[64] = {0};
     unsigned long len = sizeof(buf);
     DWORD type;
     HKEY key;
