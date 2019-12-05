@@ -473,6 +473,7 @@ static const EEL_F eel_zero=0.0, eel_one=1.0;
 
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 static double __floor(double a) { return floor(a); }
+static double __ceil(double a) { return ceil(a); }
 #endif
 
 static double eel1band(double a, double b)
@@ -573,7 +574,7 @@ static functionType fnTable1[] = {
 #else
    { "floor",  nseel_asm_1pdd,nseel_asm_1pdd_end, 1, {&floor} },
 #endif
-   { "ceil",   nseel_asm_1pdd,nseel_asm_1pdd_end,  1, {&ceil} },
+   { "ceil",   nseel_asm_1pdd,nseel_asm_1pdd_end,  1, {&__ceil} },
 #ifdef __ppc__
    { "invsqrt",   nseel_asm_invsqrt,nseel_asm_invsqrt_end,  1,  },
 #else

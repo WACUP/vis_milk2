@@ -36,6 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <locale.h>
 #include "resource.h"
+#include <loader/loader/utils.h>
 
 extern CPlugin g_plugin;		// declared in main.cpp
 
@@ -193,7 +194,7 @@ float GetFastFloat (const char* szVarName, float def, FILE* f)
     if (!_GetLineByName(f, szVarName, buf, 255))
         return def;
     float ret;
-    if (_sscanf_l(buf, "%f", g_use_C_locale, &ret)==1)
+    if (SafeAtoF(buf, &ret))
 	{
         return ret;
 	}

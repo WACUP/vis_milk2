@@ -257,12 +257,12 @@ void CTextManager::DrawNow()
         }
         last_dark_box = NULL;
 
-		int j = 0;
-        for (; j<m_nMsg[1-m_b]; j++)
+		int m_j = 0;
+        for (; m_j<m_nMsg[1-m_b]; m_j++)
         {
-            m_msg[1-m_b][j].deleted = m_msg[1-m_b][j].added = 0;
-            m_msg[1-m_b][j].prev_dark_box_ptr = last_dark_box;
-            last_dark_box = (m_msg[1-m_b][j].pfont) ? last_dark_box : (void*)&m_msg[1-m_b][j];
+            m_msg[1-m_b][m_j].deleted = m_msg[1-m_b][m_j].added = 0;
+            m_msg[1-m_b][m_j].prev_dark_box_ptr = last_dark_box;
+            last_dark_box = (m_msg[1-m_b][m_j].pfont) ? last_dark_box : (void*)&m_msg[1-m_b][m_j];
         }
 
         int bRedrawText = 0;
@@ -440,7 +440,7 @@ void CTextManager::DrawNow()
 	        WFVERTEX v3[4] = {0};
             if (bRedrawText==2)
             {
-                DWORD clearcolor = m_msg[m_b][j].bgColor;//0xFF000000;// | ((rand()%32)<<16) | ((rand()%32)<<8) | ((rand()%32));
+                DWORD clearcolor = m_msg[m_b][m_j].bgColor;//0xFF000000;// | ((rand()%32)<<16) | ((rand()%32)<<8) | ((rand()%32));
                 for (int i=0; i<4; i++)
                 {
                     v3[i].x = -1.0f + 2.0f*(i%2);

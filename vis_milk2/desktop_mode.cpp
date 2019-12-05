@@ -34,6 +34,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include <shellapi.h>
 #include <shlwapi.h>
+#include <loader/loader/paths.h>
 
 //----------------------------------------------------------------------
 
@@ -76,8 +77,8 @@ bool IsVistaOrLater()
     PGNSI pGNSI;
     BOOL bOsVersionInfoEx;
 
-    SecureZeroMemory(&si, sizeof(SYSTEM_INFO));
-    SecureZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    memset(&si, 0, sizeof(SYSTEM_INFO));
+    memset(&osvi, 0, sizeof(OSVERSIONINFOEX));
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (bOsVersionInfoEx = GetVersionEx ((OSVERSIONINFO *) &osvi))
     {
@@ -119,7 +120,7 @@ int CPluginShell::InitDesktopMode()
     // note: we have to explicitly make sure the DLL is present,
     // since we're delay-loading it; otherwise, calling setHook, etc. will crash it.
     wchar_t szVmsDesktopDll[MAX_PATH] = {0};
-    PathCombine(szVmsDesktopDll, GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
+    PathCombine(szVmsDesktopDll, GetPaths()->winamp_plugin_dir, VMS_DESKTOP_DLLNAME);
     if (!GetModuleHandleW(szVmsDesktopDll))
     {
         if (!LoadLibraryW(szVmsDesktopDll))
@@ -242,7 +243,7 @@ void CPluginShell::CleanUpDesktopMode()
     if (m_vms_desktop_loaded)
     {
 		wchar_t szVmsDesktopDll[MAX_PATH] = {0};
-        PathCombine(szVmsDesktopDll, GetPluginsDirPath(), VMS_DESKTOP_DLLNAME);
+        PathCombine(szVmsDesktopDll, GetPaths()->winamp_plugin_dir, VMS_DESKTOP_DLLNAME);
         FreeLibrary(GetModuleHandle(szVmsDesktopDll));
         m_vms_desktop_loaded = 0;
     }

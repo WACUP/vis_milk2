@@ -93,7 +93,7 @@ enum
 	MD2_PS_2_0 = 2,
 	MD2_PS_2_X = 3,
 	MD2_PS_3_0 = 4,
-	MD2_PS_4_0 = 5, // not supported by milkdrop
+	//MD2_PS_4_0 = 5, // not supported by milkdrop
 };
 /*
 typedef struct
@@ -366,7 +366,7 @@ public:
         LPD3DXFONT  m_d3dx_title_font_doublesize;
 
         // PIXEL SHADERS
-        DWORD                   m_dwShaderFlags;       // Shader compilation/linking flags
+        //DWORD                   m_dwShaderFlags;       // Shader compilation/linking flags
         //ID3DXFragmentLinker*    m_pFragmentLinker;     // Fragment linker interface
         //LPD3DXBUFFER            m_pCompiledFragments;  // Buffer containing compiled fragments
         LPD3DXBUFFER            m_pShaderCompileErrors;
@@ -450,6 +450,7 @@ public:
         void		WaitString_SeekUpOneLine();
         void		WaitString_SeekDownOneLine();
 
+		wchar_t		m_szSearch[MAX_PATH];	// used for refining the search in the preset list
         int			m_nPresets;			// the # of entries in the file listing.  Includes directories and then files, sorted alphabetically.
         int			m_nDirs;			// the # of presets that are actually directories.  Always between 0 and m_nPresets.
         int			m_nPresetListCurPos;// Index of the currently-HIGHLIGHTED preset (the user must press Enter on it to select it).
@@ -526,7 +527,7 @@ public:
 
 
 
-        wchar_t		m_szMilkdrop2Path[MAX_PATH];		// ends in a backslash
+        //wchar_t		m_szMilkdrop2Path[MAX_PATH];		// ends in a backslash
         wchar_t		m_szMsgIniFile[MAX_PATH];
         wchar_t     m_szImgIniFile[MAX_PATH];
         wchar_t		m_szPresetDir[MAX_PATH];
@@ -618,7 +619,7 @@ public:
 	    void		DeletePresetFile(wchar_t *szDelFile);	
 	    void		RenamePresetFile(wchar_t *szOldFile, wchar_t *szNewFile);
 	    void		SetCurrentPresetRating(float fNewRating);
-	    void		SeekToPreset(wchar_t cStartChar);
+	    void		SeekToPreset(/*wchar_t cStartChar*/);
 	    bool		ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2);
 	    int 		HandleRegularKey(WPARAM wParam);
 	    bool		OnResizeGraphicsWindow();

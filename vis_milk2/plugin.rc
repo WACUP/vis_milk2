@@ -160,7 +160,7 @@ BEGIN
     RTEXT           "Multisampling:",IDC_W_MULTISAMPLING_CAPTION,5,165,46,9,NOT WS_VISIBLE | WS_DISABLED
     COMBOBOX        IDC_WMS,56,163,81,123,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Allow Page Tearing",IDC_CB_WPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,126,165,77,10
-    CONTROL         "Integrate with winamp skin",IDC_CB_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,164,102,10
+    CONTROL         "Integrate with WACUP skin",IDC_CB_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,164,102,10
     CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,0,180,318,1
     LTEXT           "Start in...",IDC_STATIC,9,192,61,8
     CONTROL         "&Fullscreen",IDC_CB_FS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,9,203,48,10
@@ -169,7 +169,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,185,164,10
     CONTROL         "Show '&Press F1 for  Help' message at startup",IDC_CB_PRESS_F1_MSG,
                     "Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,78,195,159,10
-    CONTROL         "&Minimize Winamp when going fullscreen",IDC_CB_MIN,
+    CONTROL         "&Minimize WACUP when going fullscreen",IDC_CB_MIN,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,205,141,10
     CONTROL         "Try to fix slow menus/text (uses more video memory)",IDC_CB_FIXSLOWTEXT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,215,183,10
@@ -482,8 +482,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,26,4,0
- PRODUCTVERSION 2,26,4,0
+ FILEVERSION 2,26,13,0
+ PRODUCTVERSION 2,26,13,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -500,12 +500,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualization Plug-in"
-            VALUE "FileVersion", "2, 26, 4, 0"
+            VALUE "FileVersion", "2, 26, 13, 0"
             VALUE "InternalName", "Nullsoft Milkdrop v2"
-            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2018"
+            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2019"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Nullsoft Milkdrop v2"
-            VALUE "ProductVersion", "2, 26, 4, 0"
+            VALUE "ProductVersion", "2, 26, 13, 0"
         END
     END
     BLOCK "VarFileInfo"
@@ -553,7 +553,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_THIS_PLUGIN_NEEDS_MUSIC_TO_RUN 
-                            "This plug-in cannot run without music.\n\nPlease play some music, through Winamp, and then try running the plug-in again."
+                            "This plug-in cannot run without music.\n\nPlease play some music, through WACUP, and then try running the plug-in again."
     IDS_NO_MUSIC_PLAYING    "No Music Playing"
     IDS_UNABLE_TO_READ_DATA_FILE_X "Unable to read the data file:\n   %s"
     IDS_COULD_NOT_CREATE_MY_VERTEX_DECLARATION 
@@ -1206,9 +1206,9 @@ BEGIN
     IDS_WARNING_PRESET_X_ERROR_IN_PER_VERTEX_CODE 
                             "warning: preset ""%s"": error in 'per-vertex' code"
     IDS_HZ                  "Hz"
-    IDS_HELP_MINIMIZE_WINAMP "Help on 'Minimize Winamp...' checkbox"
+    IDS_HELP_MINIMIZE_WINAMP "Help on 'Minimize WACUP...' checkbox"
     IDS_HELP_MINIMIZE_WINAMP_HELP 
-                            "Enable this if you can sometimes see the Winamp window flickering\nthrough, when you run the plug-in fullscreen.  Enabling this option\nwill force the Winamp window to minimize whenever the plug-in goes\nfullscreen on the same monitor that the Winamp window is on.\nThe Winamp window will be restored as soon as the plug-in returns\nfrom fullscreen mode.\n\nNote that this also applies for 'fake' fullscreen mode (as well as 'real'\nfullscreen mode).\n\nKeep in mind that when running graphically demanding applications\n(such as this plug-in), it's always good to minimize (or close) as many\nother applications as possible, even if they appear to be idle."
+                            "Enable this if you can sometimes see the WACUP window flickering\nthrough, when you run the plug-in fullscreen.  Enabling this option\nwill force the WACUP window to minimize whenever the plug-in goes\nfullscreen on the same monitor that the WACUP window is on.\nThe WACUP window will be restored as soon as the plug-in returns\nfrom fullscreen mode.\n\nNote that this also applies for 'fake' fullscreen mode (as well as 'real'\nfullscreen mode).\n\nKeep in mind that when running graphically demanding applications\n(such as this plug-in), it's always good to minimize (or close) as many\nother applications as possible, even if they appear to be idle."
     IDS_DIRECTX_MISSING_OR_CORRUPT_TEXT 
                             "Failed to initialize DirectX 9.0 or later.\nMilkdrop requires d3dx9_31.dll to be installed.\n\nWould you like to be taken to:\nhttp://www.microsoft.com/download/details.aspx?id=35,\nwhere you can update DirectX 9.0?\n"
     IDS_PARENT_DIRECTORY    "parent directory"
@@ -1233,7 +1233,7 @@ BEGIN
                             "sprite #%d warning: error in per-frame code"
     IDS_SPRITE_X_ERROR_BAD_SLOT_INDEX "sprite #%d error: bad slot index"
     IDS_SPRITE_X_ERROR_IMAGE_FILE_MISSING_OR_CORRUPT 
-                            "sprite #%d error: image file missing or corrupt"
+                            "sprite #%d error: image file %s missing or corrupt"
     IDS_SPRITE_X_ERROR_OUT_OF_MEM 
                             "sprite #%d error: out of memory, unable to load image"
     IDS_WARNING_PRESET_X_ERROR_IN_WAVE_X_INIT_CODE 
@@ -1350,10 +1350,10 @@ BEGIN
     IDS_RESTORE_ALL_DEFAULTS 
                             "Are you sure you want to restore the default settings?\n\nIf you click YES, the config panel will close and the defaults will be restored."
     IDS_RESTORE_ALL_DEFAULTS_TITLE "Restore Default Settings?"
-    IDS_OK_HELP             "Click this button to save your changes and return to Winamp."
-    IDS_CANCEL_HELP         "Click this button to cancel any changes and return to Winamp."
+    IDS_OK_HELP             "Click this button to save your changes and return to WACUP."
+    IDS_CANCEL_HELP         "Click this button to cancel any changes and return to WACUP."
     IDS_RESTORE_DEFAULTS_HELP 
-                            "Click this button to restore all config panel settings\nto their 'factory' defaults and then return to Winamp."
+                            "Click this button to restore all config panel settings\nto their 'factory' defaults and then return to WACUP."
     IDS_DOCUMENTATION_BUTTON_HELP 
                             "Click this button to view the documentation for this plug-in."
     IDS_VIEW_ONLINE_DOCS_HELP 
@@ -1391,7 +1391,7 @@ BEGIN
     IDS_ERROR_CREATING_TEXTURE_FOR_ICON_BITMAPS 
                             "Error creating texture for icon bitmaps"
     IDS_OUTDATED_VMS_DESKTOP_DLL_NEED_TO_REINSTALL 
-                            "It appears that you have an outdated copy of the file 'vms_desktop.dll'\nin your Winamp PLUGINS directory.  Please reinstall the plug-in\nto bring this file up to date."
+                            "It appears that you have an outdated copy of the file 'vms_desktop.dll'\nin your WACUP PLUGINS directory.  Please reinstall the plug-in\nto bring this file up to date."
     IDS_ERROR_CREATING_HOOK_PROC_DESKTOP_ICONS_NOT_AVAILABLE 
                             "Error creating hook procedure;\ndesktop icons will not be available."
     IDS_ERROR_UPDATING_ICON_BITMAPS 
@@ -1417,7 +1417,7 @@ BEGIN
     IDS_ERROR_UPDATING_ICON_BITMAPS_SHGETFILEINFO_FAILED 
                             "Error updating icon bitmaps:\nSHGetFileInfo failed."
     IDS_UNABLE_TO_REGISTER_WINDOW_CLASS 
-                            "Unable to register the window class;\nPLEASE RESTART WINAMP."
+                            "Unable to register the window class;\nPLEASE RESTART WACUP."
     IDS_DIRECTX_INIT_FAILED "DirectX initialization failed; unknown color format"
 END
 
@@ -1433,15 +1433,15 @@ BEGIN
     IDS_UNABLE_TO_INIT_DXCONTEXT 
                             "Unable to initialize DXContext;\nprobably out of memory."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG 
-                            "To free up some memory, please RESTART WINAMP, then return\n   to the plug-in's config panel and try setting your\n   WINDOWED MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   WINDOWED MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_2 
-                            "To free up some memory, please RESTART WINAMP, then return\n   to the plug-in's config panel and try setting your\n   FAKE FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   FAKE FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3 
-                            "To free up some memory, please RESTART WINAMP, then return\n   to the plug-in's config panel and try setting your\n   FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_VIDEO_MEMORY 
-                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try returning to the config panel (ALT+K) and selecting a display mode\n    that uses less video memory.  16-bit display modes use half as much memory\n    as 32-bit display modes, and lower-resolution display modes (such as 640 x 480)\n    use proportionally less video memory.\n\nAfter making these changes, please RESTART WINAMP before trying to run\nthe plug-in again."
+                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try returning to the config panel (ALT+K) and selecting a display mode\n    that uses less video memory.  16-bit display modes use half as much memory\n    as 32-bit display modes, and lower-resolution display modes (such as 640 x 480)\n    use proportionally less video memory.\n\nAfter making these changes, please RESTART WACUP before trying to run\nthe plug-in again."
     IDS_TO_FREE_UP_VIDEO_MEMORY_2 
-                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try changing your Windows display mode to a lesser bit depth\n    (i.e. 16-bit color), or a smaller resolution.\n\nAfter making these changes, please RESTART WINAMP before trying to run\nthe plug-in again."
+                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try changing your Windows display mode to a lesser bit depth\n    (i.e. 16-bit color), or a smaller resolution.\n\nAfter making these changes, please RESTART WACUP before trying to run\nthe plug-in again."
     IDS_MILKDROP_SUGGESTION "MILKDROP SUGGESTION"
     IDS_DIRECTX_MISSING_OR_CORRUPT "DirectX Missing or Corrupt"
     IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING 
@@ -1485,7 +1485,7 @@ BEGIN
     IDS_UPGRADE_SHADERS_TO_USE_PS2X 
                             "Do you want to upgrade all shaders to use (at least) pixel shader 2.X?  [y/N]"
     IDS_PRESS_ESC_TO_RETURN "Press ESC to return."
-    IDS_COULD_NOT_LOAD_TEXTURE_X "Could not load texture: %hs.%hs"
+    IDS_COULD_NOT_LOAD_TEXTURE_X "Could not load texture: %s.%s"
     IDS_ERROR_COMPILING_X_X_SHADER "Error compiling %hs %hs shader:\n"
 END
 

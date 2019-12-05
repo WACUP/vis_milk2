@@ -46,7 +46,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Winamp/vis.h>
 extern winampVisModule mod1;
 
-DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPCSTR szWindowCaption,WNDPROC pProc,LONG_PTR uWindowLong, int minimize_winamp, wchar_t* szIniFile)
+DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPCWSTR szWindowCaption,WNDPROC pProc,LONG_PTR uWindowLong, int minimize_winamp, wchar_t* szIniFile)
 {
 	m_classAtom = 0;
 	m_szWindowCaption[0] = 0;
@@ -77,7 +77,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_REAL_client_width = 0;
 	m_REAL_client_height = 0;
 	m_fake_fs_covers_all = 0;
-	SecureZeroMemory(&m_current_mode, sizeof(DXCONTEXT_PARAMS));
+	memset(&m_current_mode, 0, sizeof(DXCONTEXT_PARAMS));
 
 	WNDCLASSW wc = {0};
 
@@ -112,7 +112,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 		return;
 	}
 
-	StringCchCopyA(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
+	StringCchCopyW(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
 	m_hInstance = hInstance;
 	m_uWindowLong = uWindowLong;
 }
@@ -407,10 +407,14 @@ void DXContext::WriteSafeWindowPos()
 {
 	if (m_current_mode.screenmode == WINDOWED)
 	{
+		if (!m_current_mode.m_skin)
+		{
 		WritePrivateProfileIntW(64,     L"nMainWndTop",    m_szIniFile, L"settings");
 		WritePrivateProfileIntW(64,     L"nMainWndLeft",   m_szIniFile, L"settings");
 		WritePrivateProfileIntW(64+256, L"nMainWndRight",  m_szIniFile, L"settings");
 		WritePrivateProfileIntW(64+256, L"nMainWndBottom", m_szIniFile, L"settings");
+		}
+
 		WritePrivateProfileIntW(64,     L"avs_wx",m_szIniFile,L"settings");
 		WritePrivateProfileIntW(64,     L"avs_wy",m_szIniFile,L"settings");
 		WritePrivateProfileIntW(256, L"avs_ww",m_szIniFile,L"settings");
@@ -688,7 +692,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				m_current_mode.parent_window = e(&myWindowState);
 				if (IsWindow(m_current_mode.parent_window))
 				{
-					SetWindowTextA(m_current_mode.parent_window, m_szWindowCaption);
+					SetWindowTextW(m_current_mode.parent_window, m_szWindowCaption);
 					success = 1;
 				}
 			}
@@ -700,10 +704,21 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 	// remember the client rect that was originally desired...
 	RECT windowed_mode_desired_client_rect;
+	if (m_current_mode.m_skin)
+	{
+		const int dsize = SendMessage(mod1.hwndParent, WM_WA_IPC, 0, IPC_ISDOUBLESIZE);
+		windowed_mode_desired_client_rect.top    = myWindowState.r.top + (20 * (!dsize ? 1 : 2));
+		windowed_mode_desired_client_rect.left   = myWindowState.r.left + (11 * (!dsize ? 1 : 2));
+		windowed_mode_desired_client_rect.right  = myWindowState.r.right - (8 * (!dsize ? 1 : 2));
+		windowed_mode_desired_client_rect.bottom = myWindowState.r.bottom - (14 * (!dsize ? 1 : 2));
+	}
+	else
+	{
 	windowed_mode_desired_client_rect.top    = GetPrivateProfileIntW(L"settings",L"nMainWndTop",-1,m_szIniFile);
 	windowed_mode_desired_client_rect.left   = GetPrivateProfileIntW(L"settings",L"nMainWndLeft",-1,m_szIniFile);
 	windowed_mode_desired_client_rect.right  = GetPrivateProfileIntW(L"settings",L"nMainWndRight",-1,m_szIniFile);
 	windowed_mode_desired_client_rect.bottom = GetPrivateProfileIntW(L"settings",L"nMainWndBottom",-1,m_szIniFile);
+	}
 
 	// ...and in case windowed mode init fails severely,
 	// set it up to try next time for a simple 256x256 window.
@@ -712,10 +727,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 	// 7. create the window, if not already created
 	if (!m_hwnd)
 	{
-		m_hwnd = CreateWindowExA(
+		m_hwnd = CreateWindowExW(
 		           MY_EXT_WINDOW_STYLE, // extended style
-				   #define MAKEINTATOMA(i)  (LPSTR)((ULONG_PTR)((WORD)(i)))
-		           MAKEINTATOMA(m_classAtom), // class
+		           MAKEINTATOM(m_classAtom), // class
 		           m_szWindowCaption, // caption
 		           MY_WINDOW_STYLE, // style
 		           myWindowState.r.left, // left
@@ -991,23 +1005,18 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				// changed: factor in the size of the skinned window frame
 				//			as it otherwiae resets the window position even
 				//			if it was in a valid position on the set monitor
-				if (r.top    >= (m_monitor_work_rect.top - (m_current_mode.m_skin ? 20 : 0)) &&
-				    r.left   >= (m_monitor_work_rect.left - (m_current_mode.m_skin ? 11 : 0)) &&
-				    r.right  <= (m_monitor_work_rect.right + (m_current_mode.m_skin ? 11 : 0)) &&
-				    r.bottom <= (m_monitor_work_rect.bottom + (m_current_mode.m_skin ? 20 : 0)))
+				const int dsize = (m_current_mode.m_skin ? SendMessage(mod1.hwndParent, WM_WA_IPC, 0, IPC_ISDOUBLESIZE) : 0);
+				if (r.top    >= (m_monitor_work_rect.top - (m_current_mode.m_skin ? (20 * (!dsize ? 1 : 2)) : 0)) &&
+				    r.left   >= (m_monitor_work_rect.left - (m_current_mode.m_skin ? (11 * (!dsize ? 1 : 2)) : 0)) &&
+				    r.right  <= (m_monitor_work_rect.right + (m_current_mode.m_skin ? (8 * (!dsize ? 1 : 2)) : 0)) &&
+				    r.bottom <= (m_monitor_work_rect.bottom + (m_current_mode.m_skin ? (14 * (!dsize ? 1 : 2)) : 0)))
 				{
-					if (m_current_mode.m_skin)
-					{
-						m_window_width  = m_REAL_client_width ; // m_window_width/height are for OUR borderless window, not the embedwnd parent frame.
-						m_window_height = m_REAL_client_height;
-						SetWindowPos(m_current_mode.parent_window,HWND_NOTOPMOST, r.left, r.top, r.right-r.left, r.bottom-r.top, /*SWP_SHOWWINDOW|*//*SWP_ASYNCWINDOWPOS*/0);
-						SetWindowPos(m_hwnd ,HWND_NOTOPMOST, windowed_mode_desired_client_rect.left,
-						             windowed_mode_desired_client_rect.top,
-						             m_REAL_client_width,
-						             m_REAL_client_height,
-						             SWP_SHOWWINDOW);
-					}
-					else
+					// NOTE: this used to do some re-positioning of
+					//		 the skinned window but that was causing
+					//		 issues with odd re-positioning for some
+					//		 users which not doing fixes as we set
+					//		 the wanted position elsewhere anyway.
+					if (!m_current_mode.m_skin)
 					{
 						m_window_width  = r.right - r.left;
 						m_window_height = r.bottom - r.top;
@@ -1062,7 +1071,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			m_current_mode.display_mode.Height = m_client_height;
 
 			// set up m_d3dpp (presentation parameters):
-			SecureZeroMemory(&m_d3dpp,sizeof(m_d3dpp));
+			memset(&m_d3dpp, 0, sizeof(m_d3dpp));
 			m_d3dpp.Windowed         = (m_current_mode.screenmode==FULLSCREEN) ? 0 : 1;
 			m_d3dpp.BackBufferFormat = m_current_mode.display_mode.Format;
 			m_d3dpp.BackBufferWidth  = m_client_width;
@@ -1384,6 +1393,8 @@ void DXContext::SaveWindow()
 {
 	if (m_current_mode.screenmode == WINDOWED)
 	{
+		if (!m_current_mode.m_skin)
+		{
 		RECT c;
 		GetClientRect(m_hwnd, &c);
 
@@ -1405,6 +1416,7 @@ void DXContext::SaveWindow()
 		WritePrivateProfileIntW(c.left,  L"nMainWndLeft",   m_szIniFile, L"settings");
 		WritePrivateProfileIntW(c.right, L"nMainWndRight",  m_szIniFile, L"settings");
 		WritePrivateProfileIntW(c.bottom,L"nMainWndBottom", m_szIniFile, L"settings");
+		}
 
 		// also save bounds for embedwnd
 		if (m_current_mode.m_skin && myWindowState.me)

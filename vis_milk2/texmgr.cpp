@@ -36,7 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 texmgr::texmgr()
 {
-	SecureZeroMemory(&m_tex, sizeof(m_tex));
+	memset(&m_tex, 0, sizeof(m_tex));
 }
 
 texmgr::~texmgr()
@@ -140,7 +140,7 @@ bool texmgr::TryCreateDDrawSurface(int iSlot, int w, int h)
 			break;
 
 		// TRY TO CREATE THE SURFACE IN SYSTEM MEMORY.
-		SecureZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
+		memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
 		ddsd.dwSize = sizeof( ddsd );
 		ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH; 
 		ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;//DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;// | DDSCAPS_3DDEVICE;// | DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY; 
@@ -161,7 +161,7 @@ bool texmgr::TryCreateDDrawSurface(int iSlot, int w, int h)
 		return false;
 
 	// find out (& remember) actual size created:
-	SecureZeroMemory(&ddsd, sizeof(ddsd));
+	memset(&ddsd, 0, sizeof(ddsd));
 	ddsd.dwSize = sizeof(ddsd);
 	m_tex[iSlot].pSurface->GetSurfaceDesc(&ddsd);
 	m_tex[iSlot].tex_w = ddsd.dwWidth;
@@ -297,7 +297,7 @@ int texmgr::LoadTex(wchar_t *szFilename, int iSlot, char *szInitCode, char *szCo
 		//g_dumpmsg(buf);
 
 		DDSURFACEDESC2 ddsd;
-		SecureZeroMemory(&ddsd, sizeof(DDSURFACEDESC2));
+		memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
 		ddsd.dwSize = sizeof( ddsd );
 		
 		if (m_tex[iSlot].pSurface->Lock(0, &ddsd, DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT|DDLOCK_NOSYSLOCK, 0) != DD_OK)

@@ -31,7 +31,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 #include <Winamp/wa_ipc.h>
 
+#ifdef _DEBUG
 bool g_bDebugOutput = false;
+#endif
 bool g_bDumpFileCleared = false;
 
 //---------------------------------------------------
@@ -238,7 +240,7 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
     float h = (float)1/tanf(fov_vert*0.5f);   // 1/tan(x) == cot(x)
     float Q = far_plane/(far_plane - near_plane);
  
-    SecureZeroMemory(pOut, sizeof(D3DXMATRIX));
+    memset(pOut, 0, sizeof(D3DXMATRIX));
     pOut->_11 = w;
     pOut->_22 = h;
     pOut->_33 = Q;
@@ -249,9 +251,7 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
 void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, int nSize)
 {
     szSongTitle[0] = 0;
-	wcsncpy(szSongTitle, (wchar_t*)SendMessage(hWndWinamp, WM_WA_IPC,
-								   SendMessage(hWndWinamp, WM_WA_IPC, 0 , IPC_GETLISTPOS),
-											   IPC_GETPLAYLISTTITLEW), nSize);
+	wcsncpy(szSongTitle, (wchar_t*)SendMessage(hWndWinamp, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE), nSize);
 }
 
 void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, int nSongPos)
@@ -277,13 +277,22 @@ void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, int nSongLen)
 {
     // note: size(szSongLen[]) must be at least 64.
     szSongLen[0] = 0;
-	int nSongLenMS = SendMessage(hWndWinamp,WM_USER,1,105)*1000;
+	const int nSongLenMS = SendMessage(hWndWinamp,WM_USER,1,105)*1000;
     if (nSongLenMS > 0)
     {
-		int len_s = nSongLenMS/1000;
-		int minutes = len_s/60;
-		int seconds = len_s - minutes*60;
+		const int length = (nSongLenMS / 1000),
+				  seconds = (length % 60),
+				  minutes = ((length / 60) % 60),
+				  hours = ((length / 3600) % 24);
+
+		if (hours > 0)
+		{
+			_snwprintf(szSongLen, nSongLen, L"%d:%02d:%02d", hours, minutes, seconds);
+		}
+		else
+		{
 		_snwprintf(szSongLen, nSongLen, L"%d:%02d", minutes, seconds);
+		}
     }    
 }
 

@@ -505,6 +505,8 @@ Order of Function Calls
 #include <strsafe.h>
 #include <nu/AutoCharFn.h>
 #include <loader/hook/squash.h>
+#include <loader/loader/paths.h>
+#include <loader/loader/utils.h>
 
 #define FRAND ((warand() % 7381)/7380.0f)
 
@@ -539,7 +541,9 @@ D3DVERTEXELEMENT9 g_SpriteVertDecl[] =
 extern CPlugin g_plugin;		// declared in main.cpp (note: was 'pg')
 
 // from support.cpp:
+#ifdef _DEBUG
 extern bool g_bDebugOutput;
+#endif
 extern bool g_bDumpFileCleared;
 
 // for __UpdatePresetList:
@@ -757,7 +761,7 @@ bool ReadFileToString(const wchar_t* szBaseFilename, char* szDestText, int nMaxB
 {
 	// PathCombine(..)?
 	wchar_t szFile[MAX_PATH] = {0};
-    _snwprintf(szFile, ARRAYSIZE(szFile), L"%s%s", g_plugin.m_szMilkdrop2Path, szBaseFilename);
+    _snwprintf(szFile, ARRAYSIZE(szFile), L"%s\\%sdata\\%s", GetPaths()->winamp_plugin_dir/*g_plugin.m_szMilkdrop2Path*/, SUBDIR, szBaseFilename);
     
     // read in all chars.  Replace char combos:  { 13;  13+10;  10 } with LINEFEED_CONTROL_CHAR, if bConvertLFsToSpecialChar is true.
     FILE* f = _wfopen(szFile, L"rb");
@@ -949,13 +953,9 @@ void CPlugin::MyPreInitialize()
 	unsigned char *data = (unsigned char *)WASABI_API_LOADRESFROMFILEW(L"GZ", MAKEINTRESOURCEW(IDR_TEXT_GZ), &data_size),
 				  *output = NULL;
 
-	decompress_resource(data, data_size, &output, 0);
+	DecompressResource(data, data_size, &output, 0);
 	g_szHelp = AutoWideDup((LPCSTR)output, CP_UTF8);
-
-	if (output)
-	{
-		free(output);
-	}
+	DecompressResourceFree(output);
 
     // CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
 	m_bFirstRun		            = true;
@@ -1009,11 +1009,11 @@ void CPlugin::MyPreInitialize()
     m_nMaxImages = 32;
     m_nMaxBytes  = 16000000;
 
-    #ifdef _DEBUG
+    /*#ifdef _DEBUG
         m_dwShaderFlags = D3DXSHADER_DEBUG|(1<<16);
     #else
         m_dwShaderFlags = (1<<16);//D3DXSHADER_SKIPOPTIMIZATION|D3DXSHADER_NO_PRESHADER;          
-    #endif
+    #endif*/
     //m_pFragmentLinker = NULL;     
     //m_pCompiledFragments = NULL;  
     m_pShaderCompileErrors = NULL;
@@ -1021,12 +1021,12 @@ void CPlugin::MyPreInitialize()
     //m_ps_warp = NULL;
     //m_vs_comp = NULL;
     //m_ps_comp = NULL;
-    SecureZeroMemory(&m_shaders,    sizeof(PShaderSet));
-    SecureZeroMemory(&m_OldShaders, sizeof(PShaderSet));
-    SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
-    SecureZeroMemory(&m_fallbackShaders_vs, sizeof(VShaderSet));
-    SecureZeroMemory(&m_fallbackShaders_ps, sizeof(PShaderSet));
-    SecureZeroMemory(m_BlurShaders, sizeof(m_BlurShaders));
+    memset(&m_shaders,    0, sizeof(PShaderSet));
+    memset(&m_OldShaders, 0, sizeof(PShaderSet));
+    memset(&m_NewShaders, 0, sizeof(PShaderSet));
+    memset(&m_fallbackShaders_vs, 0, sizeof(VShaderSet));
+    memset(&m_fallbackShaders_ps, 0, sizeof(PShaderSet));
+    memset(m_BlurShaders, 0, sizeof(m_BlurShaders));
     m_bWarpShaderLock = false;
     m_bCompShaderLock = false;
     m_bNeedRescanTexturesDir = true;
@@ -1071,17 +1071,18 @@ void CPlugin::MyPreInitialize()
 	
     m_waitstring.bActive		= false;
 	m_waitstring.bOvertypeMode  = false;
-	m_waitstring.szClipboard[0] = 0;
+	memset(&m_waitstring.szClipboard, 0, sizeof(m_waitstring.szClipboard));
 
 	m_nPresets		= 0;
 	m_nDirs			= 0;
     m_nPresetListCurPos = 0;
 	m_nCurrentPreset = -1;
-	m_szCurrentPresetFile[0] = 0;
-    m_szLoadingPreset[0] = 0;
+	memset(&m_szCurrentPresetFile, 0, sizeof(m_szCurrentPresetFile));
+	memset(&m_szLoadingPreset, 0, sizeof(m_szLoadingPreset));
 	//m_szPresetDir[0] = 0; // will be set @ end of this function
     m_bPresetListReady = false;
-    m_szUpdatePresetMask[0] = 0;
+	memset(&m_szSearch, 0, sizeof(m_szSearch));
+	memset(&m_szUpdatePresetMask, 0, sizeof(m_szUpdatePresetMask));
     //m_nRatingReadProgress = -1;
 
     myfft.Init(576, MY_FFT_SAMPLES, -1);
@@ -1104,9 +1105,9 @@ void CPlugin::MyPreInitialize()
 	m_bShowSongLen		= false;
 	m_fShowRatingUntilThisTime = -1.0f;
 	ClearErrors();
-	m_szDebugMessage[0]	= 0;
-    m_szSongTitle[0]    = 0;
-    m_szSongTitlePrev[0] = 0;
+	memset(&m_szDebugMessage, 0, sizeof(m_szDebugMessage));
+	memset(&m_szSongTitle, 0, sizeof(m_szSongTitle));
+	memset(&m_szSongTitlePrev, 0, sizeof(m_szSongTitlePrev));
 
 	m_lpVS[0]				= NULL;
 	m_lpVS[1]				= NULL;
@@ -1140,12 +1141,13 @@ void CPlugin::MyPreInitialize()
 	m_supertext.fStartTime = -1.0f;
 
 	// --------------------other init--------------------
-
+#ifdef _DEBUG
     g_bDebugOutput		= false;
+#endif
 	g_bDumpFileCleared	= false;
 
-    _snwprintf(m_szMilkdrop2Path, ARRAYSIZE(m_szMilkdrop2Path), L"%s%s", GetPluginsDirPath(), SUBDIR);
-	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir),  L"%spresets\\", m_szMilkdrop2Path );
+    //_snwprintf(m_szMilkdrop2Path, ARRAYSIZE(m_szMilkdrop2Path), L"%s%s", GetPluginsDirPath(), SUBDIR);
+	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\Plugins\\%spresets\\", GetPaths()->settings_dir, SUBDIR);
 
     // note that the config dir can be under Program Files or Application Data!!
     wchar_t szConfigDir[MAX_PATH] = {0};
@@ -1181,7 +1183,9 @@ void CPlugin::MyReadConfig()
 	m_bEnableRating = GetPrivateProfileBoolW(L"settings",L"bEnableRating",m_bEnableRating,pIni);
     //m_bInstaScan    = GetPrivateProfileBool("settings","bInstaScan",m_bInstaScan,pIni);
 	m_bHardCutsDisabled = GetPrivateProfileBoolW(L"settings",L"bHardCutsDisabled",m_bHardCutsDisabled,pIni);
+#ifdef _DEBUG
 	g_bDebugOutput	= GetPrivateProfileBoolW(L"settings",L"bDebugOutput",g_bDebugOutput,pIni);
+#endif
 	//m_bShowSongInfo = GetPrivateProfileBool("settings","bShowSongInfo",m_bShowSongInfo,pIni);
 	//m_bShowPresetInfo=GetPrivateProfileBool("settings","bShowPresetInfo",m_bShowPresetInfo,pIni);
 	m_bShowPressF1ForHelp = GetPrivateProfileBoolW(L"settings",L"bShowPressF1ForHelp",m_bShowPressF1ForHelp,pIni);
@@ -1287,8 +1291,9 @@ void CPlugin::MyWriteConfig()
 	WritePrivateProfileIntW(m_bHardCutsDisabled,	    L"bHardCutsDisabled",	pIni, L"settings");
 	WritePrivateProfileIntW(m_bEnableRating,		    L"bEnableRating",		pIni, L"settings");
 	//WritePrivateProfileIntW(m_bInstaScan,            "bInstaScan",		    pIni, "settings");
+#ifdef _DEBUG
 	WritePrivateProfileIntW(g_bDebugOutput,		    L"bDebugOutput",			pIni, L"settings");
-
+#endif
 	//itePrivateProfileInt(m_bShowPresetInfo, 	    "bShowPresetInfo",		pIni, "settings");
 	//itePrivateProfileInt(m_bShowSongInfo, 		"bShowSongInfo",        pIni, "settings");
 	//itePrivateProfileInt(m_bFixPinkBug, 		    "bFixPinkBug",			pIni, "settings");
@@ -1422,23 +1427,23 @@ int CPlugin::AllocateMyNonDx9Stuff()
 	InitializeCriticalSection(&g_cs);
 
     // read in 'm_szShaderIncludeText'
-    bool bSuccess = ReadFileToString(L"data\\include.fx", m_szShaderIncludeText, ARRAYSIZE(m_szShaderIncludeText)-4, false);
+    bool bSuccess = ReadFileToString(L"include.fx", m_szShaderIncludeText, ARRAYSIZE(m_szShaderIncludeText)-4, false);
 	if (!bSuccess) return false;
 	StripComments(m_szShaderIncludeText);
 	m_nShaderIncludeTextLen = strlen(m_szShaderIncludeText);
-    bSuccess |= ReadFileToString(L"data\\warp_vs.fx", m_szDefaultWarpVShaderText, ARRAYSIZE(m_szDefaultWarpVShaderText), true);
+    bSuccess |= ReadFileToString(L"warp_vs.fx", m_szDefaultWarpVShaderText, ARRAYSIZE(m_szDefaultWarpVShaderText), true);
     if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\warp_ps.fx", m_szDefaultWarpPShaderText, ARRAYSIZE(m_szDefaultWarpPShaderText), true);
+    bSuccess |= ReadFileToString(L"warp_ps.fx", m_szDefaultWarpPShaderText, ARRAYSIZE(m_szDefaultWarpPShaderText), true);
 	if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\comp_vs.fx", m_szDefaultCompVShaderText, ARRAYSIZE(m_szDefaultCompVShaderText), true);
+    bSuccess |= ReadFileToString(L"comp_vs.fx", m_szDefaultCompVShaderText, ARRAYSIZE(m_szDefaultCompVShaderText), true);
     if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\comp_ps.fx", m_szDefaultCompPShaderText, ARRAYSIZE(m_szDefaultCompPShaderText), true);
+    bSuccess |= ReadFileToString(L"comp_ps.fx", m_szDefaultCompPShaderText, ARRAYSIZE(m_szDefaultCompPShaderText), true);
     if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\blur_vs.fx", m_szBlurVS, ARRAYSIZE(m_szBlurVS), true);
+    bSuccess |= ReadFileToString(L"blur_vs.fx", m_szBlurVS, ARRAYSIZE(m_szBlurVS), true);
     if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\blur1_ps.fx", m_szBlurPSX, ARRAYSIZE(m_szBlurPSX), true);
+    bSuccess |= ReadFileToString(L"blur1_ps.fx", m_szBlurPSX, ARRAYSIZE(m_szBlurPSX), true);
     if (!bSuccess) return false;
-    bSuccess |= ReadFileToString(L"data\\blur2_ps.fx", m_szBlurPSY, ARRAYSIZE(m_szBlurPSY), true);
+    bSuccess |= ReadFileToString(L"blur2_ps.fx", m_szBlurPSY, ARRAYSIZE(m_szBlurPSY), true);
     if (!bSuccess) return false;
 
 	BuildMenus();
@@ -1785,7 +1790,7 @@ int CPlugin::AllocateMyDX9Stuff()
 			case MD2_PS_2_X:
 				WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_2,szSM,64); break;
 			case MD2_PS_3_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_3,szSM,64); break;
-			case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
+			//case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
 			default:
 				_snwprintf(szSM, ARRAYSIZE(szSM), WASABI_API_LNGSTRINGW(IDS_UKNOWN_CASE_X), m_nMaxPSVersion_DX9);
 				break;
@@ -2049,7 +2054,7 @@ int CPlugin::AllocateMyDX9Stuff()
     // BUILD VERTEX LIST for final composite blit
 	//   note the +0.5-texel offset! 
 	//   (otherwise, a 1-pixel-wide line of the image would wrap at the top and left edges).
-	SecureZeroMemory(m_comp_verts, sizeof(MYVERTEX)*FCGSX*FCGSY);
+	memset(m_comp_verts, 0, sizeof(MYVERTEX)*FCGSX*FCGSY);
 	//float fOnePlusInvWidth  = 1.0f + 1.0f/(float)GetWidth();
 	//float fOnePlusInvHeight = 1.0f + 1.0f/(float)GetHeight();
     float fHalfTexelW =  0.5f / (float)GetWidth();   // 2.5: 2 pixels bad @ bottom right
@@ -2508,7 +2513,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
     if (zoom_factor > 1) 
     {
         // first go ACROSS, blending cubically on X, but only on the main lines.
-        DWORD* dst = (DWORD*)r.pBits;
+        dst = (DWORD*)r.pBits;
         for (int y=0; y<size; y+=zoom_factor)
             for (int x=0; x<size; x++) 
                 if (x % zoom_factor)
@@ -2766,9 +2771,9 @@ void CShaderParams::Clear()
     rand_frame  = NULL;
     rand_preset = NULL;
 
-    SecureZeroMemory(rot_mat, sizeof(rot_mat));
-    SecureZeroMemory(const_handles, sizeof(const_handles));
-    SecureZeroMemory(q_const_handles, sizeof(q_const_handles));
+    memset(rot_mat, 0, sizeof(rot_mat));
+    memset(const_handles, 0, sizeof(const_handles));
+    memset(q_const_handles, 0, sizeof(q_const_handles));
     texsize_params.clear();
 
     // sampler stages for various PS texture bindings:
@@ -2784,7 +2789,7 @@ bool CPlugin::EvictSomeTexture()
     // note: this won't evict a texture whose age is zero,
     //       or whose reported size is zero!
 
-    #if _DEBUG
+#ifdef _DEBUG
     {
         int nEvictableFiles = 0;
         int nEvictableBytes = 0;
@@ -2869,7 +2874,7 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename, int
         texfiles.clear();
 
 		wchar_t szMask[MAX_PATH] = {0};
-        _snwprintf(szMask, ARRAYSIZE(szMask), L"%stextures\\*.*", g_plugin.m_szMilkdrop2Path);
+		_snwprintf(szMask, ARRAYSIZE(szMask), L"%s\\Plugins\\%stextures\\*.*", GetPaths()->settings_dir, SUBDIR);
 
 		WIN32_FIND_DATAW ffd = {0};
 
@@ -3145,7 +3150,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                     {
                         int nTexturesCached = 0;
                         int nBytesCached = 0;
-                        int N = g_plugin.m_textures.size();
+                        N = g_plugin.m_textures.size();
                         for (int i=0; i<N; i++)
                             if (g_plugin.m_textures[i].bEvictable && g_plugin.m_textures[i].texptr)
                             {
@@ -3164,19 +3169,24 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                     wchar_t szFilename[MAX_PATH] = {0};
                     for (int z=0; z<ARRAYSIZE(texture_exts); z++) 
                     {
-                        _snwprintf(szFilename, ARRAYSIZE(szFilename), L"%stextures\\%s.%s", g_plugin.m_szMilkdrop2Path, szRootName, texture_exts[z].c_str());
+						_snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s\\Plugins\\%stextures\\%s.%s",
+								   GetPaths()->settings_dir, SUBDIR, szRootName, texture_exts[z].c_str());
                         if (GetFileAttributesW(szFilename) == 0xFFFFFFFF)
                         {
                             // try again, but in presets dir
-                            _snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s%s.%s", g_plugin.m_szPresetDir, szRootName, texture_exts[z].c_str());
+                            _snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s%s.%s",
+									   g_plugin.m_szPresetDir, szRootName, texture_exts[z].c_str());
+
                             if (GetFileAttributesW(szFilename) == 0xFFFFFFFF)
+							{
 								continue;
                         }
-                        D3DXIMAGE_INFO desc;
+                        }
                         
                         // keep trying to load it - if it fails due to memory, evict something and try again.
                         while (1)
                         {
+							D3DXIMAGE_INFO desc = {0};
                             HRESULT hr = pCreateTextureFromFileExW(g_plugin.GetDevice(), 
                                                                    szFilename,
                                                                    D3DX_DEFAULT_NONPOW2, // w
@@ -3355,7 +3365,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
 bool CPlugin::RecompileVShader(const char* szShadersText, VShaderInfo *si, int shaderType, bool bHardErrors)
 {
     SafeRelease(si->ptr);
-    SecureZeroMemory(si, sizeof(VShaderInfo));    
+    memset(si, 0, sizeof(VShaderInfo));    
    
     // LOAD SHADER
     if (!LoadShaderFromMemory( szShadersText, "VS", "vs_1_1", &si->CT, (void**)&si->ptr, shaderType, bHardErrors && (GetScreenMode()==WINDOWED)))
@@ -3373,7 +3383,7 @@ bool CPlugin::RecompilePShader(const char* szShadersText, PShaderInfo *si, int s
     assert(m_nMaxPSVersion > 0);
 
     SafeRelease(si->ptr);
-    SecureZeroMemory(si, sizeof(PShaderInfo));    
+    memset(si, 0, sizeof(PShaderInfo));    
    
     // LOAD SHADER
     // note: ps_1_4 required for dependent texture lookups.
@@ -3392,7 +3402,7 @@ bool CPlugin::RecompilePShader(const char* szShadersText, PShaderInfo *si, int s
 		case MD2_PS_2_0: strncpy(ver, "ps_2_0", ARRAYSIZE(ver)); break;
 		case MD2_PS_2_X: strncpy(ver, "ps_2_a", ARRAYSIZE(ver)); break; // we'll try ps_2_a first, LoadShaderFromMemory will try ps_2_b if compilation fails
 		case MD2_PS_3_0: strncpy(ver, "ps_3_0", ARRAYSIZE(ver)); break;
-		case MD2_PS_4_0: strncpy(ver, "ps_4_0", ARRAYSIZE(ver)); break;
+		//case MD2_PS_4_0: strncpy(ver, "ps_4_0", ARRAYSIZE(ver)); break;
 		default: assert(0); break;
 		}
 
@@ -3500,7 +3510,8 @@ bool CPlugin::LoadShaderFromFile( char* szFile, char* szFn, char* szProfile,
 */
 
 bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, char* szProfile, 
-                                    LPD3DXCONSTANTTABLE* ppConstTable, void** ppShader, int shaderType, bool bHardErrors )
+                                    LPD3DXCONSTANTTABLE* ppConstTable, void** ppShader,
+									int shaderType, bool bHardErrors )
 {
     const char szWarpDefines[] = "#define rad _rad_ang.x\n"
                                  "#define ang _rad_ang.y\n"
@@ -3527,7 +3538,6 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     }
 
     LPD3DXBUFFER pShaderByteCode;
-    wchar_t title[64] = {0};
     
     *ppShader = NULL;
     *ppConstTable = NULL;
@@ -3673,7 +3683,8 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         NULL,//LPD3DXINCLUDE pInclude,
         szFn,
         szProfile,
-        m_dwShaderFlags,
+		(strcmp(szProfile, "ps_3_0") ? D3DXSHADER_USE_LEGACY_D3DX9_31_DLL :
+		D3DXSHADER_OPTIMIZATION_LEVEL3)/*/m_dwShaderFlags/**/,
         &pShaderByteCode,
 				&m_pShaderCompileErrors,
 				ppConstTable
@@ -3681,12 +3692,14 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		{
 			failed=true;
 		}
+
 		// before we totally fail, let's try using ps_2_b instead of ps_2_a
 		if (failed && !strcmp(szProfile, "ps_2_a"))
 		{
 			SafeRelease(m_pShaderCompileErrors);
 			if (D3D_OK == pCompileShader(szShaderText, len, NULL, NULL, szFn,
-				"ps_2_b", m_dwShaderFlags, &pShaderByteCode, &m_pShaderCompileErrors, ppConstTable))
+			"ps_2_b", D3DXSHADER_USE_LEGACY_D3DX9_31_DLL/*m_dwShaderFlags*/,
+			&pShaderByteCode, &m_pShaderCompileErrors, ppConstTable))
 			{
 				failed=false;
 			}
@@ -3695,16 +3708,34 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		if (failed)
 		{
 			wchar_t temp[1024] = {0};
-			_snwprintf(temp, ARRAYSIZE(temp), WASABI_API_LNGSTRINGW(IDS_ERROR_COMPILING_X_X_SHADER), szProfile, szWhichShader);
 			if (m_pShaderCompileErrors && m_pShaderCompileErrors->GetBufferSize() < ARRAYSIZE(temp) - 256) 
 			{
+			char *compiler_error = (char*)m_pShaderCompileErrors->GetBufferPointer();
+			if (compiler_error && *compiler_error)
+			{
+				// this is a specific SM3 related error that although it'd be nice
+				// to see all presets fixed it's not that simple to fix a preset
+				// so to avoid annoying users (now that SM3 works on AMD & nVidia)
+				// this will hide the X3025 (global variables not supported) error
+				if (!StrStrIA(compiler_error, "error X3025"))
+				{
+					_snwprintf(temp, ARRAYSIZE(temp), WASABI_API_LNGSTRINGW(IDS_ERROR_COMPILING_X_X_SHADER), szProfile, szWhichShader);
 				wcsncat(temp, L"\n\n", ARRAYSIZE(temp));
-				wcsncat(temp, AutoWide((char*)m_pShaderCompileErrors->GetBufferPointer()), ARRAYSIZE(temp));
+					wcsncat(temp, AutoWide(compiler_error), ARRAYSIZE(temp));
+				}
+				else
+				{
+					SafeRelease(m_pShaderCompileErrors);
+					return false;
+				}
+			}
 			}
 			SafeRelease(m_pShaderCompileErrors);
 			dumpmsg(temp);
-			if (bHardErrors)
+		if (bHardErrors) {
+			wchar_t title[64] = {0};
 				MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		}
 			else {
 				AddError(temp, 8.0f, ERR_PRESET, true);
 			}
@@ -3726,8 +3757,10 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		wchar_t temp[512] = {0};
         WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_SHADER, temp, ARRAYSIZE(temp));
 		dumpmsg(temp); 
-        if (bHardErrors)
+		if (bHardErrors) {
+			wchar_t title[64] = {0};
 		    MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		}
         else {
             AddError(temp, 6.0f, ERR_PRESET, true);
         }
@@ -4148,6 +4181,8 @@ void CPlugin::OnAltK()
 
 void CPlugin::AddError(wchar_t* szMsg, float fDuration, int category, bool bBold)
 {
+	if (szMsg && *szMsg)
+	{
     if (category == ERR_NOTIFY)
         ClearErrors(category);
 
@@ -4159,6 +4194,7 @@ void CPlugin::AddError(wchar_t* szMsg, float fDuration, int category, bool bBold
     x.category = category;
     x.bBold = bBold;
     m_errors.push_back(x);
+}
 }
 
 void CPlugin::ClearErrors(int category)  // 0=all categories
@@ -4563,7 +4599,7 @@ void CPlugin::MyRenderUI(
 						RECT r2 = rect;
                         r2.bottom = 4096;
 						m_text.DrawText(GetFont(SIMPLE_FONT), buf2, -1, &r2, DT_CALCRECT /*| DT_WORDBREAK*/, 0xFFFFFFFF, false);
-                        int h = r2.bottom-r2.top;
+                        h = r2.bottom-r2.top;
 						ypixels += h;
 						bufA[pos] = ch;
 						
@@ -4895,7 +4931,7 @@ void CPlugin::MyRenderUI(
                 {
                     box = orig_rect;
                     int w = 0;
-                    int h = 0;
+                    h = 0;
 
                     for (int mash=0; mash<MASH_SLOTS; mash++)
                     {
@@ -5110,7 +5146,7 @@ void CPlugin::MyRenderUI(
 						    RemoveExtension(str);
 						    _snwprintf(str2, ARRAYSIZE(str2), L" %s ", str);
 
-						    //if (lstrcmp(m_pState->m_szDesc, str)==0)
+						    //if (wcscmp(m_pState->m_szDesc, str)==0)
 							//    bIsRunning = true;
 					    }
 					    
@@ -5202,8 +5238,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
     //   and 1 if you do not.  DO NOT call DefWindowProc() 
     //   for these particular messages!
 
-    USHORT mask = 1 << (sizeof(SHORT)*8 - 1);
-    bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
+	const USHORT mask = 1 << (sizeof(SHORT) * 8 - 1);	// we want the highest-order bit
+    const bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
 
     int nRepeat = 1;  //updated as appropriate
     int rep;
@@ -5590,10 +5626,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		if (m_waitstring.bActive) 
 		{
 			// handle arrow keys, home, end, etc. 
-
-			USHORT mask = 1 << (sizeof(SHORT)*8 - 1);	// we want the highest-order bit
-			bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
-			bool bCtrlHeldDown = (GetKeyState(VK_CONTROL) & mask) != 0;
+			const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
 
 			if (wParam == VK_LEFT || wParam == VK_RIGHT || 
 				wParam == VK_HOME || wParam == VK_END ||
@@ -6083,6 +6116,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		case VK_PRIOR:	
 			if (m_UI_mode == UI_LOAD || m_UI_mode == UI_MASHUP)
             {
+				memset(&m_szSearch, 0, sizeof(m_szSearch));
 				m_bUserPagedUp = true;
                 if (m_UI_mode == UI_MASHUP)
                     m_nLastMashChangeFrame[m_nMashSlot] = GetFrame();  // causes delayed apply
@@ -6092,6 +6126,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		case VK_NEXT:	
 			if (m_UI_mode == UI_LOAD || m_UI_mode == UI_MASHUP)
             {
+				memset(&m_szSearch, 0, sizeof(m_szSearch));
 				m_bUserPagedDown = true;
                 if (m_UI_mode == UI_MASHUP)
                     m_nLastMashChangeFrame[m_nMashSlot] = GetFrame();  // causes delayed apply
@@ -6152,9 +6187,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                     m_nNumericInputDigits = 0;
 				    m_nNumericInputNum = 0;
 
-					USHORT mask = 1 << (sizeof(SHORT)*8 - 1);	// we want the highest-order bit
-					bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
-					bool bCtrlHeldDown = (GetKeyState(VK_CONTROL) & mask) != 0;
+					const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
 
 					if (bShiftHeldDown && bCtrlHeldDown)
 					{
@@ -6274,12 +6307,20 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			break;
 
 		case VK_BACK:
+			if (m_UI_mode == UI_LOAD)
+			{
+				memset(&m_szSearch, 0, sizeof(m_szSearch));
+				SeekToPreset();
+			}
+			else
+			{
 			// pass on to parent
 			//PostMessage(m_hWndParent,message,wParam,lParam);
             PrevPreset(0);
     		m_fHardCutThresh *= 2.0f;  // make it a little less likely that a random hard cut follows soon.
 		    //m_nNumericInputDigits = 0;
 			//m_nNumericInputNum = 0;
+			}
 			return 0;
 
         case 'T':
@@ -6344,7 +6385,19 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	if (m_UI_mode == UI_LOAD && ((wParam >= 'A' && wParam <= 'Z') || (wParam >= 'a' && wParam <= 'z')))
 	{
-		SeekToPreset((char)wParam);
+		const USHORT mask = 1 << (sizeof(SHORT)*8 - 1);	// we want the highest-order bit
+		const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
+		if (bShiftHeldDown)
+		{
+			memset(&m_szSearch, 0, sizeof(m_szSearch));
+		}
+
+		const int len = wcslen(m_szSearch);
+		if (len < ARRAYSIZE(m_szSearch))
+		{
+			m_szSearch[len] = (char)wParam;
+		}
+		SeekToPreset(/*(char)wParam*/);
 		return 0; // we processed (or absorbed) the key
 	}
     else if (m_UI_mode == UI_MASHUP && wParam >= '1' && wParam <= ('0' + MASH_SLOTS))
@@ -6729,8 +6782,7 @@ void DoColors(HWND hwnd, int *r, int *g, int *b)
 {
 	static COLORREF acrCustClr[16]; 
 
-	CHOOSECOLOR cc;
-	SecureZeroMemory(&cc, sizeof(CHOOSECOLOR));
+	CHOOSECOLOR cc = {0};
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner = hwnd;//NULL;//hSaverMainWindow;
 	cc.Flags = CC_RGBINIT | CC_FULLOPEN;
@@ -6806,7 +6858,6 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
         {
         case WM_INITDIALOG: // initialize controls here
             {
-				char buf[2048] = {0};
 				int nPos, i;
                 HWND ctrl;
 
@@ -6895,13 +6946,16 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    for (i=0; i<5; i++)
 				    SendMessage( GetDlgItem( hwnd, IDC_BRIGHT_SLIDER), TBM_SETTIC, 0, i);
 
+#ifdef _DEBUG
 			    // append debug output filename to the checkbox's text
-			    GetWindowTextA( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf, 256);
-			    strncat(buf, DEBUGFILE, ARRAYSIZE(buf));
-			    SetWindowTextA( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf);
+				wchar_t buf[MAX_PATH] = { 0 };
+			    GetWindowTextW( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf, ARRAYSIZE(buf));
+			    wcsncat(buf, DEBUGFILE, ARRAYSIZE(buf));
+			    SetWindowTextW( GetDlgItem(hwnd, IDC_CB_DEBUGOUTPUT), buf);
 
 			    // set checkboxes
 			    CheckDlgButton(hwnd, IDC_CB_DEBUGOUTPUT, g_bDebugOutput);
+#endif
 			    //CheckDlgButton(hwnd, IDC_CB_PRESSF1, (!m_bShowPressF1ForHelp));
 			    //CheckDlgButton(hwnd, IDC_CB_TOOLTIPS, m_bShowMenuToolTips);
 			    //CheckDlgButton(hwnd, IDC_CB_ALWAYS3D, m_bAlways3D);
@@ -6955,7 +7009,9 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				if (t != CB_ERR) m_n16BitGamma = t;
 
 				// checkboxes
+#ifdef _DEBUG
 				g_bDebugOutput = DlgItemIsChecked(hwnd, IDC_CB_DEBUGOUTPUT);
+#endif
 				//m_bShowPressF1ForHelp = (!DlgItemIsChecked(hwnd, IDC_CB_PRESSF1));
 				//m_bShowMenuToolTips = DlgItemIsChecked(hwnd, IDC_CB_TOOLTIPS);
 				//m_bClearScreenAtStartup = !DlgItemIsChecked(hwnd, IDC_CB_CLS);
@@ -7061,11 +7117,10 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
         {
         case WM_INITDIALOG:
             {
-                char buf[2048] = {0};
-                HWND ctrl;
+                wchar_t buf[2048] = {0};
 
 			    //-------------- image cache max. bytes combo box ---------------------
-                ctrl = GetDlgItem( hwnd, IDC_MAX_BYTES );
+				HWND ctrl = GetDlgItem( hwnd, IDC_MAX_BYTES );
                 AddItem(ctrl, WASABI_API_LNGSTRINGW(IDS_AUTO), (DWORD)-1);
                 AddItem(ctrl, FormImageCacheSizeString(L"   0", IDS_MB), 0);
                 AddItem(ctrl, FormImageCacheSizeString(L"   1", IDS_MB), 1000000);
@@ -7145,12 +7200,12 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    //_snprintf(buf, ARRAYSIZE(buf), " %3.2f", m_fStereoSep);
 			    //SetWindowText( GetDlgItem( hwnd, IDC_3DSEP ), buf );
 
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fSongTitleAnimDuration);
-			    SetWindowTextA(GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION), buf);
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fTimeBetweenRandomSongTitles);
-			    SetWindowTextA(GetDlgItem(hwnd, IDC_RAND_TITLE), buf);
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fTimeBetweenRandomCustomMsgs);
-			    SetWindowTextA(GetDlgItem(hwnd, IDC_RAND_MSG), buf);
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fSongTitleAnimDuration);
+			    SetWindowTextW(GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION), buf);
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenRandomSongTitles);
+			    SetWindowTextW(GetDlgItem(hwnd, IDC_RAND_TITLE), buf);
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenRandomCustomMsgs);
+			    SetWindowTextW(GetDlgItem(hwnd, IDC_RAND_MSG), buf);
 
 			    CheckDlgButton(hwnd, IDC_CB_TITLE_ANIMS, m_bSongTitleAnims);
             }
@@ -7213,17 +7268,25 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 ReadCBValue(hwnd, IDC_MAX_BYTES    , &m_nMaxBytes   );
                 ReadCBValue(hwnd, IDC_MAX_IMAGES   , &m_nMaxImages  );
 
-				char buf[2048] = {0};
+				wchar_t buf[2048] = {0};
 
-				GetWindowTextA( GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				GetWindowTextW( GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fSongTitleAnimDuration = val;
-				GetWindowTextA( GetDlgItem( hwnd, IDC_RAND_TITLE ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				}
+
+				GetWindowTextW( GetDlgItem( hwnd, IDC_RAND_TITLE ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fTimeBetweenRandomSongTitles = val;
-				GetWindowTextA( GetDlgItem( hwnd, IDC_RAND_MSG ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				}
+
+				GetWindowTextW( GetDlgItem( hwnd, IDC_RAND_MSG ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fTimeBetweenRandomCustomMsgs = val;
+				}
 
 				m_bSongTitleAnims = DlgItemIsChecked(hwnd, IDC_CB_TITLE_ANIMS);
             }
@@ -7291,21 +7354,21 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
         {
         case WM_INITDIALOG:
             {
-                char buf[2048] = {0};
+                wchar_t buf[2048] = {0};
 
 			    // soft cuts
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fTimeBetweenPresets);
-			    SetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf );
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fTimeBetweenPresetsRand);
-			    SetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf );
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fBlendTimeUser);
-			    SetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_USER ), buf );
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fBlendTimeAuto);
-			    SetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf );
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenPresets);
+			    SetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf );
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenPresetsRand);
+			    SetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf );
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fBlendTimeUser);
+			    SetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_USER ), buf );
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fBlendTimeAuto);
+			    SetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf );
 
 			    // hard cuts
-			    _snprintf(buf, ARRAYSIZE(buf), " %2.1f", m_fHardCutHalflife);
-			    SetWindowTextA( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf );
+			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fHardCutHalflife);
+			    SetWindowTextW( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf );
 
 			    int n = (int)((m_fHardCutLoudnessThresh - 1.25f) * 10.0f);
 			    if (n<0) n = 0;
@@ -7319,26 +7382,39 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
             break;
         case WM_DESTROY:
             {
-                char buf[2048] = {0};
+                wchar_t buf[2048] = {0};
 
 				// soft cuts
-				GetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				GetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fTimeBetweenPresets = val;
-				GetWindowTextA( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				}
+
+				GetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fTimeBetweenPresetsRand = val;
-				GetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				}
+
+				GetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fBlendTimeAuto = val;
-				GetWindowTextA( GetDlgItem( hwnd, IDC_BLEND_USER ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				}
+
+				GetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_USER ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fBlendTimeUser = val;
+				}
 
 				// hard cuts
-				GetWindowTextA( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
-				if (_sscanf_l(buf, "%f", g_use_C_locale, &val) == 1)
+				GetWindowTextW( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
+				if (SafeWtoF(buf, &val))
+				{
 					m_fHardCutHalflife = val;
+				}
 
 				t = SendMessage( GetDlgItem( hwnd, IDC_HARDCUT_LOUDNESS ), TBM_GETPOS, 0, 0);
 				if (t != CB_ERR) m_fHardCutLoudnessThresh = 1.25f + t/10.0f;
@@ -7678,7 +7754,7 @@ void CPlugin::WriteRealtimeConfig()
 
 void CPlugin::dumpmsg(wchar_t *s)
 {
-    #if _DEBUG
+#ifdef _DEBUG
         OutputDebugStringW(s);
         if (s[0]) 
         {
@@ -8067,7 +8143,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         SafeRelease( m_OldShaders.comp.CT );
         SafeRelease( m_OldShaders.warp.CT );
         m_OldShaders = m_shaders;
-        SecureZeroMemory(&m_shaders, sizeof(PShaderSet));
+        memset(&m_shaders, 0, sizeof(PShaderSet));
     
         LoadShaders(&m_shaders, m_pState, false);
 
@@ -8078,7 +8154,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         // set ourselves up to load the preset (and esp. compile shaders) a little bit at a time
         SafeRelease( m_NewShaders.comp.ptr );
         SafeRelease( m_NewShaders.warp.ptr );
-        SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
+        memset(&m_NewShaders, 0, sizeof(PShaderSet));
 
         DWORD ApplyFlags = STATE_ALL;
         ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
@@ -8138,7 +8214,7 @@ void CPlugin::LoadPresetTick()
         SafeRelease( m_OldShaders.warp.ptr );
         m_OldShaders = m_shaders;
         m_shaders = m_NewShaders;
-        SecureZeroMemory(&m_NewShaders, sizeof(PShaderSet));
+        memset(&m_NewShaders, 0, sizeof(PShaderSet));
 
         // end slow-preset-load mode
         m_nLoadingPreset = 0;
@@ -8150,9 +8226,9 @@ void CPlugin::LoadPresetTick()
         ++m_nLoadingPreset;
 }
 
-void CPlugin::SeekToPreset(wchar_t cStartChar)
+void CPlugin::SeekToPreset(/*wchar_t cStartChar*/)
 {
-	if (cStartChar >= L'a' && cStartChar <= L'z')
+	/*if (cStartChar >= L'a' && cStartChar <= L'z')
 		cStartChar -= L'a' - L'A';
 
 	for (int i = m_nDirs; i < m_nPresets; i++)
@@ -8165,18 +8241,28 @@ void CPlugin::SeekToPreset(wchar_t cStartChar)
 			m_nPresetListCurPos = i;
 			return;
 		}
+	}*/
+	const int len = wcslen(m_szSearch);
+	for (int i = m_nDirs; i < m_nPresets; i++)
+	{
+		if (!wcsnicmp(m_presets[i].szFilename.c_str(), m_szSearch, len))
+		{
+			m_nPresetListCurPos = i;
+			return;
+		}
 	}	
 }
 
 void CPlugin::FindValidPresetDir()
 {
-    _snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%spresets\\", m_szMilkdrop2Path );
+	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\Plugins\\%spresets\\", GetPaths()->settings_dir, SUBDIR);
     if (GetFileAttributesW(m_szPresetDir) != -1)
         return;
-    wcsncpy(m_szPresetDir, m_szMilkdrop2Path, ARRAYSIZE(m_szPresetDir));
+    /*wcsncpy(m_szPresetDir, m_szMilkdrop2Path, ARRAYSIZE(m_szPresetDir));
     if (GetFileAttributesW(m_szPresetDir) != -1)
-        return;
-    wcsncpy(m_szPresetDir, GetPluginsDirPath(), ARRAYSIZE(m_szPresetDir));
+        return;*/
+    wcsncpy(m_szPresetDir, GetPaths()->winamp_plugin_dir, ARRAYSIZE(m_szPresetDir));
+	PathAddBackslash(m_szPresetDir);
     if (GetFileAttributesW(m_szPresetDir) != -1)
         return;
     /*wcsncpy(m_szPresetDir, L"c:\\program files\\winamp\\", ARRAYSIZE(m_szPresetDir));  //getting desperate here
@@ -8244,7 +8330,7 @@ retry:
         h = INVALID_HANDLE_VALUE;
         g_plugin.m_bPresetListReady = false;
         wcsncpy(g_plugin.m_szUpdatePresetMask, szMask, ARRAYSIZE(g_plugin.m_szUpdatePresetMask));
-        SecureZeroMemory(&fd, sizeof(fd));
+        memset(&fd, 0, sizeof(fd));
 
         g_plugin.m_nPresets = 0;
 	    g_plugin.m_nDirs    = 0;
@@ -8402,7 +8488,7 @@ retry:
 								p = NextLine(p);
 								if (p && !strncmp(p, "fRating=", 8)) 
 								{
-									_sscanf_l(&p[8], "%f", g_use_C_locale, &fRating);
+									SafeAtoF(&p[8], &fRating);
 									bRatingKnown = true;
 									break;
 								}
@@ -9402,10 +9488,10 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 	
 	if (img[1] != L':')// || img[2] != '\\')
 	{
-		// it's not in the form "x:\blah\billy.jpg" so prepend plugin dir path.
+		// it's not in the form "x:\blah\billy.jpg" so prepend the plugin settings dir path.
 		wchar_t temp[512] = {0};
 		wcsncpy(temp, img, ARRAYSIZE(temp));
-		_snwprintf(img, ARRAYSIZE(img), L"%s%s", m_szMilkdrop2Path, temp);
+		_snwprintf(img, ARRAYSIZE(img), L"%s\\Plugins\\%s%s", GetPaths()->settings_dir, SUBDIR, temp);
 	}
 
 	// 2. get color key
@@ -9513,7 +9599,7 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 	case TEXMGR_ERR_CORRUPT_JPEG:           _snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "sprite #%d error: jpeg is corrupt", nSpriteNum); break;
     */
     case TEXMGR_ERR_BADFILE:                
-        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_IMAGE_FILE_MISSING_OR_CORRUPT), nSpriteNum); 
+        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_SPRITE_X_ERROR_IMAGE_FILE_MISSING_OR_CORRUPT), nSpriteNum, img); 
         AddError(buf, 6.0f, ERR_MISC, true);
         break;
     case TEXMGR_ERR_OUTOFMEM:               

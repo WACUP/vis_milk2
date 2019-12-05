@@ -63,7 +63,8 @@ class DXContext
 {
     public:
         // PUBLIC FUNCTIONS
-        DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPCSTR szWindowCaption,WNDPROC pProc,LONG_PTR uWindowLong, int minimize_winamp, wchar_t* szIniFile);
+        DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPCWSTR szWindowCaption,
+				  WNDPROC pProc,LONG_PTR uWindowLong, int minimize_winamp, wchar_t* szIniFile);
         ~DXContext();
         BOOL StartOrRestartDevice(DXCONTEXT_PARAMS *pParams); // also serves as Init() function
         BOOL OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect);
@@ -109,7 +110,7 @@ class DXContext
         HWND m_hwnd_winamp;
         LONG_PTR m_uWindowLong;
 		ATOM m_classAtom;
-        char m_szWindowCaption[512];
+        wchar_t m_szWindowCaption[128];
         wchar_t m_szIniFile[MAX_PATH];
         char m_szDriver[MAX_DEVICE_IDENTIFIER_STRING];
         char m_szDesc[MAX_DEVICE_IDENTIFIER_STRING];

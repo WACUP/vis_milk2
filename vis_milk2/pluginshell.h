@@ -73,7 +73,7 @@ public:
     eScrMode  GetScreenMode();     // returns WINDOWED, FULLSCREEN, FAKE_FULLSCREEN, DESKTOP, or NOT_YET_KNOWN (if called before or during OverrideDefaults()).
     HWND      GetWinampWindow();   // returns handle to Winamp main window
     HINSTANCE GetInstance();       // returns handle to the plugin DLL module; used for things like loading resources (dialogs, bitmaps, icons...) that are built into the plugin.
-    wchar_t*  GetPluginsDirPath(); // usually returns 'c:\\program files\\winamp\\plugins\\'
+    //const wchar_t*  GetPluginsDirPath(); // usually returns 'c:\\program files\\winamp\\plugins\\'
     wchar_t*  GetConfigIniFile();  // usually returns 'c:\\program files\\winamp\\plugins\\something.ini' - filename is determined from identifiers in 'defines.h'
 	char*     GetConfigIniFileA();
 protected:
@@ -161,7 +161,7 @@ private:
     HWND         m_hWndWinamp;      // handle to Winamp window 
     HINSTANCE    m_hInstance;       // handle to application instance
     DXContext*   m_lpDX;            // pointer to DXContext object
-    wchar_t      m_szPluginsDirPath[MAX_PATH];  // usually 'c:\\program files\\winamp\\plugins\\'
+    //wchar_t      m_szPluginsDirPath[MAX_PATH];  // usually 'c:\\program files\\winamp\\plugins\\'
     wchar_t      m_szConfigIniFile[MAX_PATH];   // usually 'c:\\program files\\winamp\\plugins\\something.ini' - filename is determined from identifiers in 'defines.h'
 	char         m_szConfigIniFileA[MAX_PATH];   // usually 'c:\\program files\\winamp\\plugins\\something.ini' - filename is determined from identifiers in 'defines.h'
     
@@ -216,7 +216,7 @@ private:
     HWND                m_hWndProgMan;
     HWND                m_hWndDesktop;
     HWND                m_hWndDesktopListView;
-    char                m_szDesktopFolder[MAX_PATH];   // *without* the final backslash
+    wchar_t             m_szDesktopFolder[MAX_PATH];   // *without* the final backslash
     int                 m_desktop_icon_size;
     int                 m_desktop_dragging;  // '1' when user is dragging icons around
     int                 m_desktop_box;       // '1' when user is drawing a box

@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include <shellapi.h>
 #include <strsafe.h>
+#include <loader/loader/paths.h>
 
 #define PREFERRED_FORMAT D3DFMT_X8R8G8B8
 #define MAX_PROPERTY_PAGES 8
@@ -211,6 +212,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 			// re-populate it:
 
 			int nDispAdapters = 0;
+#ifdef _DEBUG
 			wchar_t szDebugFile[MAX_PATH] = {0};
 			StringCchCopyW(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
 			wchar_t* p = wcsrchr(szDebugFile, L'\\');
@@ -224,6 +226,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 					fprintf(f, "Winamp version = 0x%04X\n", winamp_version);
 					fprintf(f, "Plugin long name = \"%s\", version=%d, subversion=%d\n", LONGNAME, INT_VERSION, INT_SUBVERSION);
 					fprintf(f, "Enumeration of Display Adapters:\n");
+#endif
 					//fprintf(f, "...this is a temporary debug file created by MilkDrop 2.\n");
 					//fprintf(f, "...don't worry - the final release of the plug-in will NOT generate this file.\n");
 					for (int i=0; i<nAdapters && nDispAdapters<MAX_DISPLAY_ADAPTERS; i++)
@@ -244,7 +247,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 								  adapter_ok = 0;
 							}
 							*/
-
+#ifdef _DEBUG
 							fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
 							fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
 							fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
@@ -258,6 +261,7 @@ void CPluginShell::UpdateAdapters(int screenmode)
 							GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, ARRAYSIZE(szGuidText));
 							fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
 							fprintf(f, "    GUID=%s\n", szGuidText);                   
+#endif
 
 							/*if (adapter_ok)
 							{*/
@@ -269,9 +273,11 @@ void CPluginShell::UpdateAdapters(int screenmode)
 							//}
 						}
 					}    
+#ifdef _DEBUG
 					fclose(f);
 				}
 			}
+#endif
 
 			// set selection(s):
 			// find i where global_adapter_list[i].DeviceIdentifier is the same as last time,
@@ -965,6 +971,7 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             // pre-checks
             if (m_start_fullscreen && m_start_desktop)
                 m_start_desktop = 0;
+#if 0
             if (!mod1.hwndParent || SendMessage(mod1.hwndParent,WM_WA_IPC,0,0) < 0x2900)
             {
                 m_skin = 0;
@@ -975,6 +982,7 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 StringCchCat(buf, ARRAYSIZE(buf), TEXT(" 2.90+"));
                 SetWindowText(skin, buf);
             }
+#endif
 
             // set checkboxes
             CheckDlgButton(hwnd, IDC_CB_FS,  m_start_fullscreen);
@@ -1348,7 +1356,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             }
 
             // set window caption
-            SetWindowText( hwnd, TEXT(WINDOWCAPTION) );
+            SetWindowText( hwnd, WINDOWCAPTION );
 
             // Test for DirectX 9 + start it
             // note: if you don't call LoadLibrary here, and you're on a system
@@ -1475,7 +1483,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             case ID_DOCS:
                 {
                     wchar_t szFile[512] = {0};
-					PathCombine(szFile, m_szPluginsDirPath, DOCFILE);
+					PathCombine(szFile, GetPaths()->winamp_plugin_dir, DOCFILE);
 
 					intptr_t ret = myOpenURL(0,szFile);
                     if (ret <= 32)

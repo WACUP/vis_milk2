@@ -145,8 +145,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Winamp/wa_ipc.h>
 #include <nu/AutoCharFn.h>
 #include <mmsystem.h>
+#ifdef OLD_WINDOWS_SUPPORT
 #pragma comment(lib,"winmm.lib")    // for timeGetTime
+#endif
 #include <loader/loader/utils.h>
+#include <loader/loader/paths.h>
 
 // STATE VALUES & VERTEX FORMATS FOR HELP SCREEN TEXTURE:
 #define TEXT_SURFACE_NOT_READY  0
@@ -230,10 +233,10 @@ HINSTANCE CPluginShell::GetInstance()
 {
 	return m_hInstance;
 };
-wchar_t* CPluginShell::GetPluginsDirPath()
+/*const wchar_t* CPluginShell::GetPluginsDirPath()
 {
 	return m_szPluginsDirPath;
-};
+};*/
 wchar_t* CPluginShell::GetConfigIniFile()
 {
 	return m_szConfigIniFile;
@@ -281,7 +284,9 @@ char* CPluginShell::GetDriverDescription()
 
 int CPluginShell::InitNondx9Stuff()
 {
+#ifdef OLD_WINDOWS_SUPPORT
 	timeBeginPeriod(1);
+#endif
 	m_fftobj.Init(576, NUM_FREQUENCIES);
 	if (!InitGDIStuff()) return false;
 	return AllocateMyNonDx9Stuff();
@@ -289,7 +294,9 @@ int CPluginShell::InitNondx9Stuff()
 
 void CPluginShell::CleanUpNondx9Stuff()
 {
+#ifdef OLD_WINDOWS_SUPPORT
 	timeEndPeriod(1);
+#endif
 	CleanUpMyNonDx9Stuff();
 	CleanUpGDIStuff();
 	m_fftobj.CleanUp();
@@ -1119,7 +1126,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 		m_d3dx_font[i] = NULL;
 	m_d3dx_desktop_font = NULL;
 	m_lpDDSText = NULL;
-	SecureZeroMemory(&m_sound, sizeof(td_soundinfo));
+	memset(&m_sound, 0, sizeof(td_soundinfo));
 	for (int ch=0; ch<2; ch++)
 		for (int i=0; i<3; i++)
 		{
@@ -1134,13 +1141,13 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_hWndWinamp = hWinampWnd;
 	m_hInstance = hWinampInstance;
 	m_lpDX = NULL;
-	m_szPluginsDirPath[0] = 0;  // will be set further down
+	//m_szPluginsDirPath[0] = 0;  // will be set further down
 	m_szConfigIniFile[0] = 0;  // will be set further down
 	// m_szPluginsDirPath:
 
-	wchar_t *p;
+	/*wchar_t *p;
 
-	if (hWinampWnd
+	if (IsWindow(hWinampWnd)
 	    && (p = (wchar_t *)SendMessage(hWinampWnd, WM_WA_IPC, 0, IPC_GETPLUGINDIRECTORYW))
 	    && p != (wchar_t *)1)
 	{
@@ -1155,16 +1162,16 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 		if (++p >= m_szPluginsDirPath) *p = 0;
 	}
 
-	if (hWinampWnd
+	if (IsWindow(hWinampWnd)
 	    && (p = (wchar_t *)SendMessage(hWinampWnd, WM_WA_IPC, 0, IPC_GETINIDIRECTORYW))
-	    && p != (wchar_t *)1)
+	    && p != (wchar_t *)1)*/
 	{
 		// load settings as well as coping with moving old settings to a contained folder
 		wchar_t m_szOldConfigIniFile[MAX_PATH] = {0}, temp[MAX_PATH] = {0}, temp2[MAX_PATH] = {0};
-		_snwprintf(m_szOldConfigIniFile, ARRAYSIZE(m_szOldConfigIniFile), L"%s\\Plugins\\%s", p, INIFILE);
-		_snwprintf(m_szConfigIniFile, ARRAYSIZE(m_szConfigIniFile), L"%s\\Plugins\\%s%s", p, SUBDIR, INIFILE);
-		_snwprintf(temp, ARRAYSIZE(temp), L"%s\\Plugins\\%s", p, SUBDIR);
-		_snwprintf(temp2, ARRAYSIZE(temp2), L"%s\\Plugins\\", p);
+		_snwprintf(m_szOldConfigIniFile, ARRAYSIZE(m_szOldConfigIniFile), L"%s\\Plugins\\%s", GetPaths()->settings_dir, INIFILE);
+		_snwprintf(m_szConfigIniFile, ARRAYSIZE(m_szConfigIniFile), L"%s\\Plugins\\%s%s", GetPaths()->settings_dir, SUBDIR, INIFILE);
+		_snwprintf(temp, ARRAYSIZE(temp), L"%s\\Plugins\\%s", GetPaths()->settings_dir, SUBDIR);
+		_snwprintf(temp2, ARRAYSIZE(temp2), L"%s\\Plugins\\", GetPaths()->settings_dir);
 		CreateDirectoryW(temp, NULL);
 
 		if (PathFileExistsW(m_szOldConfigIniFile) && !PathFileExistsW(m_szConfigIniFile))
@@ -1172,33 +1179,39 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 			MoveFileW(m_szOldConfigIniFile, m_szConfigIniFile);
 
 			wchar_t m_szMsgIniFile[MAX_PATH] = {0}, m_szNewMsgIniFile[MAX_PATH] = {0},
-					m_szImgIniFile[MAX_PATH] = {0}, m_szNewImgIniFile[MAX_PATH] = {0},
-					m_szAdaptersFile[MAX_PATH] = {0}, m_szNewAdaptersFile[MAX_PATH] = {0};
+					m_szImgIniFile[MAX_PATH] = {0}, m_szNewImgIniFile[MAX_PATH] = {0}
+#ifdef _DEBUG
+					, m_szAdaptersFile[MAX_PATH] = {0}, m_szNewAdaptersFile[MAX_PATH] = {0}
+#endif
+			;
    			PathCombine(m_szMsgIniFile, temp2, MSG_INIFILE);
 			PathCombine(m_szNewMsgIniFile, temp, MSG_INIFILE);
 			PathCombine(m_szImgIniFile, temp2, IMG_INIFILE);
 			PathCombine(m_szNewImgIniFile, temp, IMG_INIFILE);
+#ifdef _DEBUG
 			PathCombine(m_szAdaptersFile, temp2, ADAPTERSFILE);
 			PathCombine(m_szNewAdaptersFile, temp, ADAPTERSFILE);
-
+#endif
 			MoveFileW(m_szImgIniFile, m_szNewImgIniFile);
 			MoveFileW(m_szMsgIniFile, m_szNewMsgIniFile);
+#ifdef _DEBUG
 			MoveFileW(m_szAdaptersFile, m_szNewAdaptersFile);
+#endif
 		}
 	}
-	else
+	/*else
 	{
 		PathCombine(m_szConfigIniFile, m_szPluginsDirPath, INIFILE);
-	}
+	}*/
 	strncpy(m_szConfigIniFileA,AutoCharFn(m_szConfigIniFile),MAX_PATH);
 
 	// PRIVATE CONFIG PANEL SETTINGS
 	m_multisample_fullscreen = D3DMULTISAMPLE_NONE;
 	m_multisample_desktop = D3DMULTISAMPLE_NONE;
 	m_multisample_windowed = D3DMULTISAMPLE_NONE;
-	SecureZeroMemory(&m_adapter_guid_fullscreen, sizeof(GUID));
-	SecureZeroMemory(&m_adapter_guid_desktop , sizeof(GUID));
-	SecureZeroMemory(&m_adapter_guid_windowed , sizeof(GUID));
+	memset(&m_adapter_guid_fullscreen, 0, sizeof(GUID));
+	memset(&m_adapter_guid_desktop, 0, sizeof(GUID));
+	memset(&m_adapter_guid_windowed, 0, sizeof(GUID));
 	m_adapter_devicename_windowed[0]   = 0;
 	m_adapter_devicename_fullscreen[0] = 0;
 	m_adapter_devicename_desktop[0]    = 0;
@@ -1257,8 +1270,12 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_last_raw_time = 0;
 	memset(m_time_hist, 0, sizeof(m_time_hist));
 	m_time_hist_pos = 0;
+#ifndef OLD_WINDOWS_SUPPORT
+	QueryPerformanceFrequency(&m_high_perf_timer_freq);
+#else
 	if (!QueryPerformanceFrequency(&m_high_perf_timer_freq))
 		m_high_perf_timer_freq.QuadPart = 0;
+#endif
 	m_prev_end_of_frame.QuadPart = 0;
 
 	// PRIVATE AUDIO PROCESSING DATA
@@ -1919,6 +1936,7 @@ void CPluginShell::DoTime()
 		}
 	}
 
+#ifdef OLD_WINDOWS_SUPPORT
 	if (m_high_perf_timer_freq.QuadPart == 0)
 	{
 		// get low-precision time
@@ -1926,6 +1944,7 @@ void CPluginShell::DoTime()
 		new_raw_time = (double)(timeGetTime()*0.001);
 		elapsed = (float)(new_raw_time - m_last_raw_time);
 	}
+#endif
 
 	m_last_raw_time = new_raw_time;
 	int slots_to_look_back = (m_high_perf_timer_freq.QuadPart==0) ? TIME_HIST_SLOTS : TIME_HIST_SLOTS/2;
@@ -2468,7 +2487,6 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 	bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
 	//bool bAltHeldDown: most keys come in under WM_SYSKEYDOWN when ALT is depressed.
 
-	int i;
 #ifdef _DEBUG
 	char caption[256] = "WndProc: frame 0, ";
 	if (m_frame > 0)
@@ -2805,8 +2823,8 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 							break;
 						case WM_LBUTTONDBLCLK:
 						{
-							char buf[MAX_PATH] = {0};
-							_snprintf(buf, ARRAYSIZE(buf), "%s\\%ws", m_szDesktopFolder, p->name);
+							wchar_t buf[MAX_PATH] = {0};
+							_snwprintf(buf, ARRAYSIZE(buf), L"%s\\%s", m_szDesktopFolder, p->name);
 							ExecutePidl((LPITEMIDLIST)p->pidl, buf, m_szDesktopFolder, GetPluginWindow());
 						}
 						break;
@@ -3270,7 +3288,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			// increase volume
 		{
 			int nRepeat = lParam & 0xFFFF;
-			for (i=0; i<nRepeat*2; i++) PostMessage(m_hWndWinamp,WM_COMMAND,40058,0);
+			for (int i=0; i<nRepeat*2; i++) PostMessage(m_hWndWinamp,WM_COMMAND,40058,0);
 		}
 		return 0;
 
@@ -3278,7 +3296,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			// decrease volume
 		{
 			int nRepeat = lParam & 0xFFFF;
-			for (i=0; i<nRepeat*2; i++) PostMessage(m_hWndWinamp,WM_COMMAND,40059,0);
+			for (int i=0; i<nRepeat*2; i++) PostMessage(m_hWndWinamp,WM_COMMAND,40059,0);
 		}
 		return 0;
 

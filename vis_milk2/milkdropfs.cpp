@@ -900,16 +900,16 @@ void CPlugin::RenderFrame(int bRedraw)
 	    }
 
 	    // handle hard cuts here (just after new sound analysis)
-	    static float m_fHardCutThresh;
+	    static float s_fHardCutThresh;
 	    if (GetFrame() == 0)
-		    m_fHardCutThresh = m_fHardCutLoudnessThresh*2.0f;
+		    s_fHardCutThresh = m_fHardCutLoudnessThresh*2.0f;
 	    if (GetFps() > 1.0f && !m_bHardCutsDisabled && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
 	    {
-		    if (mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2] > m_fHardCutThresh*3.0f)
+		    if (mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2] > s_fHardCutThresh*3.0f)
 		    {
                 if (m_nLoadingPreset==0) // don't start a load if one is already underway!
 		            LoadRandomPreset(0.0f);
-			    m_fHardCutThresh *= 2.0f;
+			    s_fHardCutThresh *= 2.0f;
 		    }
 		    else
 		    {
@@ -920,7 +920,7 @@ void CPlugin::RenderFrame(int bRedraw)
 			    float k = -1.3863f / (m_fHardCutHalflife*GetFps());
 			    //float single_frame_multiplier = powf(2.7183f, k / GetFps());
 			    float single_frame_multiplier = expf(k);
-			    m_fHardCutThresh = (m_fHardCutThresh - m_fHardCutLoudnessThresh)*single_frame_multiplier + m_fHardCutLoudnessThresh;
+			    s_fHardCutThresh = (s_fHardCutThresh - m_fHardCutLoudnessThresh)*single_frame_multiplier + m_fHardCutLoudnessThresh;
 		    }
 	    }
 
@@ -1330,11 +1330,11 @@ void CPlugin::DrawMotionVectors()
 
 							// enforce minimum trail lengths:
 							{	
-								float dx = (fx2 - fx);
-								float dy = (fy2 - fy);
-								dx *= len_mult;
-								dy *= len_mult;
-								float len = sqrtf(dx*dx + dy*dy);
+								float _dx = (fx2 - fx);
+								float _dy = (fy2 - fy);
+								_dx *= len_mult;
+								_dy *= len_mult;
+								float len = sqrtf(_dx*_dx + _dy*_dy);
 
 								if (len > min_len)
 								{
@@ -1343,17 +1343,17 @@ void CPlugin::DrawMotionVectors()
 								else if (len > 0.00000001f)
 								{
 									len = min_len/len;
-									dx *= len;
-									dy *= len;
+									_dx *= len;
+									_dy *= len;
 								}
 								else
 								{
-									dx = min_len;
-									dy = min_len;
+									_dx = min_len;
+									_dy = min_len;
 								}
 									
-								fx2 = fx + dx;
-								fy2 = fy + dy;
+								fx2 = fx + _dx;
+								fy2 = fy + _dy;
 							}
 							/**/
 
@@ -1396,7 +1396,7 @@ void CPlugin::UpdateSongInfo()
 			if (strlen(m_szSongMessage) > 9)
 			{
 				int check_pos = strlen(m_szSongMessage) - 9;
-				if (lstrcmp(" - Winamp", (char *)(m_szSongMessage + check_pos)) == 0)
+				if (wcscmp(" - Winamp", (char *)(m_szSongMessage + check_pos)) == 0)
 					m_szSongMessage[check_pos] = 0;
 			}
 
@@ -1404,7 +1404,7 @@ void CPlugin::UpdateSongInfo()
 			if (strlen(m_szSongMessage) > 18)
 			{
 				int check_pos = strlen(m_szSongMessage) - 18;
-				if (lstrcmp(" - Winamp [Paused]", (char *)(m_szSongMessage + check_pos)) == 0)
+				if (wcscmp(" - Winamp [Paused]", (char *)(m_szSongMessage + check_pos)) == 0)
 					m_szSongMessage[check_pos] = 0;
 			}
 
@@ -1442,7 +1442,7 @@ void CPlugin::UpdateSongInfo()
 			}*/
 			/*
 			if (m_bSongTitleAnims && 
-				((lstrcmp(szOldSongMessage, m_szSongMessage) != 0) || (GetFrame()==0)))
+				((wcscmp(szOldSongMessage, m_szSongMessage) != 0) || (GetFrame()==0)))
 			{
 				// launch song title animation
 				LaunchSongTitleAnim();
@@ -2662,7 +2662,7 @@ void CPlugin::DrawCustomWaves()
                     float j_mult = 1.0f/(float)(nSamples-1); 
                     for (j=0; j<nSamples; j++)
                     {
-                        float t = j*j_mult;
+                        t = j*j_mult;
                         float value1 = tempdata[0][j];
                         float value2 = tempdata[1][j];
                         *pState->m_wave[i].var_pp_sample = t;
@@ -2862,7 +2862,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
         }
 
 		WFVERTEX *v = (it==0) ? v1 : v2;
-		SecureZeroMemory(v, sizeof(WFVERTEX)*nVerts);
+		memset(v, 0, sizeof(WFVERTEX)*nVerts);
 
 		float alpha = (float)(*m_pState->var_pf_wave_a);//m_pState->m_fWaveAlpha.eval(GetTime());
 
@@ -3171,10 +3171,10 @@ void CPlugin::DrawWave(float *fL, float *fR)
 
 						if (bClip)
 						{
-							float dx = edge_x[i] - edge_x[1-i];
-							float dy = edge_y[i] - edge_y[1-i];
-							edge_x[i] = edge_x[1-i] + dx*t;
-							edge_y[i] = edge_y[1-i] + dy*t;
+							float _dx = edge_x[i] - edge_x[1-i];
+							float _dy = edge_y[i] - edge_y[1-i];
+							edge_x[i] = edge_x[1-i] + _dx*t;
+							edge_y[i] = edge_y[1-i] + _dy*t;
 						}
 					}
 				}
@@ -3260,7 +3260,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
 		//       in this case, code must break wave into THREE segments
 		float m = (nVerts2-1)/(float)nVerts1;
 		float x,y;
-		for (int i=0; i<nVerts1; i++)
+		for (i=0; i<nVerts1; i++)
 		{
 			float fIdx = i*m;
 			int   nIdx = (int)fIdx;
@@ -3486,7 +3486,7 @@ bool CPlugin::SetMilkdropRenderTarget(LPDIRECTDRAWSURFACE7 lpSurf, int w, int h,
 	//lpSurf->GetSurfaceDesc(&ddsd);
 
 	D3DVIEWPORT7 viewData;
-	SecureZeroMemory(&viewData, sizeof(D3DVIEWPORT7));
+	memset(&viewData, 0, sizeof(D3DVIEWPORT7));
 	viewData.dwWidth  = w;	// not: in windowed mode, when lpSurf is the back buffer, chances are good that w,h are smaller than the full surface size (since real size is fullscreen, but we're only using a portion of it as big as the window).
 	viewData.dwHeight = h;
 	hr = m_lpD3DDev->SetViewport(&viewData);
@@ -4246,9 +4246,9 @@ void CPlugin::ShowToUser_NoShaders()//int bRedraw, int nPassOverride)
 		}
 
 		//SPRITEVERTEX v3[4];
-		SecureZeroMemory(v3, sizeof(SPRITEVERTEX)*4);
-		float fOnePlusInvWidth  = 1.0f + 1.0f/(float)GetWidth();
-		float fOnePlusInvHeight = 1.0f + 1.0f/(float)GetHeight();
+		memset(v3, 0, sizeof(SPRITEVERTEX)*4);
+		fOnePlusInvWidth  = 1.0f + 1.0f/(float)GetWidth();
+		fOnePlusInvHeight = 1.0f + 1.0f/(float)GetHeight();
 		v3[0].x = -fOnePlusInvWidth;
 		v3[1].x =  fOnePlusInvWidth;
 		v3[2].x = -fOnePlusInvWidth;

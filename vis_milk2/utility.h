@@ -51,7 +51,6 @@ float   GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, floa
 bool    WritePrivateProfileIntW(int d, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName);
 bool    WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName);
 
-extern  _locale_t g_use_C_locale;
 extern	char keyMappings[8];
 
 void	SetScrollLock(int bNewState, bool bPreventHandling);
@@ -65,7 +64,7 @@ void    GuidToText(GUID *pGUID, char *str, int nStrLen);
     void    OutputDebugMessage(char *szStartText, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam); // only available in RELEASE builds!
 #endif
 void    MissingDirectX(HWND hwnd);
-void    GetDesktopFolder(char *szDesktopFolder); // should be MAX_PATH len.
+void    GetDesktopFolder(wchar_t *szDesktopFolder); // should be MAX_PATH len.
 
 #include "icon_t.h"
 #include <shlobj.h>
@@ -76,7 +75,7 @@ UINT    GetItemCount (LPITEMIDLIST pidl);
 LPITEMIDLIST GetNextItem (LPITEMIDLIST pidl);
 LPITEMIDLIST DuplicateItem (LPMALLOC pMalloc, LPITEMIDLIST pidl);
 void    FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *listview_wnd);
-void    ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirectory, HWND hWnd);
+void    ExecutePidl(LPITEMIDLIST pidl, wchar_t *szPathAndFile, wchar_t *szWorkingDirectory, HWND hWnd);
 int     GetDesktopIconSize();
 
 // handy functions for populating Combo Boxes:

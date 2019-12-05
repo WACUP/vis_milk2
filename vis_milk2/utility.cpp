@@ -39,6 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Winamp/wa_ipc.h>
 #include "resource.h"
 #include <shellapi.h>
+#include <loader/loader/utils.h>
 
 intptr_t myOpenURL(HWND hwnd, wchar_t *loc)
 {
@@ -103,11 +104,11 @@ float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float 
     wchar_t szDefault[64] = {0};
     float ret = fDefault;
 
-    _snwprintf_l(szDefault, ARRAYSIZE(szDefault), L"%f", g_use_C_locale, fDefault);
+    SafePrintfL(szDefault, ARRAYSIZE(szDefault), L"%f", fDefault);
 
     if (GetPrivateProfileStringW(szSectionName, szKeyName, szDefault, string, 64, szIniFile) > 0)
     {
-        _swscanf_l(string, L"%f", g_use_C_locale, &ret);
+        SafeWtoF(string, &ret);
     }
     return ret;
 }
@@ -115,7 +116,7 @@ float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float 
 bool WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName)
 {
     wchar_t szValue[32] = {0};
-    _snwprintf_l(szValue, ARRAYSIZE(szValue), L"%f", g_use_C_locale, f);
+    SafePrintfL(szValue, ARRAYSIZE(szValue), L"%f", f);
     return (WritePrivateProfileStringW(szSectionName, szKeyName, szValue, szIniFile) != 0);
 }
 
@@ -645,17 +646,16 @@ void MissingDirectX(HWND hwnd)
         DownloadDirectX(hwnd);
 }
 
-void GetDesktopFolder(char *szDesktopFolder) // should be MAX_PATH len.
+void GetDesktopFolder(wchar_t *szDesktopFolder) // should be MAX_PATH len.
 {
     // returns the path to the desktop folder, WITHOUT a trailing backslash.
     szDesktopFolder[0] = 0;
-    ITEMIDLIST pidl;
-    SecureZeroMemory(&pidl, sizeof(pidl));
-    if (!SHGetPathFromIDListA(&pidl, szDesktopFolder))
+	ITEMIDLIST pidl = {0};
+    if (!SHGetPathFromIDList(&pidl, szDesktopFolder))
         szDesktopFolder[0] = 0;
 }
 
-void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirectory, HWND hWnd)
+void ExecutePidl(LPITEMIDLIST pidl, wchar_t *szPathAndFile, wchar_t *szWorkingDirectory, HWND hWnd)
 {
     // This function was based on code by Jeff Prosise.
 
@@ -664,9 +664,8 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
     // So, if that fails, we try again w/the plain old text filename 
     // (szPathAndFile).
 
-    char szVerb[] = "open";
-    char szFilename2[MAX_PATH] = {0};
-    _snprintf(szFilename2, ARRAYSIZE(szFilename2), "%s.lnk", szPathAndFile);
+    wchar_t szVerb[] = L"open", szFilename2[MAX_PATH] = {0};
+    _snwprintf(szFilename2, ARRAYSIZE(szFilename2), L"%s.lnk", szPathAndFile);
 
     // -without the "no-verb" pass,
     //   certain icons still don't work (like shortcuts
@@ -681,7 +680,7 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
         {
             for (int context_pass=0; context_pass<2; context_pass++)
             {
-                SHELLEXECUTEINFOA sei = { sizeof(sei) };
+                SHELLEXECUTEINFO sei = { sizeof(sei) };
                 sei.hwnd = hWnd;
                 sei.fMask = SEE_MASK_FLAG_NO_UI;
                 if (context_pass==1)
@@ -707,7 +706,7 @@ void ExecutePidl(LPITEMIDLIST pidl, char *szPathAndFile, char *szWorkingDirector
                     sei.lpFile = szFilename2;
                 }
 
-                if (ShellExecuteExA(&sei))
+                if (ShellExecuteEx(&sei))
                     return;
             }
         }
@@ -750,7 +749,7 @@ LRESULT CALLBACK HookWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp,
 	}
 
 	// for all untreated messages, call the original wndproc
-	return DefSubclassProc(hWnd, msg, wp, lp);
+	return DefSubclass(hWnd, msg, wp, lp);
 }
 
 BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
@@ -860,7 +859,7 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                 // install the subclassing "hook", for versions 2 or 3
                 if (level >= 2) 
                 {
-					SetWindowSubclass(hwnd, HookWndProc, (UINT_PTR)HookWndProc, 0);
+					Subclass(hwnd, HookWndProc);
                     g_pIContext2or3 = (LPCONTEXTMENU2)pContextMenu; // cast ok for ICMv3
                 }
                 else 
@@ -876,14 +875,14 @@ BOOL DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point)
                     point.x, point.y, 0, hwnd, NULL);
 
                 // restore old wndProc
-				RemoveWindowSubclass(hwnd, HookWndProc, (UINT_PTR)HookWndProc);
+				UnSubclass(hwnd, HookWndProc);
 
                 //
                 // If a command was selected from the menu, execute it.
                 //
                 if (nCmd >= 1 && nCmd <= 0x7fff) 
                 {
-                    SecureZeroMemory(&ici, sizeof(ici));
+                    memset(&ici, 0, sizeof(ici));
                     ici.cbSize          = sizeof (CMINVOKECOMMANDINFO);
                     //ici.fMask           = 0;
                     ici.hwnd            = hwnd;
@@ -1071,7 +1070,7 @@ int GetDesktopIconSize()
         if (ERROR_SUCCESS == RegQueryValueEx(key, TEXT("Shell Icon Size"), NULL, &type, (unsigned char*)buf, &len) &&
             type == REG_SZ)
         {
-            int x = _atoi_l((char*)buf, g_use_C_locale);
+            int x = atoi((char*)buf);
             if (x>0 && x<=128)
                 ret = x;
         }

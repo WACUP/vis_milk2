@@ -38,7 +38,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <loader/loader/utils.h>
 
 CPlugin  g_plugin;
-_locale_t g_use_C_locale = 0;
 char keyMappings[8] = {0};
 bool g_bFullyExited = true;
 
@@ -143,10 +142,6 @@ extern "C" {
 				** 4 - used for the previous track sent to Winamp
 				*/
 				WASABI_API_LNGSTRING_BUF(IDS_KEY_MAPPINGS, keyMappings, 8);
-
-				// as we're under a different thread we need to set the locale
-				//WASABI_API_LNG->UseUserNumericLocale();
-				g_use_C_locale = WASABI_API_LNG->Get_C_NumericLocale();
 			}
 		}
 		return &hdr;

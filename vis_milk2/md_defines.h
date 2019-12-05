@@ -41,10 +41,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLASSNAME               "MilkDrop"  // window class name
 */
 #define TEXT_WINDOW_CLASSNAME   TEXT("MilkDrop Console [VJ Mode]")
-#define DEBUGFILE				"c:\\m_debug.txt"
+#ifdef _DEBUG
+#define DEBUGFILE				TEXT("c:\\m_debug.txt")
+#endif
 //#define CONFIG_INIFILE			"milkdrop_config.ini"
 //#define PRESET_INIFILE			"milkdrop_presets.ini"
+#ifdef _DEBUG
 #define DEBUGFILEHEADER			"[milkdrop debug file]\n"
+#endif
 
 // define this to disable expression evaluation:
 //   (...for some reason, evallib kills the debugger)
