@@ -317,11 +317,9 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
     {
         // custom msg -> pick font to use that will best fill the texture
 
-        HFONT gdi_font = NULL;
         LPD3DXFONT d3dx_font = NULL;
 
-        int lo = 0;
-	    int hi = ARRAYSIZE(g_title_font_sizes) - 1;
+        int lo = 0, hi = ARRAYSIZE(g_title_font_sizes) - 1;
     
         // limit the size of the font used:
 
@@ -334,12 +332,6 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 	    {
 		    int mid = (lo+hi)/2;
 
-		    // create new gdi font at 'mid' size:
-            gdi_font = CreateFontW( g_title_font_sizes[mid], 0, 0, 0, m_supertext.bBold ? 900 : 400, m_supertext.bItal, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, 
-				                    m_fontinfo[SONGTITLE_FONT].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY, 
-								    DEFAULT_PITCH, m_supertext.nFontFace );
-            if (gdi_font) 
-            {
                 // create new d3dx font at 'mid' size:
                 if (pCreateFontW(
 					    lpDevice, 
@@ -371,12 +363,9 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 
                     SafeRelease(d3dx_font);
                 }
-
-                DeleteObject(gdi_font); gdi_font=NULL;
-            }
 	    }
 
-        if (gdi_font && d3dx_font)
+        if (d3dx_font)
         {
 	        // do actual drawing + set m_supertext.nFontSizeUsed; use 'lo' size
             int h = d3dx_font->DrawTextW(NULL, szTextToDraw, -1, &temp, DT_SINGLELINE | DT_CALCRECT /*| DT_NOPREFIX*/ | DT_CENTER, 0xFFFFFFFF);
@@ -395,7 +384,6 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 
         // clean up font:
         SafeRelease(d3dx_font);
-        if (gdi_font) DeleteObject(gdi_font); gdi_font=NULL;
     }
     else // song title
     {
@@ -431,7 +419,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 
             // no more stuff to chop off the front; chop off the end w/ ...
             int len = wcslen(str);
-            float fPercentToKeep = 0.91f * m_nTitleTexSizeX / (float)(temp.right-temp.left);
+            float fPercentToKeep = 0.95f * m_nTitleTexSizeX / (float)(temp.right-temp.left);
             if (len > 8)
                 wcscpy( &str[ (int)(len*fPercentToKeep) ], L"...");            
             break;

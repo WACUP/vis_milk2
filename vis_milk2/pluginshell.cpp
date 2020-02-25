@@ -304,21 +304,9 @@ void CPluginShell::CleanUpNondx9Stuff()
 
 int CPluginShell::InitGDIStuff()
 {
-	wchar_t title[64] = {0};
-	// note: messagebox parent window should be NULL here, because lpDX is still NULL!
-	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
-	{
-		if (!(m_font[i] = CreateFontW(m_fontinfo[i].nSize, 0, 0, 0, m_fontinfo[i].bBold ? 900 : 400, m_fontinfo[i].bItalic, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, m_fontinfo[i].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY, DEFAULT_PITCH, m_fontinfo[i].szFace)))
-		{
-			MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_GDI_FONTS),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
-			return false;
-		}
-	}
-
 	if (!(m_main_menu = WASABI_API_LOADMENU(IDR_WINDOWED_CONTEXT_MENU)))
 	{
+		wchar_t title[64] = { 0 };
 		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_MAIN_MENU),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -327,6 +315,7 @@ int CPluginShell::InitGDIStuff()
 
 	if (!(m_context_menu = GetSubMenu(m_main_menu, 0)))
 	{
+		wchar_t title[64] = { 0 };
 		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_CONTEXT_MENU),
 				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
@@ -338,15 +327,6 @@ int CPluginShell::InitGDIStuff()
 
 void CPluginShell::CleanUpGDIStuff()
 {
-	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
-	{
-		if (m_font[i])
-		{
-			DeleteObject(m_font[i]);
-			m_font[i] = NULL;
-		}
-	}
-
 	/*if (m_context_menu)
 	{
 	    DestroyMenu(m_context_menu);
@@ -358,8 +338,6 @@ void CPluginShell::CleanUpGDIStuff()
 		DestroyMenu(m_main_menu);
 		m_main_menu = NULL;
 	}
-
-	//CleanUpMyGDIStuff();
 }
 
 int CPluginShell::InitVJStuff(RECT* pClientRect)
@@ -593,9 +571,15 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 {
 	// Create D3DX system font:
 	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
-		if (pCreateFontW(pDevice,  //m_font[i],
-		                   m_fontinfo[i].nSize,
-		                   m_fontinfo[i].nSize*4/10,
+	{
+		// note: the song title font needs to be left alone as it
+		//       works out the font needed based on the screen so
+		//       we won't attempt to up-scale it for high-dpi etc
+		m_fontinfo[i].nSize = m_fontinfo[i].nOriginalSize;
+		const int width = m_fontinfo[i].nSize * 4 / 10;
+		if (pCreateFontW(pDevice,
+		                 (i != SONGTITLE_FONT ? WASABI_API_APP->getScaleX(m_fontinfo[i].nSize) : m_fontinfo[i].nSize),
+						 (i != SONGTITLE_FONT ? WASABI_API_APP->getScaleY(width) : width),
 		                   m_fontinfo[i].bBold ? 900 : 400,
 		                   1,  // mip levels
 		                   m_fontinfo[i].bItalic,
@@ -613,13 +597,13 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
 			return false;
 		}
+	}
 
 	// get actual font heights
 	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
 	{
-		RECT r;
-		SetRect(&r, 0, 0, 1024, 1024);
-		int h = m_d3dx_font[i]->DrawText(NULL, TEXT("M"), -1, &r, DT_CALCRECT, 0xFFFFFFFF);
+		RECT r = {0, 0, 1024, 1024};
+		const int h = m_d3dx_font[i]->DrawText(NULL, TEXT("M"), -1, &r, DT_CALCRECT, 0xFFFFFFFF);
 		if (h>0) m_fontinfo[i].nSize = h;
 	}
 
@@ -1049,21 +1033,25 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 
 	// initialize font settings:
 	wcscpy(m_fontinfo[SIMPLE_FONT    ].szFace,        SIMPLE_FONT_DEFAULT_FACE);
+	m_fontinfo[SIMPLE_FONT    ].nOriginalSize        = SIMPLE_FONT_DEFAULT_SIZE ;
 	m_fontinfo[SIMPLE_FONT    ].nSize        = SIMPLE_FONT_DEFAULT_SIZE ;
 	m_fontinfo[SIMPLE_FONT    ].bBold        = SIMPLE_FONT_DEFAULT_BOLD ;
 	m_fontinfo[SIMPLE_FONT    ].bItalic      = SIMPLE_FONT_DEFAULT_ITAL ;
 	m_fontinfo[SIMPLE_FONT    ].bAntiAliased = SIMPLE_FONT_DEFAULT_AA   ;
 	wcscpy(m_fontinfo[DECORATIVE_FONT].szFace,        DECORATIVE_FONT_DEFAULT_FACE);
+	m_fontinfo[DECORATIVE_FONT].nOriginalSize = DECORATIVE_FONT_DEFAULT_SIZE;
 	m_fontinfo[DECORATIVE_FONT].nSize        = DECORATIVE_FONT_DEFAULT_SIZE;
 	m_fontinfo[DECORATIVE_FONT].bBold        = DECORATIVE_FONT_DEFAULT_BOLD;
 	m_fontinfo[DECORATIVE_FONT].bItalic      = DECORATIVE_FONT_DEFAULT_ITAL;
 	m_fontinfo[DECORATIVE_FONT].bAntiAliased = DECORATIVE_FONT_DEFAULT_AA  ;
 	wcscpy(m_fontinfo[HELPSCREEN_FONT].szFace,        HELPSCREEN_FONT_DEFAULT_FACE);
+	m_fontinfo[HELPSCREEN_FONT].nOriginalSize = HELPSCREEN_FONT_DEFAULT_SIZE;
 	m_fontinfo[HELPSCREEN_FONT].nSize        = HELPSCREEN_FONT_DEFAULT_SIZE;
 	m_fontinfo[HELPSCREEN_FONT].bBold        = HELPSCREEN_FONT_DEFAULT_BOLD;
 	m_fontinfo[HELPSCREEN_FONT].bItalic      = HELPSCREEN_FONT_DEFAULT_ITAL;
 	m_fontinfo[HELPSCREEN_FONT].bAntiAliased = HELPSCREEN_FONT_DEFAULT_AA  ;
 	wcscpy(m_fontinfo[PLAYLIST_FONT  ].szFace,        PLAYLIST_FONT_DEFAULT_FACE);
+	m_fontinfo[PLAYLIST_FONT  ].nOriginalSize = PLAYLIST_FONT_DEFAULT_SIZE;
 	m_fontinfo[PLAYLIST_FONT  ].nSize        = PLAYLIST_FONT_DEFAULT_SIZE;
 	m_fontinfo[PLAYLIST_FONT  ].bBold        = PLAYLIST_FONT_DEFAULT_BOLD;
 	m_fontinfo[PLAYLIST_FONT  ].bItalic      = PLAYLIST_FONT_DEFAULT_ITAL;
@@ -1071,6 +1059,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 
 #if (NUM_EXTRA_FONTS >= 1)
 	wcscpy(m_fontinfo[NUM_BASIC_FONTS + 0].szFace,        EXTRA_FONT_1_DEFAULT_FACE);
+	m_fontinfo[NUM_BASIC_FONTS + 0].nOriginalSize = EXTRA_FONT_1_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 0].nSize        = EXTRA_FONT_1_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 0].bBold        = EXTRA_FONT_1_DEFAULT_BOLD;
 	m_fontinfo[NUM_BASIC_FONTS + 0].bItalic      = EXTRA_FONT_1_DEFAULT_ITAL;
@@ -1078,6 +1067,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 #endif
 #if (NUM_EXTRA_FONTS >= 2)
 	wcscpy(m_fontinfo[NUM_BASIC_FONTS + 1].szFace,        EXTRA_FONT_2_DEFAULT_FACE);
+	m_fontinfo[NUM_BASIC_FONTS + 1].nOriginalSize = EXTRA_FONT_2_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 1].nSize        = EXTRA_FONT_2_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 1].bBold        = EXTRA_FONT_2_DEFAULT_BOLD;
 	m_fontinfo[NUM_BASIC_FONTS + 1].bItalic      = EXTRA_FONT_2_DEFAULT_ITAL;
@@ -1085,6 +1075,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 #endif
 #if (NUM_EXTRA_FONTS >= 3)
 	strcpy(m_fontinfo[NUM_BASIC_FONTS + 2].szFace,        EXTRA_FONT_3_DEFAULT_FACE);
+	m_fontinfo[NUM_BASIC_FONTS + 2].nOriginalSize = EXTRA_FONT_3_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 2].nSize        = EXTRA_FONT_3_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 2].bBold        = EXTRA_FONT_3_DEFAULT_BOLD;
 	m_fontinfo[NUM_BASIC_FONTS + 2].bItalic      = EXTRA_FONT_3_DEFAULT_ITAL;
@@ -1092,6 +1083,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 #endif
 #if (NUM_EXTRA_FONTS >= 4)
 	strcpy(m_fontinfo[NUM_BASIC_FONTS + 3].szFace,        EXTRA_FONT_4_DEFAULT_FACE);
+	m_fontinfo[NUM_BASIC_FONTS + 3].nOriginalSize = EXTRA_FONT_4_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 3].nSize        = EXTRA_FONT_4_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 3].bBold        = EXTRA_FONT_4_DEFAULT_BOLD;
 	m_fontinfo[NUM_BASIC_FONTS + 3].bItalic      = EXTRA_FONT_4_DEFAULT_ITAL;
@@ -1099,6 +1091,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 #endif
 #if (NUM_EXTRA_FONTS >= 5)
 	strcpy(m_fontinfo[NUM_BASIC_FONTS + 4].szFace,        EXTRA_FONT_5_DEFAULT_FACE);
+	m_fontinfo[NUM_BASIC_FONTS + 4].nOriginalSize = EXTRA_FONT_5_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 4].nSize        = EXTRA_FONT_5_DEFAULT_SIZE;
 	m_fontinfo[NUM_BASIC_FONTS + 4].bBold        = EXTRA_FONT_5_DEFAULT_BOLD;
 	m_fontinfo[NUM_BASIC_FONTS + 4].bItalic      = EXTRA_FONT_5_DEFAULT_ITAL;
@@ -1241,8 +1234,6 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	// PRIVATE - GDI STUFF
 	m_main_menu     = NULL;
 	m_context_menu  = NULL;
-	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
-		m_font[i] = NULL;
 	m_font_desktop = NULL;
 
 	// PRIVATE - DESKTOP MODE STUFF
@@ -2279,8 +2270,8 @@ void CPluginShell::RenderBuiltInTextMsgs()
 
 			r.top += m_upper_left_corner_y;
 			r.left += m_left_edge;
-			r.right += m_left_edge + PLAYLIST_INNER_MARGIN*2;
-			r.bottom += m_upper_left_corner_y + PLAYLIST_INNER_MARGIN*2;
+			r.right += m_left_edge + PLAYLIST_INNER_MARGIN*4;
+			r.bottom += m_upper_left_corner_y + PLAYLIST_INNER_MARGIN*4;
 			DrawDarkTranslucentBox(&r);
 
 			r.top += PLAYLIST_INNER_MARGIN;
@@ -2308,9 +2299,9 @@ void CPluginShell::RenderPlaylist()
 	// draw playlist:
 	if (m_show_playlist)
 	{
-		RECT r;
-		int nSongs = SendMessage(m_hWndWinamp,WM_USER, 0, 124);
-		int now_playing = SendMessage(m_hWndWinamp,WM_USER, 0, 125);
+		RECT r = {0};
+		const int nSongs = SendMessage(m_hWndWinamp,WM_USER, 0, 124),
+				  now_playing = SendMessage(m_hWndWinamp,WM_USER, 0, 125);
 
 		if (nSongs <= 0)
 		{
@@ -2406,8 +2397,8 @@ void CPluginShell::RenderPlaylist()
 			//RECT r;
 			r.top    = m_upper_left_corner_y;
 			r.left   = m_left_edge;
-			r.right  = m_left_edge + m_playlist_width_pixels + PLAYLIST_INNER_MARGIN*2;
-			r.bottom = m_upper_left_corner_y + (end-start)*GetFontHeight(PLAYLIST_FONT) + PLAYLIST_INNER_MARGIN*2;
+			r.right  = m_left_edge + m_playlist_width_pixels + PLAYLIST_INNER_MARGIN*4;
+			r.bottom = m_upper_left_corner_y + (end-start)*GetFontHeight(PLAYLIST_FONT) + PLAYLIST_INNER_MARGIN*4;
 			DrawDarkTranslucentBox(&r);
 
 			//m_d3dx_font[PLAYLIST_FONT]->Begin();

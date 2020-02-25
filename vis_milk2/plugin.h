@@ -362,7 +362,7 @@ public:
         bool		 m_bTitleFontBold;
         bool		 m_bTitleFontItalic;
         */
-        HFONT       m_gdi_title_font_doublesize;
+
         LPD3DXFONT  m_d3dx_title_font_doublesize;
 
         // PIXEL SHADERS

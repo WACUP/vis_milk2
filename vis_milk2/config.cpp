@@ -1417,11 +1417,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                 if (!AddButton(0, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_1)) ||
                     !AddButton(1, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_2)) ||
                     !AddButton(2, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_3)) ||
-                    !AddButton(3, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_4)) ||
-                    !AddButton(4, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_5)) ||
-                    !AddButton(5, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_6)) ||
-                    !AddButton(6, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_7)) ||
-                    !AddButton(7, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_8)))
+                    !AddButton(3, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_4)))
                 {
 					wchar_t title[64] = {0};
                     MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_LOAD_TABS),

@@ -1036,7 +1036,6 @@ void CPlugin::MyPreInitialize()
     m_pWfVertDecl = NULL;
     m_pMyVertDecl = NULL;
 
-    m_gdi_title_font_doublesize  = NULL;
     m_d3dx_title_font_doublesize = NULL;
 
     // RUNTIME SETTINGS THAT WE'VE ADDED
@@ -2237,17 +2236,8 @@ int CPlugin::AllocateMyDX9Stuff()
 
     // -----------------
 
-    // create 'm_gdi_title_font_doublesize'
     int songtitle_font_size = m_fontinfo[SONGTITLE_FONT].nSize * m_nTitleTexSizeX/256;
     if (songtitle_font_size<6) songtitle_font_size=6;
-    if (!(m_gdi_title_font_doublesize = CreateFontW(songtitle_font_size, 0, 0, 0, m_fontinfo[SONGTITLE_FONT].bBold ? 900 : 400, 
-		    m_fontinfo[SONGTITLE_FONT].bItalic, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, m_fontinfo[SONGTITLE_FONT].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY, DEFAULT_PITCH, m_fontinfo[SONGTITLE_FONT].szFace)))
-    {
-        MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DOUBLE_SIZED_GDI_TITLE_FONT),
-						 WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)),
-						 MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
-        return false;
-    }
 
 	if (pCreateFontW(	GetDevice(), 
 						songtitle_font_size, 
@@ -3537,7 +3527,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     default:           strncpy(szWhichShader, "(unknown)", ARRAYSIZE(szWhichShader)); break;
     }
 
-    LPD3DXBUFFER pShaderByteCode;
+    LPD3DXBUFFER pShaderByteCode = NULL;
     
     *ppShader = NULL;
     *ppConstTable = NULL;
@@ -3675,7 +3665,9 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     // now really try to compile it.
 
 	bool failed=false;
-    int len = strlen(szShaderText);
+    const int len = strlen(szShaderText);
+	__try
+	{
     if (D3D_OK != pCompileShader(
         szShaderText,
         len,
@@ -3692,11 +3684,19 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		{
 			failed=true;
 		}
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	//catch(...)
+	{
+		failed=true;
+	}
 
 		// before we totally fail, let's try using ps_2_b instead of ps_2_a
 		if (failed && !strcmp(szProfile, "ps_2_a"))
 		{
 			SafeRelease(m_pShaderCompileErrors);
+		__try
+		{
 			if (D3D_OK == pCompileShader(szShaderText, len, NULL, NULL, szFn,
 			"ps_2_b", D3DXSHADER_USE_LEGACY_D3DX9_31_DLL/*m_dwShaderFlags*/,
 			&pShaderByteCode, &m_pShaderCompileErrors, ppConstTable))
@@ -3704,6 +3704,11 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 				failed=false;
 			}
 		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			failed = false;
+		}
+	}
 
 		if (failed)
 		{
@@ -3743,6 +3748,8 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		}
 
     HRESULT hr = S_FALSE;
+	if (pShaderByteCode)
+	{
     if (szProfile[0] == 'v') 
     {
         hr = GetDevice()->CreateVertexShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DVertexShader9**)ppShader);
@@ -3751,6 +3758,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     {
         hr = GetDevice()->CreatePixelShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DPixelShader9**)ppShader);
     }
+	}
 
     if (hr != D3D_OK)
     {
@@ -3880,13 +3888,6 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
     SafeRelease(m_lpVS[1]);
     SafeRelease(m_lpDDSTitle);
     SafeRelease(m_d3dx_title_font_doublesize);
-
-    // NOTE: THIS CODE IS IN THE RIGHT PLACE.
-    if (m_gdi_title_font_doublesize)
-    {
-        DeleteObject(m_gdi_title_font_doublesize);
-        m_gdi_title_font_doublesize = NULL;
-    }
 
     m_texmgr.Finish();
 

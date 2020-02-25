@@ -248,7 +248,7 @@ int init(struct winampVisModule *this_mod)
     return 0;    // success
 }
 
-// render function for oscilliscope. Returns 0 if successful, 1 if visualization should end.
+// render function for oscilloscope. Returns 0 if successful, 1 if visualization should end.
 int render1(struct winampVisModule *this_mod)
 {
 	if (g_plugin.PluginRender(this_mod->waveformData[0], this_mod->waveformData[1]))

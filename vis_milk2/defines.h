@@ -40,8 +40,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHORTNAME        L"MilkDrop 2" // used as window caption for both MilkDrop and the config panel.
 									   // avoid punctuation; when 'integrate with winamp' option is enabled,
 									   // these characters don't always work with all skins.
-#define LONGNAME         "MilkDrop v2.26m" // appears at bottom of config panel
-#define LONGNAMEW        L"MilkDrop v2.26m" // appears at bottom of config panel
+#define LONGNAME         "MilkDrop v2.27" // appears at bottom of config panel
+#define LONGNAMEW        L"MilkDrop v2.27" // appears at bottom of config panel
 
 // INT_VERSION is the major version #, multipled by 100 (ie. version 1.02 
 // would be 102).  If the app goes to read in the INI file and sees that
@@ -139,25 +139,25 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //     verdana
 //     webdings
 #define SIMPLE_FONT_DEFAULT_FACE L"Courier" //"MS Sans Serif"  - changed to Courier because menus + code FAR more legible!
-#define SIMPLE_FONT_DEFAULT_SIZE 12 //16
+#define SIMPLE_FONT_DEFAULT_SIZE 14
 #define SIMPLE_FONT_DEFAULT_BOLD 0
 #define SIMPLE_FONT_DEFAULT_ITAL 0
-#define SIMPLE_FONT_DEFAULT_AA   0
-#define DECORATIVE_FONT_DEFAULT_FACE L"Times New Roman" 
+#define SIMPLE_FONT_DEFAULT_AA   1
+#define DECORATIVE_FONT_DEFAULT_FACE L"Arial"
 #define DECORATIVE_FONT_DEFAULT_SIZE 24
 #define DECORATIVE_FONT_DEFAULT_BOLD 0
-#define DECORATIVE_FONT_DEFAULT_ITAL 1
+#define DECORATIVE_FONT_DEFAULT_ITAL 0
 #define DECORATIVE_FONT_DEFAULT_AA   1
-#define HELPSCREEN_FONT_DEFAULT_FACE L"MS Sans Serif" 
-#define HELPSCREEN_FONT_DEFAULT_SIZE 14  // NOTE: should fit on 640x480 screen!
-#define HELPSCREEN_FONT_DEFAULT_BOLD 1
+#define HELPSCREEN_FONT_DEFAULT_FACE L"Arial"
+#define HELPSCREEN_FONT_DEFAULT_SIZE 16
+#define HELPSCREEN_FONT_DEFAULT_BOLD 0
 #define HELPSCREEN_FONT_DEFAULT_ITAL 0
 #define HELPSCREEN_FONT_DEFAULT_AA   0
 #define PLAYLIST_FONT_DEFAULT_FACE L"Arial" 
 #define PLAYLIST_FONT_DEFAULT_SIZE 16      
 #define PLAYLIST_FONT_DEFAULT_BOLD 0
 #define PLAYLIST_FONT_DEFAULT_ITAL 0
-#define PLAYLIST_FONT_DEFAULT_AA   0
+#define PLAYLIST_FONT_DEFAULT_AA   1
 
 // automatically add extra fonts to the config panel 
 // by simply #defining them here, UP TO A MAX OF 5 EXTRA FONTS.
@@ -175,10 +175,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SONGTITLE_FONT EXTRA_2
 //#define EXTRA_FONT_2_NAME         "Animated Songtitles"
 // defined in the stringtable resources now since 2.0e
-#define EXTRA_FONT_2_DEFAULT_FACE L"Times New Roman"
-#define EXTRA_FONT_2_DEFAULT_SIZE 18        
+#define EXTRA_FONT_2_DEFAULT_FACE L"Arial"/*/L"Times New Roman"/**/
+#define EXTRA_FONT_2_DEFAULT_SIZE 14
 #define EXTRA_FONT_2_DEFAULT_BOLD 0
-#define EXTRA_FONT_2_DEFAULT_ITAL 1
+#define EXTRA_FONT_2_DEFAULT_ITAL 0
 #define EXTRA_FONT_2_DEFAULT_AA   1
 
 #define WINDOWCAPTION   SHORTNAME   // the caption that will appear on the plugin window
@@ -202,8 +202,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                                            //   ** this must be a power of 2!
                                            //   ** the actual FFT will use twice this many frequencies **
 
-#define TEXT_MARGIN                  10    // the # of pixels of margin to leave between text and the edge of the screen
-#define PLAYLIST_INNER_MARGIN        4     // the extra margin between the playlist box and the text inside
+#define TEXT_MARGIN                  WASABI_API_APP->getScaleX(10)    // the # of pixels of margin to leave between text and the edge of the screen
+#define PLAYLIST_INNER_MARGIN        WASABI_API_APP->getScaleX(4)     // the extra margin between the playlist box and the text inside
 
 #define PLAYLIST_COLOR_PLAYING_TRACK 0xFFCCFF00 // alpha|red|green|blue
 #define PLAYLIST_COLOR_HILITE_TRACK  0xFFFF5050
@@ -215,7 +215,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DIR_COLOR     0xFF88CCFF
 #define TOOLTIP_COLOR 0xFFBBBBCC
 
-#define MAX_PRESETS_PER_PAGE 32
+#define MAX_PRESETS_PER_PAGE 128
 
 //#define PRESS_F1_MSG                 "Press F1 for Help " // leave extra space @ end, so italicized fonts don't get clipped
 // defined in the stringtable resources now since 2.0e

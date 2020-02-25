@@ -40,11 +40,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <nu/Vector.h>
 
 #define TIME_HIST_SLOTS 128     // # of slots used if fps > 60.  half this many if fps==30.
-#define MAX_SONGS_PER_PAGE 40
+#define MAX_SONGS_PER_PAGE 128
 
 typedef struct
 {
     wchar_t szFace[256];
+	int nOriginalSize;  // value for nSize to initially use before it's re-sized, etc
     int nSize;  // size requested @ font creation time
     int bBold;
     int bItalic;
@@ -169,7 +170,6 @@ private:
 	IDirect3DTexture9* m_lpDDSText;
     LPD3DXFONT   m_d3dx_font[NUM_BASIC_FONTS + NUM_EXTRA_FONTS];
     LPD3DXFONT   m_d3dx_desktop_font;
-    HFONT        m_font[NUM_BASIC_FONTS + NUM_EXTRA_FONTS];
     HFONT        m_font_desktop;
     
     // PRIVATE CONFIG PANEL SETTINGS

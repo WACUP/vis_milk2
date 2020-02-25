@@ -32,8 +32,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-#define DEFAULT_FULLSCREEN_WIDTH  640
-#define DEFAULT_FULLSCREEN_HEIGHT 480
+#define DEFAULT_FULLSCREEN_WIDTH  1920
+#define DEFAULT_FULLSCREEN_HEIGHT 1080
 #define MAX_ICON_TEXTURES 8
 #define ICON_TEXTURE_SIZE 256
 #define DEFAULT_WINDOW_SIZE 0.625f      // as a portion of the width or height of the screen (whichever is smaller)
