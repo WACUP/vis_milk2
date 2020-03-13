@@ -29,6 +29,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "api.h"
 #include <windows.h>
+#include <shlwapi.h>
+#include <delayimp.h>
 #include <Winamp/vis.h>
 #include "plugin.h"
 #include "defines.h"
@@ -36,6 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 #include <loader/hook/get_api_service.h>
 #include <loader/loader/utils.h>
+#include <loader/loader/paths.h>
 
 CPlugin  g_plugin;
 char keyMappings[8] = {0};
@@ -263,3 +266,37 @@ void quit(struct winampVisModule *this_mod)
 	g_plugin.PluginQuit();
 	g_bFullyExited = true;
 }
+
+FARPROC WINAPI FailHook(unsigned dliNotify, PDelayLoadInfo pdli)
+{
+	if (dliNotify == dliFailLoadLib)
+	{
+		HMODULE module = NULL;
+		wchar_t *filename = AutoWideDup(pdli != NULL ? pdli->szDll : "", 0),
+			filepath[MAX_PATH] = { 0 };
+
+		PathCombineW(filepath, GetPaths()->winamp_plugin_dir, filename);
+		if (!PathFileExistsW(filepath))
+		{
+			PathCombineW(filepath, GetPaths()->winamp_dir, filename);
+		}
+
+		if (PathFileExistsW(filepath))
+		{
+			module = LoadLibraryW(filepath);
+			if (!module)
+			{
+				module = LoadLibraryExW(filepath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
+			}
+		}
+		free(filename);
+		return (FARPROC)module;
+	}
+	return 0;
+}
+
+ExternC
+#if _MSC_VER >= 1900
+const
+#endif
+PfnDliHook __pfnDliFailureHook2 = FailHook;
