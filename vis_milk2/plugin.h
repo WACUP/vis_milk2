@@ -605,8 +605,8 @@ public:
         void        LoadPerFrameEvallibVars(CState* pState);
         void        LoadCustomWavePerFrameEvallibVars(CState* pState, int i);
         void        LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int instance);
-    	void		WriteRealtimeConfig();	// called on Finish()
-	    void		dumpmsg(wchar_t *s);
+    	//void		WriteRealtimeConfig();	// called on Finish()
+	    //void		dumpmsg(wchar_t *s);
 	    void		Randomize();
 	    void		LoadRandomPreset(float fBlendTime);
 	    void		LoadPreset(const wchar_t *szPresetFilename, float fBlendTime);
@@ -622,8 +622,8 @@ public:
 	    void		SeekToPreset(/*wchar_t cStartChar*/);
 	    bool		ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2);
 	    int 		HandleRegularKey(WPARAM wParam);
-	    bool		OnResizeGraphicsWindow();
-	    bool		OnResizeTextWindow();
+	    /*bool		OnResizeGraphicsWindow();
+	    bool		OnResizeTextWindow();*/
 	    //bool		InitFont();
 	    //void		ToggleControlWindow();	// for Desktop Mode only
 	    //void		DrawUI();

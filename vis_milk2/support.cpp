@@ -30,11 +30,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "support.h"
 #include "utility.h"
 #include <Winamp/wa_ipc.h>
+#define WA_UTILS_SIMPLE
+#include <loader/loader/utils.h>
 
 #ifdef _DEBUG
 bool g_bDebugOutput = false;
 #endif
 bool g_bDumpFileCleared = false;
+
 
 //---------------------------------------------------
 void PrepareFor3DDrawing(
@@ -248,64 +251,75 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
     pOut->_34 = 1;
 }
 
-void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, int nSize)
+void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, const int nSize)
 {
     szSongTitle[0] = 0;
-	wcsncpy(szSongTitle, (wchar_t*)SendMessage(hWndWinamp, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE), nSize);
+
+	// this has been changed to use SendMessageTimeout instead of the
+	// simpler SendMessage as crash reports indicated there were cases
+	// of this call causing a deadlock due to other things going on so
+	// by adding in a reasonable timeout we can avoid some of the pain
+	DWORD_PTR ret = 0;
+	if (SendMessageTimeout(hWndWinamp, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE,
+						   SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 500, &ret))
+	{
+		LPCWSTR title = (wchar_t*)ret;
+		if (title && *title)
+		{
+			wcsncpy(szSongTitle, title, nSize);
+		}
+	}
 }
 
-void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, int nSongPos)
+void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, const int nSongPos)
 {
     // note: size(szSongPos[]) must be at least 64.
     szSongPos[0] = 0;
-	int nSongPosMS = SendMessage(hWndWinamp,WM_USER,0,105);
+
+	DWORD_PTR ret = 0;
+	if (SendMessageTimeout(hWndWinamp, WM_WA_IPC, 0, IPC_GETOUTPUTTIME,
+						   SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret))
+	{
+		const int nSongPosMS = ret;
     if (nSongPosMS > 0)
     {
-		wchar_t tmp[16] = {0};
+			wchar_t tmp[16] = { L"00" };
 		float time_s = nSongPosMS*0.001f;
 		int minutes = (int)(time_s/60);
 		time_s -= minutes*60;
 		int seconds = (int)time_s;
 		time_s -= seconds;
-		int dsec = (int)(time_s*100);
-		_snwprintf(tmp, ARRAYSIZE(tmp), L"%.02f", dsec/100.0f);
-		_snwprintf(szSongPos, nSongPos, L"%d:%02d%s", minutes, seconds, tmp+1);
-    }
+			if (time_s)
+			{
+				_snwprintf(tmp, ARRAYSIZE(tmp), L"%.02f", time_s / 1.0f);
 }
 
-void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, int nSongLen)
-{
-    // note: size(szSongLen[]) must be at least 64.
-    szSongLen[0] = 0;
-	const int nSongLenMS = SendMessage(hWndWinamp,WM_USER,1,105)*1000;
-    if (nSongLenMS > 0)
-    {
-		const int length = (nSongLenMS / 1000),
-				  seconds = (length % 60),
-				  minutes = ((length / 60) % 60),
-				  hours = ((length / 3600) % 24);
+			// this converts to seconds which FormatTimeString
+			// needs otherwise it'll show it's playing days :)
+			FormatTimeString(szSongPos, nSongPos, (ret / 1000));
 
-		if (hours > 0)
+			if (szSongPos[0] && tmp[0])
 		{
-			_snwprintf(szSongLen, nSongLen, L"%d:%02d:%02d", hours, minutes, seconds);
+				// move it on by one to avoid the zero
+				wcsncat(szSongPos, (tmp + 1), nSongPos);
 		}
-		else
-		{
-		_snwprintf(szSongLen, nSongLen, L"%d:%02d", minutes, seconds);
 		}
     }    
 }
 
-float GetWinampSongPos(HWND hWndWinamp)
+void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSongLen)
 {
-    // returns answer in seconds
-    return (float)SendMessage(hWndWinamp,WM_USER,0,105)*0.001f;
-}
-
-float GetWinampSongLen(HWND hWndWinamp)
+    // note: size(szSongLen[]) must be at least 64.
+    szSongLen[0] = 0;
+	// this will format the string nicely in a manner that
+	// better fits in with the WACUP styling for 1hr+ items
+	DWORD_PTR ret = 0;
+	if (SendMessageTimeout(hWndWinamp, WM_WA_IPC, 1, IPC_GETOUTPUTTIME,
+		SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret))
 {
-    // returns answer in seconds
-	return (float)SendMessage(hWndWinamp,WM_USER,1,105);
+		const int nSongLenMS = ret;
+		FormatTimeString(szSongLen, nSongLen, nSongLenMS);
+	}
 }
 
 int GetDX9TexFormatBitsPerPixel(D3DFORMAT fmt)

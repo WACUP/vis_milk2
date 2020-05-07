@@ -160,7 +160,7 @@ int GetNumToSpawn(float fTime, float fDeltaT, float fRate, float fRegularity, in
     return (int)(fNumToSpawn + 0.49f);
 }
 
-bool CPlugin::OnResizeTextWindow()
+/*bool CPlugin::OnResizeTextWindow()
 {
 	/*
     if (!m_hTextWnd)
@@ -202,10 +202,9 @@ bool CPlugin::OnResizeTextWindow()
 		// save new window pos
 		WriteRealtimeConfig();
 	}*/
-
+/*
 	return true;
-}
-
+}*/
 
 void CPlugin::ClearGraphicsWindow()
 {
