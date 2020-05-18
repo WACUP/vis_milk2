@@ -41,16 +41,21 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shellapi.h>
 #include <loader/loader/utils.h>
 
-intptr_t myOpenURL(HWND hwnd, wchar_t *loc)
+intptr_t myOpenURL(HWND hwnd, LPCWSTR loc)
 {
-	if (loc)
+	if (loc && *loc)
 	{
-		bool override=false;
-		WASABI_API_SYSCB->syscb_issueCallback(SysCallback::BROWSER, BrowserCallback::ONOPENURL, reinterpret_cast<intptr_t>(loc), reinterpret_cast<intptr_t>(&override));
-		if (!override)
+		// changed not to try & show it in the in-skin browser
+		// as the cases we generally need work better in the
+		// user's default browser instead of the old IE mode!
+		/*bool override=false;
+		WASABI_API_SYSCB->syscb_issueCallback(SysCallback::BROWSER, BrowserCallback::ONOPENURL,
+											  reinterpret_cast<intptr_t>(loc),
+											  reinterpret_cast<intptr_t>(&override));
+		if (!override)*/
 			return (intptr_t)ShellExecuteW(hwnd, L"open", loc, NULL, NULL, SW_SHOWNORMAL);
-		else
-			return 33;
+		/*else
+			return 33;*/
 	}
 	return 33;
 }
@@ -587,8 +592,8 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
 
 void DownloadDirectX(HWND hwnd)
 {
-    wchar_t szUrl[] = L"https://www.microsoft.com/en-us/download/details.aspx?id=35";
-    intptr_t ret = myOpenURL(NULL, szUrl);
+    const wchar_t szUrl[] = L"https://www.microsoft.com/download/details.aspx?id=35";
+    const intptr_t ret = myOpenURL(NULL, szUrl);
     if (ret <= 32)
     {
         wchar_t buf[1024] = {0};
@@ -609,8 +614,8 @@ void DownloadDirectX(HWND hwnd)
             _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), szUrl, ret);
             break;
         }
-        MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL),
-					MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+        TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL),
+						MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
     }
 }
 
@@ -618,7 +623,7 @@ void MissingDirectX(HWND hwnd)
 {
     // DIRECTX MISSING OR CORRUPT -> PROMPT TO GO TO WEB.
 	wchar_t title[128] = {0};
-    int ret = MessageBoxW(hwnd, 
+    if (TimedMessageBox(hwnd, 
         #ifndef D3D_SDK_VERSION
             --- error; you need to #include <d3d9.h> ---
         #endif
@@ -629,7 +634,7 @@ void MissingDirectX(HWND hwnd)
             "Milkdrop requires d3dx9_31.dll to be installed.\n"
             "\n"
             "Would you like to be taken to:\n"
-			"http://www.microsoft.com/download/details.aspx?id=35,\n"
+			"https://www.microsoft.com/download/details.aspx?id=35,\n"
             "where you can update DirectX 9.0?\n"
             XXXXXXX
         #else
@@ -640,10 +645,10 @@ void MissingDirectX(HWND hwnd)
         #endif
         ,
 		WASABI_API_LNGSTRINGW_BUF(IDS_DIRECTX_MISSING_OR_CORRUPT, title, 128),
-		MB_YESNO|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
-        
-    if (ret==IDYES)
+		MB_YESNO|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 3000) ==IDYES)
+	{
         DownloadDirectX(hwnd);
+	}
 }
 
 void GetDesktopFolder(wchar_t *szDesktopFolder) // should be MAX_PATH len.

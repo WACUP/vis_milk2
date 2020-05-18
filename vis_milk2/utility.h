@@ -94,7 +94,7 @@ bool ReadCBValue(HWND hwnd, DWORD ctrl_id, int* pRetValue);
 
 HMODULE FindD3DX9(HWND winamp);
 
-intptr_t myOpenURL(HWND hwnd, wchar_t *loc);
+intptr_t myOpenURL(HWND hwnd, LPCWSTR loc);
 
 typedef HRESULT (WINAPI *D3DXCREATEFONTW)(LPDIRECT3DDEVICE9, INT, UINT, UINT, UINT, BOOL, DWORD, DWORD, DWORD, DWORD, LPCWSTR, LPD3DXFONT *);
 extern D3DXCREATEFONTW pCreateFontW;

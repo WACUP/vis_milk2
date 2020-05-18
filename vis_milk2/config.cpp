@@ -43,6 +43,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shellapi.h>
 #include <strsafe.h>
 #include <loader/loader/paths.h>
+#include <loader/loader/utils.h>
 
 #define PREFERRED_FORMAT D3DFMT_X8R8G8B8
 #define MAX_PROPERTY_PAGES 8
@@ -1481,7 +1482,7 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                     wchar_t szFile[512] = {0};
 					PathCombine(szFile, GetPaths()->winamp_plugin_dir, DOCFILE);
 
-					intptr_t ret = myOpenURL(0,szFile);
+					const intptr_t ret = myOpenURL(0,szFile);
                     if (ret <= 32)
                     {
                         wchar_t buf[1024] = {0};
@@ -1502,14 +1503,14 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                             StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X), szFile, ret);
                             break;
                         }
-                        MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_DOCUMENTATION), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+                        TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_DOCUMENTATION), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
                     }
                 }
                 break;
-
+#ifdef PLUGIN_WEB_URL
             case ID_WEB:
                 {
-                    intptr_t ret = myOpenURL(NULL, PLUGIN_WEB_URL);
+                    const intptr_t ret = myOpenURL(NULL, PLUGIN_WEB_URL);
                     if (ret <= 32)
                     {
                         wchar_t buf[1024] = {0};
@@ -1530,11 +1531,11 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                             StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), PLUGIN_WEB_URL, ret);
                             break;
                         }
-                        MessageBoxW(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+                        TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
                     }
                 }
                 break;
-
+#endif
             case ID_DEFAULTS:
 			{
 				wchar_t title[64] = {0};

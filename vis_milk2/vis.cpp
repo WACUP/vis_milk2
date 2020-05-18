@@ -48,7 +48,7 @@ bool g_bFullyExited = true;
 api_service *WASABI_API_SVC = 0;
 api_language *WASABI_API_LNG = 0;
 api_application *WASABI_API_APP = 0;
-api_syscb *WASABI_API_SYSCB = 0;
+//api_syscb *WASABI_API_SYSCB = 0;
 HINSTANCE WASABI_API_LNG_HINST = 0, WASABI_API_ORIG_HINST = 0;
 
 void config(struct winampVisModule *this_mod); // configuration dialog
@@ -128,8 +128,8 @@ extern "C" {
 				sf = WASABI_API_SVC->service_getServiceByGuid(applicationApiServiceGuid);
 				if (sf) WASABI_API_APP = reinterpret_cast<api_application*>(sf->getInterface());
 
-				sf = WASABI_API_SVC->service_getServiceByGuid(syscbApiServiceGuid);
-				if (sf) WASABI_API_SYSCB = reinterpret_cast<api_syscb*>(sf->getInterface());
+				/*sf = WASABI_API_SVC->service_getServiceByGuid(syscbApiServiceGuid);
+				if (sf) WASABI_API_SYSCB = reinterpret_cast<api_syscb*>(sf->getInterface());*/
 
 				// need to have this initialised before we try to do anything with localisation features
 				WASABI_API_START_LANG(GetMyInstance(),VisMilkdropLangGUID);

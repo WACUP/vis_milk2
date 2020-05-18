@@ -40,8 +40,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHORTNAME        L"MilkDrop 2" // used as window caption for both MilkDrop and the config panel.
 									   // avoid punctuation; when 'integrate with winamp' option is enabled,
 									   // these characters don't always work with all skins.
-#define LONGNAME         "MilkDrop v2.27.4" // appears at bottom of config panel
-#define LONGNAMEW        L"MilkDrop v2.27.4" // appears at bottom of config panel
+#define LONGNAME         "MilkDrop v2.27.5" // appears at bottom of config panel
+#define LONGNAMEW        L"MilkDrop v2.27.5" // appears at bottom of config panel
 
 // INT_VERSION is the major version #, multipled by 100 (ie. version 1.02 
 // would be 102).  If the app goes to read in the INI file and sees that
@@ -89,7 +89,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ***Note that the button will be invisible (on the config panel) 
 // at runtime if this string is empty.***
-#define PLUGIN_WEB_URL  L"http://www.nullsoft.com/free/milkdrop/"   // set this to something like "http://www.myplugin.com/"    
+//#define PLUGIN_WEB_URL  L"http://www.nullsoft.com/free/milkdrop/"   // set this to something like "http://www.myplugin.com/"
+//#define PLUGIN_WEB_URL  L"https://getwacup.com/milkdrop"
 
 // The following two strings - AUTHOR_NAME and COPYRIGHT - will be used 
 // in a little box in the config panel, to identify the author & copyright 
