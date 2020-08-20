@@ -39,6 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Winamp/wa_ipc.h>
 #include "resource.h"
 #include <shellapi.h>
+#include <shlwapi.h>
 #include <loader/loader/utils.h>
 
 intptr_t myOpenURL(HWND hwnd, LPCWSTR loc)
@@ -103,7 +104,7 @@ float AdjustRateToFPS(float per_frame_decay_rate_at_fps1, float fps1, float actu
     return per_frame_decay_rate_at_fps2;
 }
 
-float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float fDefault, wchar_t *szIniFile)
+float GetPrivateProfileFloatW(const wchar_t *szSectionName, const wchar_t *szKeyName, const float fDefault, const wchar_t *szIniFile)
 {
     wchar_t string[64] = {0};
     wchar_t szDefault[64] = {0};
@@ -118,18 +119,26 @@ float GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float 
     return ret;
 }
 
-bool WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName)
+void WritePrivateProfileFloatW(const float f, const float fDefault, const wchar_t *szKeyName,
+							   const wchar_t *szIniFile, const wchar_t *szSectionName)
 {
     wchar_t szValue[32] = {0};
-    SafePrintfL(szValue, ARRAYSIZE(szValue), L"%f", f);
-    return (WritePrivateProfileStringW(szSectionName, szKeyName, szValue, szIniFile) != 0);
+	if (f != fDefault)
+	{
+		SafePrintfL(szValue, ARRAYSIZE(szValue), L"%f", f);
+	}
+    WritePrivateProfileStringW(szSectionName, szKeyName, (szValue[0] ? szValue : NULL), szIniFile);
 }
 
-bool WritePrivateProfileIntW(int d, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName)
+void WritePrivateProfileIntW(const int d, const int dDefault, const wchar_t *szKeyName,
+							 const wchar_t *szIniFile, const wchar_t *szSectionName)
 {
 	wchar_t szValue[32] = {0};
-	_itow_s(d, szValue, ARRAYSIZE(szValue), 10);
-    return (WritePrivateProfileStringW(szSectionName, szKeyName, szValue, szIniFile) != 0);
+	if (d != dDefault)
+	{
+		_itow_s(d, szValue, ARRAYSIZE(szValue), 10);
+	}
+    WritePrivateProfileStringW(szSectionName, szKeyName, (szValue[0] ? szValue : NULL), szIniFile);
 }
 
 void SetScrollLock(int bNewState, bool bPreventHandling)
@@ -592,6 +601,7 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
 
 void DownloadDirectX(HWND hwnd)
 {
+#if 0
     const wchar_t szUrl[] = L"https://www.microsoft.com/download/details.aspx?id=35";
     const intptr_t ret = myOpenURL(NULL, szUrl);
     if (ret <= 32)
@@ -617,6 +627,7 @@ void DownloadDirectX(HWND hwnd)
         TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL),
 						MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
     }
+#endif
 }
 
 void MissingDirectX(HWND hwnd)
@@ -644,8 +655,9 @@ void MissingDirectX(HWND hwnd)
             WASABI_API_LNGSTRINGW(IDS_DIRECTX_MISSING_OR_CORRUPT_TEXT)
         #endif
         ,
-		WASABI_API_LNGSTRINGW_BUF(IDS_DIRECTX_MISSING_OR_CORRUPT, title, 128),
-		MB_YESNO|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 3000) ==IDYES)
+		WASABI_API_LNGSTRINGW_BUF(IDS_DIRECTX_MISSING_OR_CORRUPT,
+		title, ARRAYSIZE(title)), MB_YESNO|MB_SETFOREGROUND|MB_TOPMOST|
+		MB_TASKMODAL|MB_DEFBUTTON1|MB_ICONEXCLAMATION, 5000) == IDYES)
 	{
         DownloadDirectX(hwnd);
 	}
@@ -1129,7 +1141,7 @@ D3DXCREATETEXTURE pCreateTexture=0;
 //----------------------------------------------------------------------
 HMODULE FindD3DX9(HWND winamp)
 {
-	HMODULE d3dx9 = (HMODULE)SendMessage(winamp,WM_WA_IPC, 0, IPC_GET_D3DX9);
+	HMODULE d3dx9 = /*NULL;/*/(HMODULE)SendMessage(winamp, WM_WA_IPC, 0, IPC_GET_D3DX9)/**/;
 	if (d3dx9)
 	{
 		pCreateFontW = (D3DXCREATEFONTW) GetProcAddress(d3dx9,"D3DXCreateFontW");

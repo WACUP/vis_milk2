@@ -820,8 +820,8 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 
 	// if motion vectors were transparent before, don't morph the # in X and Y - just
 	// start in the right place, and fade them in.
-	bool bOldStateTransparent = (s_from->m_fMvA.eval(-1) < 0.001f);
-	bool bNewStateTransparent = (s_to->m_fMvA.eval(-1) < 0.001f);
+	const bool bOldStateTransparent = (s_from->m_fMvA.eval(-1) < 0.001f),
+			   bNewStateTransparent = (s_to->m_fMvA.eval(-1) < 0.001f);
 	if (!bOldStateTransparent && bNewStateTransparent)
 	{
 		s_from->m_fMvX = s_to->m_fMvX.eval(fAnimTime);
@@ -832,9 +832,9 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 		s_from->m_fMvR = s_to->m_fMvR.eval(fAnimTime);
 		s_from->m_fMvG = s_to->m_fMvG.eval(fAnimTime);
 		s_from->m_fMvB = s_to->m_fMvB.eval(fAnimTime);
-	}
-	if (bNewStateTransparent && !bOldStateTransparent)
-	{
+	/*}
+	if (!bOldStateTransparent && bNewStateTransparent)
+	{*/
 		s_to->m_fMvX = s_from->m_fMvX.eval(fAnimTime);
 		s_to->m_fMvY = s_from->m_fMvY.eval(fAnimTime);
 		s_to->m_fMvDX = s_from->m_fMvDX.eval(fAnimTime);

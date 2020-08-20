@@ -123,6 +123,7 @@ int CPluginShell::InitDesktopMode()
     PathCombine(szVmsDesktopDll, GetPaths()->winamp_plugin_dir, VMS_DESKTOP_DLLNAME);
     if (!GetModuleHandleW(szVmsDesktopDll))
     {
+        // cppcheck-suppress leakReturnValNotUsed
         if (!LoadLibraryW(szVmsDesktopDll))
         {
             wchar_t buf[2048] = {0};
@@ -515,18 +516,18 @@ int CPluginShell::StuffIconBitmaps(int iStartIconIdx, int iTexNum, int *show_msg
         //       but 'idx' starts at zero!
     
         // get the icon:
-        SHFILEINFO sfi;
-        int flags = SHGFI_ICON|SHGFI_PIDL|SHGFI_SHELLICONSIZE | ((m_desktop_icon_size > 32) ? SHGFI_LARGEICON : 0);
-        if (SHGetFileInfo((LPCTSTR)p->pidl, 0, &sfi, sizeof(sfi), flags))
+        SHFILEINFO sfi = {0};
+        if (SHGetFileInfo((LPCTSTR)p->pidl, 0, &sfi, sizeof(sfi),
+						  SHGFI_ICON | SHGFI_PIDL | SHGFI_SHELLICONSIZE))
         {
-            ICONINFO ii;
+            ICONINFO ii = {0};
             if (GetIconInfo(sfi.hIcon, &ii))
             {
                 int x0 = (bitmap_idx%nAcross)*m_desktop_icon_size;
                 int y0 = (bitmap_idx/nAcross)*m_desktop_icon_size;
                 int checksum[3] = { 0, 0, 0 };
 
-				BITMAPINFO bmi = {0};
+                BITMAPINFO bmi = {0};
 
                 // pass 1: get the colors 
 

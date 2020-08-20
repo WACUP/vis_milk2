@@ -507,6 +507,7 @@ Order of Function Calls
 #include <loader/hook/squash.h>
 #include <loader/loader/paths.h>
 #include <loader/loader/utils.h>
+#include <loader/loader/ini.h>
 
 #define FRAND ((warand() % 7381)/7380.0f)
 
@@ -958,7 +959,6 @@ void CPlugin::MyPreInitialize()
 	DecompressResourceFree(output);
 
     // CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
-	m_bFirstRun		            = true;
     m_bInitialPresetSelected    = false;
 	m_fBlendTimeUser			= 1.7f;
 	m_fBlendTimeAuto			= 2.7f;
@@ -1178,7 +1178,6 @@ void CPlugin::MyReadConfig()
 
     wchar_t *pIni = GetConfigIniFile();
 
-	m_bFirstRun		= !GetPrivateProfileBoolW(L"settings",L"bConfigured" ,false,pIni);
 	m_bEnableRating = GetPrivateProfileBoolW(L"settings",L"bEnableRating",m_bEnableRating,pIni);
     //m_bInstaScan    = GetPrivateProfileBool("settings","bInstaScan",m_bInstaScan,pIni);
 	m_bHardCutsDisabled = GetPrivateProfileBoolW(L"settings",L"bHardCutsDisabled",m_bHardCutsDisabled,pIni);
@@ -1282,13 +1281,11 @@ void CPlugin::MyWriteConfig()
     wchar_t *pIni = GetConfigIniFile();
 
 	// constants:
-	WritePrivateProfileStringW(L"settings",L"bConfigured",L"1",pIni);
-
 	//note: m_szPresetDir is not written here; it is written manually, whenever it changes.
 
-	WritePrivateProfileIntW(m_bSongTitleAnims,		L"bSongTitleAnims",		pIni, L"settings");
-	WritePrivateProfileIntW(m_bHardCutsDisabled,	    L"bHardCutsDisabled",	pIni, L"settings");
-	WritePrivateProfileIntW(m_bEnableRating,		    L"bEnableRating",		pIni, L"settings");
+	WritePrivateProfileIntW(m_bSongTitleAnims,    1,		L"bSongTitleAnims",		pIni, L"settings");
+	WritePrivateProfileIntW(m_bHardCutsDisabled,  1,	    L"bHardCutsDisabled",	pIni, L"settings");
+	WritePrivateProfileIntW(m_bEnableRating,      1,	    L"bEnableRating",		pIni, L"settings");
 	//WritePrivateProfileIntW(m_bInstaScan,            "bInstaScan",		    pIni, "settings");
 #ifdef _DEBUG
 	WritePrivateProfileIntW(g_bDebugOutput,		    L"bDebugOutput",			pIni, L"settings");
@@ -1297,39 +1294,39 @@ void CPlugin::MyWriteConfig()
 	//itePrivateProfileInt(m_bShowSongInfo, 		"bShowSongInfo",        pIni, "settings");
 	//itePrivateProfileInt(m_bFixPinkBug, 		    "bFixPinkBug",			pIni, "settings");
 
-	WritePrivateProfileIntW(m_bShowPressF1ForHelp,   L"bShowPressF1ForHelp",	pIni, L"settings");
+	WritePrivateProfileIntW(m_bShowPressF1ForHelp, 1, L"bShowPressF1ForHelp",	pIni, L"settings");
 	//itePrivateProfileInt(m_bShowMenuToolTips, 	"bShowMenuToolTips",    pIni, "settings");
-	WritePrivateProfileIntW(m_n16BitGamma, 		    L"n16BitGamma",			pIni, L"settings");
-	WritePrivateProfileIntW(m_bAutoGamma,  		    L"bAutoGamma",			pIni, L"settings");
+	WritePrivateProfileIntW(m_n16BitGamma, 2,	    L"n16BitGamma",			pIni, L"settings");
+	WritePrivateProfileIntW(m_bAutoGamma, 1, 	    L"bAutoGamma",			pIni, L"settings");
 
 	//WritePrivateProfileIntW(m_bAlways3D, 			"bAlways3D",			pIni, "settings");
     //WritePrivateProfileFloat(m_fStereoSep,          "fStereoSep",           pIni, "settings");
 	//WritePrivateProfileIntW(m_bFixSlowText,		    "bFixSlowText",			pIni, "settings");
 	//itePrivateProfileInt(m_bAlwaysOnTop,		    "bAlwaysOnTop",			pIni, "settings");
 	//WritePrivateProfileIntW(m_bWarningsDisabled,	    "bWarningsDisabled",	pIni, "settings");
-	WritePrivateProfileIntW(m_bWarningsDisabled2,	L"bWarningsDisabled2",	pIni, L"settings");
+	WritePrivateProfileIntW(m_bWarningsDisabled2, 0, L"bWarningsDisabled2",	pIni, L"settings");
 	//WritePrivateProfileIntW(m_bAnisotropicFiltering,	"bAnisotropicFiltering",pIni, "settings");
-    WritePrivateProfileIntW(m_bPresetLockOnAtStartup,L"bPresetLockOnAtStartup",pIni,L"settings");
-	WritePrivateProfileIntW(m_bPreventScollLockHandling,L"m_bPreventScollLockHandling",pIni,L"settings");
+    WritePrivateProfileIntW(m_bPresetLockOnAtStartup, 0, L"bPresetLockOnAtStartup",pIni,L"settings");
+	WritePrivateProfileIntW(m_bPreventScollLockHandling, 0, L"m_bPreventScollLockHandling",pIni,L"settings");
     // note: this is also written @ exit of the visualizer
     
-    WritePrivateProfileIntW(m_nCanvasStretch,        L"nCanvasStretch",   	pIni, L"settings");
-    WritePrivateProfileIntW(m_nTexSizeX,			    L"nTexSize",				pIni, L"settings");
-	WritePrivateProfileIntW(m_nTexBitsPerCh,         L"nTexBitsPerCh",        pIni, L"settings");
-	WritePrivateProfileIntW(m_nGridX, 				L"nMeshSize",			pIni, L"settings");
-	WritePrivateProfileIntW(m_nMaxPSVersion_ConfigPanel, L"MaxPSVersion",  	pIni, L"settings");
-    WritePrivateProfileIntW(m_nMaxImages, L"MaxImages",  	pIni, L"settings");
-    WritePrivateProfileIntW(m_nMaxBytes , L"MaxBytes",  	pIni, L"settings");
-     
-	WritePrivateProfileFloatW(m_fBlendTimeAuto,          L"fBlendTimeAuto",           pIni, L"settings");
-	WritePrivateProfileFloatW(m_fBlendTimeUser,          L"fBlendTimeUser",           pIni, L"settings");
-	WritePrivateProfileFloatW(m_fTimeBetweenPresets,     L"fTimeBetweenPresets",      pIni, L"settings");
-	WritePrivateProfileFloatW(m_fTimeBetweenPresetsRand, L"fTimeBetweenPresetsRand",  pIni, L"settings");
-	WritePrivateProfileFloatW(m_fHardCutLoudnessThresh,  L"fHardCutLoudnessThresh",   pIni, L"settings");
-	WritePrivateProfileFloatW(m_fHardCutHalflife,        L"fHardCutHalflife",         pIni, L"settings");
-	WritePrivateProfileFloatW(m_fSongTitleAnimDuration,  L"fSongTitleAnimDuration",   pIni, L"settings");
-	WritePrivateProfileFloatW(m_fTimeBetweenRandomSongTitles,L"fTimeBetweenRandomSongTitles",pIni, L"settings");
-	WritePrivateProfileFloatW(m_fTimeBetweenRandomCustomMsgs,L"fTimeBetweenRandomCustomMsgs",pIni, L"settings");
+    WritePrivateProfileIntW(m_nCanvasStretch, 0,       L"nCanvasStretch",   	pIni, L"settings");
+    WritePrivateProfileIntW(m_nTexSizeX, -1,	    L"nTexSize",				pIni, L"settings");
+	WritePrivateProfileIntW(m_nTexBitsPerCh, 8,        L"nTexBitsPerCh",        pIni, L"settings");
+	WritePrivateProfileIntW(m_nGridX, 48,				L"nMeshSize",			pIni, L"settings");
+	WritePrivateProfileIntW(m_nMaxPSVersion_ConfigPanel, -1, L"MaxPSVersion",  	pIni, L"settings");
+    WritePrivateProfileIntW(m_nMaxImages, 32, L"MaxImages",  	pIni, L"settings");
+    WritePrivateProfileIntW(m_nMaxBytes, 16000000, L"MaxBytes",  	pIni, L"settings");
+
+	WritePrivateProfileFloatW(m_fBlendTimeAuto, 2.7f,    L"fBlendTimeAuto",           pIni, L"settings");
+	WritePrivateProfileFloatW(m_fBlendTimeUser, 1.7f,    L"fBlendTimeUser",           pIni, L"settings");
+	WritePrivateProfileFloatW(m_fTimeBetweenPresets, 16.0f,     L"fTimeBetweenPresets",      pIni, L"settings");
+	WritePrivateProfileFloatW(m_fTimeBetweenPresetsRand, 10.0f, L"fTimeBetweenPresetsRand",  pIni, L"settings");
+	WritePrivateProfileFloatW(m_fHardCutLoudnessThresh, 2.5f,   L"fHardCutLoudnessThresh",   pIni, L"settings");
+	WritePrivateProfileFloatW(m_fHardCutHalflife, 60.0f,        L"fHardCutHalflife",         pIni, L"settings");
+	WritePrivateProfileFloatW(m_fSongTitleAnimDuration, 1.7f,   L"fSongTitleAnimDuration",   pIni, L"settings");
+	WritePrivateProfileFloatW(m_fTimeBetweenRandomSongTitles, -1.0f,    L"fTimeBetweenRandomSongTitles",pIni, L"settings");
+	WritePrivateProfileFloatW(m_fTimeBetweenRandomCustomMsgs, -1.0f,    L"fTimeBetweenRandomCustomMsgs",pIni, L"settings");
 }
 
 //----------------------------------------------------------------------
@@ -2794,7 +2791,7 @@ bool CPlugin::EvictSomeTexture()
         _snprintf(buf, ARRAYSIZE(buf), "evicting at %d textures, %.1f MB\n", nEvictableFiles, nEvictableBytes*0.000001f);
         OutputDebugStringA(buf);
     }
-    #endif
+#endif
 
     int N = m_textures.size();
     
@@ -2846,7 +2843,7 @@ bool CPlugin::EvictSomeTexture()
     return true;
 }
 
-std::wstring  texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", };
+std::wstring texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", };
 const wchar_t szExtsWithSlashes[] = L"jpg|png|dds|etc.";
 typedef Vector<std::wstring> StringVec;
 bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename, int szRetTextureFilenameLen)  //should be MAX_PATH chars
@@ -3141,10 +3138,10 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                         int nTexturesCached = 0;
                         int nBytesCached = 0;
                         N = g_plugin.m_textures.size();
-                        for (int i=0; i<N; i++)
-                            if (g_plugin.m_textures[i].bEvictable && g_plugin.m_textures[i].texptr)
+                        for (int I=0; I<N; I++)
+                            if (g_plugin.m_textures[I].bEvictable && g_plugin.m_textures[I].texptr)
                             {
-                                nBytesCached += g_plugin.m_textures[i].nSizeInBytes;
+                                nBytesCached += g_plugin.m_textures[I].nSizeInBytes;
                                 ++nTexturesCached;
                             }
                         if ( nTexturesCached < g_plugin.m_nMaxImages && 
@@ -3157,7 +3154,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
 
                     //load the texture
                     wchar_t szFilename[MAX_PATH] = {0};
-                    for (int z=0; z<ARRAYSIZE(texture_exts); z++) 
+                    for (int z = 0; z < ARRAYSIZE(texture_exts); z++) 
                     {
 						_snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s\\Plugins\\%stextures\\%s.%s",
 								   GetPaths()->settings_dir, SUBDIR, szRootName, texture_exts[z].c_str());
@@ -3170,9 +3167,9 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                             if (GetFileAttributesW(szFilename) == 0xFFFFFFFF)
 							{
 								continue;
+							}
                         }
-                        }
-                        
+
                         // keep trying to load it - if it fails due to memory, evict something and try again.
                         while (1)
                         {
@@ -3204,11 +3201,11 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                                 x.w = desc.Width;
                                 x.h = desc.Height;
                                 x.d = desc.Depth;
-                                x.bEvictable    = true;
-                                x.nAge          = g_plugin.m_nPresetsLoadedTotal;
+                                x.bEvictable = true;
+                                x.nAge = g_plugin.m_nPresetsLoadedTotal;
                                 int nPixels = desc.Width*desc.Height*max(1,desc.Depth);
                                 int BitsPerPixel = GetDX9TexFormatBitsPerPixel(desc.Format);
-                                x.nSizeInBytes  =  nPixels*BitsPerPixel/8 + 16384;  //plus some overhead
+                                x.nSizeInBytes = nPixels*BitsPerPixel/8 + 16384;  //plus some overhead
                             }
                             break;
                         }
@@ -3231,7 +3228,7 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                     }
 
                     g_plugin.m_textures.push_back(x);
-                    m_texture_bindings[ cd.RegisterIndex ].texptr    = x.texptr;
+                    m_texture_bindings[ cd.RegisterIndex ].texptr = x.texptr;
                 }
             }
         }
@@ -3520,11 +3517,11 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     char szWhichShader[64] = {0};
     switch(shaderType)
     {
-    case SHADER_WARP:  strncpy(szWhichShader, "warp", ARRAYSIZE(szWhichShader)); break;
-    case SHADER_COMP:  strncpy(szWhichShader, "composite", ARRAYSIZE(szWhichShader)); break;
-    case SHADER_BLUR:  strncpy(szWhichShader, "blur", ARRAYSIZE(szWhichShader)); break;
-    case SHADER_OTHER: strncpy(szWhichShader, "(other)", ARRAYSIZE(szWhichShader)); break;
-    default:           strncpy(szWhichShader, "(unknown)", ARRAYSIZE(szWhichShader)); break;
+		case SHADER_WARP:  strncpy(szWhichShader, "warp", ARRAYSIZE(szWhichShader)); break;
+		case SHADER_COMP:  strncpy(szWhichShader, "composite", ARRAYSIZE(szWhichShader)); break;
+		case SHADER_BLUR:  strncpy(szWhichShader, "blur", ARRAYSIZE(szWhichShader)); break;
+		case SHADER_OTHER: strncpy(szWhichShader, "(other)", ARRAYSIZE(szWhichShader)); break;
+		default:           strncpy(szWhichShader, "(unknown)", ARRAYSIZE(szWhichShader)); break;
     }
 
     LPD3DXBUFFER pShaderByteCode = NULL;
@@ -3616,7 +3613,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         char* p = &szShaderText[shaderStartPos];
         
         // seek to 'shader_body' and replace it with spaces
-        while (*p && strncmp(p, "shader_body", 11))
+        while (p && *p && strncmp(p, "shader_body", 11))
             ++p;
         if (p) 
         {
@@ -3668,19 +3665,19 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
     const int len = strlen(szShaderText);
 	__try
 	{
-    if (D3D_OK != pCompileShader(
-        szShaderText,
-        len,
-        NULL,//CONST D3DXMACRO* pDefines,
-        NULL,//LPD3DXINCLUDE pInclude,
-        szFn,
-        szProfile,
-		(strcmp(szProfile, "ps_3_0") ? D3DXSHADER_USE_LEGACY_D3DX9_31_DLL :
-		D3DXSHADER_OPTIMIZATION_LEVEL3)/*/m_dwShaderFlags/**/,
-        &pShaderByteCode,
-				&m_pShaderCompileErrors,
-				ppConstTable
-				)) 
+		if (D3D_OK != pCompileShader(
+			szShaderText,
+			len,
+			NULL,//CONST D3DXMACRO* pDefines,
+			NULL,//LPD3DXINCLUDE pInclude,
+			szFn,
+			szProfile,
+			(strcmp(szProfile, "ps_3_0") ? D3DXSHADER_USE_LEGACY_D3DX9_31_DLL :
+			D3DXSHADER_OPTIMIZATION_LEVEL3)/*/m_dwShaderFlags/**/,
+			&pShaderByteCode,
+			&m_pShaderCompileErrors,
+			ppConstTable
+			)) 
 		{
 			failed=true;
 		}
@@ -3691,17 +3688,17 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		failed=true;
 	}
 
-		// before we totally fail, let's try using ps_2_b instead of ps_2_a
-		if (failed && !strcmp(szProfile, "ps_2_a"))
-		{
-			SafeRelease(m_pShaderCompileErrors);
+	// before we totally fail, let's try using ps_2_b instead of ps_2_a
+	if (failed && !strcmp(szProfile, "ps_2_a"))
+	{
+		SafeRelease(m_pShaderCompileErrors);
 		__try
 		{
 			if (D3D_OK == pCompileShader(szShaderText, len, NULL, NULL, szFn,
-			"ps_2_b", D3DXSHADER_USE_LEGACY_D3DX9_31_DLL/*m_dwShaderFlags*/,
-			&pShaderByteCode, &m_pShaderCompileErrors, ppConstTable))
+				"ps_2_b", D3DXSHADER_USE_LEGACY_D3DX9_31_DLL/*m_dwShaderFlags*/,
+				&pShaderByteCode, &m_pShaderCompileErrors, ppConstTable))
 			{
-				failed=false;
+				failed = false;
 			}
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
@@ -3710,11 +3707,11 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		}
 	}
 
-		if (failed)
+	if (failed)
+	{
+		wchar_t temp[1024] = {0};
+		if (m_pShaderCompileErrors && m_pShaderCompileErrors->GetBufferSize() < ARRAYSIZE(temp) - 256) 
 		{
-			wchar_t temp[1024] = {0};
-			if (m_pShaderCompileErrors && m_pShaderCompileErrors->GetBufferSize() < ARRAYSIZE(temp) - 256) 
-			{
 			char *compiler_error = (char*)m_pShaderCompileErrors->GetBufferPointer();
 			if (compiler_error && *compiler_error)
 			{
@@ -3725,7 +3722,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 				if (!StrStrIA(compiler_error, "error X3025"))
 				{
 					_snwprintf(temp, ARRAYSIZE(temp), WASABI_API_LNGSTRINGW(IDS_ERROR_COMPILING_X_X_SHADER), szProfile, szWhichShader);
-				wcsncat(temp, L"\n\n", ARRAYSIZE(temp));
+					wcsncat(temp, L"\n\n", ARRAYSIZE(temp));
 					wcsncat(temp, AutoWide(compiler_error), ARRAYSIZE(temp));
 				}
 				else
@@ -3734,30 +3731,36 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 					return false;
 				}
 			}
-			}
-			SafeRelease(m_pShaderCompileErrors);
+		}
+		SafeRelease(m_pShaderCompileErrors);
 		//dumpmsg(temp);
 		if (bHardErrors) {
 			wchar_t title[64] = {0};
-				MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		}
-			else {
-				AddError(temp, 8.0f, ERR_PRESET, true);
-			}
-			return false;
+		else {
+			AddError(temp, 8.0f, ERR_PRESET, true);
 		}
+		return false;
+	}
 
     HRESULT hr = S_FALSE;
 	if (pShaderByteCode)
 	{
-    if (szProfile[0] == 'v') 
-    {
-        hr = GetDevice()->CreateVertexShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DVertexShader9**)ppShader);
-    }
-    else if (szProfile[0] == 'p') 
-    {
-        hr = GetDevice()->CreatePixelShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DPixelShader9**)ppShader);
-    }
+		if (szProfile[0] == 'v')
+		{
+			/*char a[32] = {0};
+			StringCchPrintfA(a, 32, "%d", pShaderByteCode->GetBufferSize());
+			MessageBoxA(0, (LPCSTR)pShaderByteCode->GetBufferPointer(), a, 0);*/
+			hr = GetDevice()->CreateVertexShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DVertexShader9**)ppShader);
+		}
+		else if (szProfile[0] == 'p')
+		{
+			/*char a[32] = {0};
+			StringCchPrintfA(a, 32, "%d", pShaderByteCode->GetBufferSize());
+			MessageBoxA(0, (LPCSTR)pShaderByteCode->GetBufferPointer(), a, 0);*/
+			hr = GetDevice()->CreatePixelShader((const unsigned long *)(pShaderByteCode->GetBufferPointer()), (IDirect3DPixelShader9**)ppShader);
+		}
 	}
 
     if (hr != D3D_OK)
@@ -3829,11 +3832,11 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
         {
             // notify all CShaderParams classes that we're releasing a bindable texture!!
             size_t N = global_CShaderParams_master_list.size();
-            for (size_t j=0; j<N; j++) 
+            for (size_t j=0; j<N; j++)
 			{
 				if (global_CShaderParams_master_list[j])
 				{
-                global_CShaderParams_master_list[j]->OnTextureEvict( m_textures[i].texptr );
+					global_CShaderParams_master_list[j]->OnTextureEvict(m_textures[i].texptr);
 				}
 			}
             SafeRelease(m_textures[i].texptr);
@@ -3931,7 +3934,7 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
     // The "random" state should be preserved from session to session.
     // It's pretty safe to do, because the Scroll Lock key is hard to
     //   accidentally click... :)
-    WritePrivateProfileIntW(m_bPresetLockedByUser,L"bPresetLockOnAtStartup", GetConfigIniFile(),L"settings");
+    WritePrivateProfileIntW(m_bPresetLockedByUser,0,L"bPresetLockOnAtStartup", GetConfigIniFile(),L"settings");
 }
 
 //----------------------------------------------------------------------
@@ -4188,18 +4191,18 @@ void CPlugin::AddError(wchar_t* szMsg, float fDuration, int category, bool bBold
 {
 	if (szMsg && *szMsg)
 	{
-    if (category == ERR_NOTIFY)
-        ClearErrors(category);
+		if (category == ERR_NOTIFY)
+			ClearErrors(category);
 
-    assert(category != ERR_ALL);
-    ErrorMsg x;
-    x.msg = szMsg;
-    x.birthTime = GetTime();
-    x.expireTime = GetTime() + fDuration;
-    x.category = category;
-    x.bBold = bBold;
-    m_errors.push_back(x);
-}
+		assert(category != ERR_ALL);
+		ErrorMsg x;
+		x.msg = szMsg;
+		x.birthTime = GetTime();
+		x.expireTime = GetTime() + fDuration;
+		x.category = category;
+		x.bBold = bBold;
+		m_errors.push_back(x);
+	}
 }
 
 void CPlugin::ClearErrors(int category)  // 0=all categories
@@ -4268,8 +4271,8 @@ void CPlugin::MyRenderUI(
 			if (buf[0])
 			{
 				SelectFont(DECORATIVE_FONT);
-            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-		}
+				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+			}
 		}
 
         // b) preset rating
@@ -4282,8 +4285,8 @@ void CPlugin::MyRenderUI(
 			if (buf[0])
 			{
 				SelectFont(DECORATIVE_FONT);
-            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-		}
+				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+			}
 		}
 
         // c) fps display
@@ -4294,8 +4297,8 @@ void CPlugin::MyRenderUI(
 			if (buf[0])
 			{
 				SelectFont(DECORATIVE_FONT);
-            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-        }
+				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+			}
         }
 
         // d) debug information
@@ -4306,8 +4309,8 @@ void CPlugin::MyRenderUI(
 			if (buf[0])
 			{
 				SelectFont(SIMPLE_FONT);
-            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-		}
+				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+			}
 		}
 
         // NOTE: custom timed msg comes at the end!!
@@ -4332,8 +4335,8 @@ void CPlugin::MyRenderUI(
 			if (buf4[0])
 			{
 				SelectFont(DECORATIVE_FONT);
-            MyTextOut_Shadow(buf4, MTO_LOWER_LEFT);
-        }
+				MyTextOut_Shadow(buf4, MTO_LOWER_LEFT);
+			}
         }
 
         // render song time & len above that:
@@ -4359,10 +4362,10 @@ void CPlugin::MyRenderUI(
 
 			if (buf3[0])
 			{
-            SelectFont(DECORATIVE_FONT);
-            MyTextOut_Shadow(buf3, MTO_LOWER_LEFT);
+				SelectFont(DECORATIVE_FONT);
+				MyTextOut_Shadow(buf3, MTO_LOWER_LEFT);
+			}
         }
-    }
     }
 
     // 4. render text in upper-left corner
@@ -4483,7 +4486,6 @@ void CPlugin::MyRenderUI(
 					for (i=len; i>=start; i--)
 						bufA[i+1] = bufA[i];
 					bufA[start] = '[';
-					++len;
 				}
 				else
 				{
@@ -4501,7 +4503,6 @@ void CPlugin::MyRenderUI(
 					for (i=len; i>=start; i--)
 						buf[i+1] = buf[i];
 					buf[start] = L'[';
-					++len;
 				}
 			}
 			else
@@ -5265,6 +5266,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
 	const USHORT mask = 1 << (sizeof(SHORT) * 8 - 1);	// we want the highest-order bit
     const bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
+	const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
 
     int nRepeat = 1;  //updated as appropriate
     int rep;
@@ -5581,56 +5583,56 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			case VK_F2:
 			{
 				m_bShowSongTitle = !m_bShowSongTitle;
-				WritePrivateProfileIntW(m_bShowSongTitle, L"bShowSongTitle", GetConfigIniFile(), L"settings");
+				WritePrivateProfileIntW(m_bShowSongTitle, 0, L"bShowSongTitle", GetConfigIniFile(), L"settings");
 				return 0; // we processed (or absorbed) the key
 			}
-		case VK_F3:
+			case VK_F3:
 			{
-			if (m_bShowSongTime && m_bShowSongLen)
-			{
-				m_bShowSongTime = false;
-				m_bShowSongLen  = false;
-			}
-			else if (m_bShowSongTime && !m_bShowSongLen)
-			{
-				m_bShowSongLen  = true;
-			}
-			else 
-			{
-				m_bShowSongTime = true;
-				m_bShowSongLen  = false;
-			}
-				WritePrivateProfileIntW(m_bShowSongTime, L"bShowSongTime", GetConfigIniFile(), L"settings");
-				WritePrivateProfileIntW(m_bShowSongLen, L"bShowSongLen", GetConfigIniFile(), L"settings");
+				if (m_bShowSongTime && m_bShowSongLen)
+				{
+					m_bShowSongTime = false;
+					m_bShowSongLen = false;
+				}
+				else if (m_bShowSongTime && !m_bShowSongLen)
+				{
+					m_bShowSongLen = true;
+				}
+				else
+				{
+					m_bShowSongTime = true;
+					m_bShowSongLen = false;
+				}
+				WritePrivateProfileIntW(m_bShowSongTime, 0, L"bShowSongTime", GetConfigIniFile(), L"settings");
+				WritePrivateProfileIntW(m_bShowSongLen, 0, L"bShowSongLen", GetConfigIniFile(), L"settings");
 				return 0; // we processed (or absorbed) the key
 			}
 			case VK_F4:
 			{
 				m_bShowPresetInfo = !m_bShowPresetInfo;
-				WritePrivateProfileIntW(m_bShowPresetInfo, L"bShowPresetInfo", GetConfigIniFile(), L"settings");
+				WritePrivateProfileIntW(m_bShowPresetInfo, 0, L"bShowPresetInfo", GetConfigIniFile(), L"settings");
 				return 0; // we processed (or absorbed) the key
 			}
 			case VK_F5:
 			{
 				m_bShowFPS = !m_bShowFPS;
-				WritePrivateProfileIntW(m_bShowFPS, L"bShowFPS", GetConfigIniFile(), L"settings");
+				WritePrivateProfileIntW(m_bShowFPS, 0, L"bShowFPS", GetConfigIniFile(), L"settings");
 				return 0; // we processed (or absorbed) the key
 			}
 			case VK_F6:
 			{
 				m_bShowRating = !m_bShowRating;
-				WritePrivateProfileIntW(m_bShowRating, L"bShowRating", GetConfigIniFile(), L"settings");
-			return 0; // we processed (or absorbed) the key
+				WritePrivateProfileIntW(m_bShowRating, 0, L"bShowRating", GetConfigIniFile(), L"settings");
+				return 0; // we processed (or absorbed) the key
 			}
-		case VK_F7:	
+			case VK_F7:
 			{
-			if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
+				if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 				{
-				ReadCustomMessages();		// re-read custom messages
+					ReadCustomMessages();		// re-read custom messages
 				}
-			return 0; // we processed (or absorbed) the key
+				return 0; // we processed (or absorbed) the key
 			}
-		case VK_F8:		
+			case VK_F8:		
 			{
 				m_UI_mode = UI_CHANGEDIR;
 
@@ -5650,22 +5652,22 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				WASABI_API_LNGSTRINGW_BUF(IDS_DIRECTORY_TO_JUMP_TO, m_waitstring.szPrompt, 512);
 				m_waitstring.szToolTip[0] = 0;
 				m_waitstring.nCursorPos = wcslen(m_waitstring.szText);	// set the starting edit position
-			return 0; // we processed (or absorbed) the key
+				return 0; // we processed (or absorbed) the key
 			}
-        case VK_F9:
+			case VK_F9:
 			{
-            m_bShowShaderHelp = !m_bShowShaderHelp;
-            return FALSE;
+				m_bShowShaderHelp = !m_bShowShaderHelp;
+				return FALSE;
 			}
-        case VK_SCROLL:	
+			case VK_SCROLL:
 			{
-            m_bPresetLockedByUser = GetKeyState(VK_SCROLL) & 1;
-            //SetScrollLock(m_bPresetLockedByUser);
-            SendMessage(GetWinampWindow(), WM_WA_IPC, (m_bPresetLockedByUser ? 0 : 1) << 16, IPC_CB_VISRANDOM);
-            //int set = m_bPresetLockedByUser ? 
-            //PostMessage(GetWinampWindow(), WM_COMMAND, ID_VIS_RANDOM | (set << 16), 0);
+				m_bPresetLockedByUser = GetKeyState(VK_SCROLL) & 1;
+				//SetScrollLock(m_bPresetLockedByUser);
+				SendMessage(GetWinampWindow(), WM_WA_IPC, (m_bPresetLockedByUser ? 0 : 1) << 16, IPC_CB_VISRANDOM);
+				//int set = m_bPresetLockedByUser ? 
+				//PostMessage(GetWinampWindow(), WM_COMMAND, ID_VIS_RANDOM | (set << 16), 0);
 
-			return 0; // we processed (or absorbed) the key
+				return 0; // we processed (or absorbed) the key
 			}
 		}
 
@@ -5677,8 +5679,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		if (m_waitstring.bActive) 
 		{
 			// handle arrow keys, home, end, etc. 
-			const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
-
 			if (wParam == VK_LEFT || wParam == VK_RIGHT || 
 				wParam == VK_HOME || wParam == VK_END ||
 				wParam == VK_UP || wParam == VK_DOWN)
@@ -6159,7 +6159,20 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 goto HitEnterFromLoadMenu;
 			if (!m_bPresetLockedByCode)
 			{
-				LoadRandomPreset(m_fBlendTimeUser);
+				// follow the global wacup option so that spacebar
+				// will toggle play/pause if we're focused but its
+				// still possible for the random preset if control
+				// or shift is held down so it's still accessible.
+				if (!bShiftHeldDown && !bCtrlHeldDown &&
+					GetNativeIniInt(WINAMP_INI, L"Jump To File Extra",
+									L"jtfe_no_winamp_scroll", -1) == 2)
+				{
+					PostMessage(GetWinampWindow(), uMsg, wParam, lParam);
+				}
+				else
+				{
+					LoadRandomPreset(m_fBlendTimeUser);
+				}
 				return 0; // we processed (or absorbed) the key
 			}
 			break;
@@ -6237,8 +6250,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
                     m_nNumericInputDigits = 0;
 				    m_nNumericInputNum = 0;
-
-					const bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
 
 					if (bShiftHeldDown && bCtrlHeldDown)
 					{
@@ -6365,12 +6376,12 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			}
 			else
 			{
-			// pass on to parent
-			//PostMessage(m_hWndParent,message,wParam,lParam);
-            PrevPreset(0);
-    		m_fHardCutThresh *= 2.0f;  // make it a little less likely that a random hard cut follows soon.
-		    //m_nNumericInputDigits = 0;
-			//m_nNumericInputNum = 0;
+				// pass on to parent
+				//PostMessage(m_hWndParent,message,wParam,lParam);
+				PrevPreset(0);
+    			m_fHardCutThresh *= 2.0f;  // make it a little less likely that a random hard cut follows soon.
+				//m_nNumericInputDigits = 0;
+				//m_nNumericInputNum = 0;
 			}
 			return 0;
 
@@ -6474,7 +6485,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 	case '9':	
 		{
 			int digit = wParam - '0';
-			m_nNumericInputNum		= (m_nNumericInputNum*10) + digit;
+			m_nNumericInputNum = (m_nNumericInputNum*10) + digit;
 			++m_nNumericInputDigits;
 
 			if (m_nNumericInputDigits >= 2)
@@ -6814,12 +6825,12 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 void CPlugin::RefreshTab2(HWND hwnd)
 {
-	ShowWindow(GetDlgItem(hwnd, IDC_BRIGHT_SLIDER), !m_bAutoGamma);
-	ShowWindow(GetDlgItem(hwnd, IDC_T1), !m_bAutoGamma);
-	ShowWindow(GetDlgItem(hwnd, IDC_T2), !m_bAutoGamma);
-	ShowWindow(GetDlgItem(hwnd, IDC_T3), !m_bAutoGamma);
-	ShowWindow(GetDlgItem(hwnd, IDC_T4), !m_bAutoGamma);
-	ShowWindow(GetDlgItem(hwnd, IDC_T5), !m_bAutoGamma);
+	ShowControl(hwnd, IDC_BRIGHT_SLIDER, !m_bAutoGamma);
+	ShowControl(hwnd, IDC_T1, !m_bAutoGamma);
+	ShowControl(hwnd, IDC_T2, !m_bAutoGamma);
+	ShowControl(hwnd, IDC_T3, !m_bAutoGamma);
+	ShowControl(hwnd, IDC_T4, !m_bAutoGamma);
+	ShowControl(hwnd, IDC_T5, !m_bAutoGamma);
 }
 
 int CALLBACK MyEnumFontsProc(
@@ -7811,14 +7822,14 @@ void CPlugin::BuildMenus()
 /*void CPlugin::dumpmsg(wchar_t *s)
 {
 #ifdef _DEBUG
-        OutputDebugStringW(s);
-        if (s[0]) 
-        {
-            int len = wcslen(s);
-            if (s[len-1] != L'\n')
-                OutputDebugStringW(L"\n");
-        }
-    #endif
+    OutputDebugStringW(s);
+    if (s[0]) 
+    {
+        int len = wcslen(s);
+        if (s[len-1] != L'\n')
+            OutputDebugStringW(L"\n");
+    }
+#endif
 }*/
 
 void CPlugin::PrevPreset(float fBlendTime)
@@ -8306,7 +8317,7 @@ void CPlugin::SeekToPreset(/*wchar_t cStartChar*/)
 			m_nPresetListCurPos = i;
 			return;
 		}
-	}	
+	}
 }
 
 void CPlugin::FindValidPresetDir()
@@ -8539,7 +8550,7 @@ retry:
 						//for (int z=0; z<100; z++)
 						while (p)
 						{
-							if (p && !strncmp(p, "[preset00]", 10)) 
+							if (!strncmp(p, "[preset00]", 10)) 
 							{
 								p = NextLine(p);
 								if (p && !strncmp(p, "fRating=", 8)) 
@@ -8629,7 +8640,7 @@ retry:
     g_plugin.m_nDirs    = temp_nDirs;
     g_plugin.m_bPresetListReady = true;
 
-    if (g_plugin.m_bPresetListReady && g_plugin.m_nPresets == 0)
+    if (g_plugin.m_nPresets == 0)
     {
         // no presets OR directories found - weird - but it happens.
         // --> revert back to plugins dir
@@ -8690,7 +8701,7 @@ retry:
     return 0;
 }
 
-void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectCurrentPreset)
+void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectCurrentPreset) const
 {
     // note: if dir changed, make sure bForce is true!
 
@@ -9033,7 +9044,7 @@ void CPlugin::WaitString_SeekRightWord()
 	}
 }
 
-int CPlugin::WaitString_GetCursorColumn()
+int CPlugin::WaitString_GetCursorColumn() const
 {
 	if (m_waitstring.bDisplayAsCode)
 	{
@@ -9051,7 +9062,7 @@ int CPlugin::WaitString_GetCursorColumn()
 	}
 }
 
-int	CPlugin::WaitString_GetLineLength()
+int	CPlugin::WaitString_GetLineLength() const
 {
 	int line_start = m_waitstring.nCursorPos - WaitString_GetCursorColumn();
 	int line_length = 0;
@@ -9282,7 +9293,7 @@ void CPlugin::SetCurrentPresetRating(float fNewRating)
 	//char szPresetFileWithPath[512] = {0};
 	//_snprintf(szPresetFileNoPath, ARRAYSIZE(szPresetFileNoPath), "%s.milk", m_pState->m_szDesc);
 	//_snprintf(szPresetFileWithPath, ARRAYSIZE(szPresetFileWithPath), "%s%s.milk", GetPresetDir(), m_pState->m_szDesc);
-	WritePrivateProfileFloatW(fNewRating, L"fRating", m_szCurrentPresetFile, L"preset00");
+	WritePrivateProfileFloatW(fNewRating, -1.0f, L"fRating", m_szCurrentPresetFile, L"preset00");
 
 	// update the copy of the preset in memory
 	m_pState->m_fRating = fNewRating;

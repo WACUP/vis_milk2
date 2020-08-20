@@ -242,7 +242,7 @@ public:
     IDirect3DPixelShader9*  ptr;
     LPD3DXCONSTANTTABLE     CT;
     CShaderParams           params;
-    PShaderInfo()  { ptr=NULL; CT=NULL; params.Clear(); }
+    PShaderInfo() : ptr(NULL), CT(NULL) {  params.Clear(); }
     ~PShaderInfo() { Clear(); }
     void Clear();
 };
@@ -296,7 +296,6 @@ public:
     //====[ 1. members added to create this specific example plugin: ]================================================
 
         /// CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
-        bool		m_bFirstRun;
         float		m_fBlendTimeAuto;		// blend time when preset auto-switches
         float		m_fBlendTimeUser;		// blend time when user loads a new preset
         float		m_fTimeBetweenPresets;		// <- this is in addition to m_fBlendTimeAuto
@@ -445,8 +444,8 @@ public:
         void		WaitString_Paste();
         void		WaitString_SeekLeftWord();
         void		WaitString_SeekRightWord();
-        int			WaitString_GetCursorColumn();
-        int			WaitString_GetLineLength();
+        int			WaitString_GetCursorColumn() const;
+        int			WaitString_GetLineLength() const;
         void		WaitString_SeekUpOneLine();
         void		WaitString_SeekDownOneLine();
 
@@ -459,7 +458,7 @@ public:
 								        //   Be careful - this can be -1 if the user changed dir. & a new preset hasn't been loaded yet.
         wchar_t		m_szCurrentPresetFile[512];	// w/o path.  this is always valid (unless no presets were found)
         PresetList  m_presets;
-	    void		UpdatePresetList(bool bBackground=false, bool bForce=false, bool bTryReselectCurrentPreset=true);
+        void		UpdatePresetList(bool bBackground=false, bool bForce=false, bool bTryReselectCurrentPreset=true) const;
         wchar_t     m_szUpdatePresetMask[MAX_PATH];
         bool        m_bPresetListReady;
 	    //void		UpdatePresetRatings();
@@ -602,9 +601,9 @@ public:
         void        DrawTooltip(wchar_t* str, int xR, int yB);
         void        RandomizeBlendPattern();
         void        GenPlasma(int x0, int x1, int y0, int y1, float dt);
-        void        LoadPerFrameEvallibVars(CState* pState);
-        void        LoadCustomWavePerFrameEvallibVars(CState* pState, int i);
-        void        LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int instance);
+        void        LoadPerFrameEvallibVars(CState* pState) const;
+        void        LoadCustomWavePerFrameEvallibVars(CState* pState, int i) const;
+        void        LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int instance) const;
     	//void		WriteRealtimeConfig();	// called on Finish()
 	    //void		dumpmsg(wchar_t *s);
 	    void		Randomize();
@@ -620,14 +619,14 @@ public:
 	    void		RenamePresetFile(wchar_t *szOldFile, wchar_t *szNewFile);
 	    void		SetCurrentPresetRating(float fNewRating);
 	    void		SeekToPreset(/*wchar_t cStartChar*/);
-	    bool		ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2);
+	    bool		ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2) const;
 	    int 		HandleRegularKey(WPARAM wParam);
 	    /*bool		OnResizeGraphicsWindow();
 	    bool		OnResizeTextWindow();*/
 	    //bool		InitFont();
 	    //void		ToggleControlWindow();	// for Desktop Mode only
 	    //void		DrawUI();
-	    void		ClearGraphicsWindow();	// for windowed mode only
+	    static void		ClearGraphicsWindow();	// for windowed mode only
         //bool    Update_Overlay();
 	    //void		UpdatePlaylist();
 	    void		LaunchCustomMessage(int nMsgNum);
@@ -639,7 +638,7 @@ public:
 	    void		DrawWave(float *fL, float *fR);
         void        DrawCustomWaves();
         void        DrawCustomShapes();
-	    void		DrawSprites();
+	    void		DrawSprites() const;
         void        ComputeGridAlphaValues();
         //void        WarpedBlit();
                      // note: 'bFlipAlpha' just flips the alpha blending in fixed-fn pipeline - not the values for culling tiles.
@@ -648,7 +647,7 @@ public:
 	    void		 ShowToUser_Shaders  (int nPass, bool bAlphaBlend, bool bFlipAlpha, bool bCullTiles, bool bFlipCulling);
 	    void		 ShowToUser_NoShaders();
         void        BlurPasses();
-        void        GetSafeBlurMinMax(CState* pState, float* blur_min, float* blur_max);
+        static void        GetSafeBlurMinMax(CState* pState, float* blur_min, float* blur_max);
 	    void		RunPerFrameEquations(int code);
 	    void		DrawUserSprites();
 	    void		MergeSortPresets(int left, int right);
@@ -658,12 +657,12 @@ public:
 	    bool		LaunchSprite(int nSpriteNum, int nSlot);
 	    void		KillSprite(int iSlot);
         void        DoCustomSoundAnalysis();
-        void        DrawMotionVectors();
+        void        DrawMotionVectors() const;
         
         bool        LoadShaders(PShaderSet* sh, CState* pState, bool bTick);
         void        UvToMathSpace(float u, float v, float* rad, float* ang);
         void        ApplyShaderParams(CShaderParams* p, LPD3DXCONSTANTTABLE pCT, CState* pState);
-        void        RestoreShaderParams();
+        void        RestoreShaderParams() const;
         bool        AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor);
         bool        AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor);
 

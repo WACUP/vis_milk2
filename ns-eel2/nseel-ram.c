@@ -149,7 +149,7 @@ EEL_F * NSEEL_CGEN_CALL  __NSEEL_RAMAlloc(EEL_F ***blocks, int w)
       	}
         if (!p) w=0;
       }
-    }	  
+    }
     if (is_locked) NSEEL_HOSTSTUB_LeaveMutex();
     return p + (w&(NSEEL_RAM_ITEMSPERBLOCK-1));
   }

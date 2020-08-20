@@ -32,6 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "resource.h"
 #include "utility.h"
 #include <strsafe.h>
+#include <loader/loader/utils.h>
 
 int g_nFontSize[] = { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28, 30, 32,
                       36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 88, 96, 104, 112, 120, 128 };
@@ -85,9 +86,9 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
 	HWND sizebox  = GetDlgItem( hwnd, ctrl2 );
     ShowWindow(fontbox, SW_NORMAL);
     ShowWindow(sizebox, SW_NORMAL);
-    ShowWindow(GetDlgItem(hwnd,bold_id), SW_NORMAL);
-    ShowWindow(GetDlgItem(hwnd,ital_id), SW_NORMAL);
-    ShowWindow(GetDlgItem(hwnd,aa_id), SW_NORMAL);
+	ShowControl(hwnd, bold_id, SW_NORMAL);
+	ShowControl(hwnd, ital_id, SW_NORMAL);
+	ShowControl(hwnd, aa_id, SW_NORMAL);
     if (namebox && szFontName && szFontName[0])
     {
         ShowWindow(namebox, SW_NORMAL);
@@ -189,9 +190,9 @@ BOOL CPluginShell::PluginShellFontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LP
 
             // Finally, if not all extra fonts are in use, shrink the window size, and
             // move up any controls that were at the bottom:
-            RECT r;
+            RECT r = {0};
             GetWindowRect(hwnd, &r);
-            int scoot_factor = 128*(MAX_EXTRA_FONTS-NUM_EXTRA_FONTS)/MAX_EXTRA_FONTS;
+            const int scoot_factor = 128*(MAX_EXTRA_FONTS-NUM_EXTRA_FONTS)/MAX_EXTRA_FONTS;
             if (scoot_factor>0)
             {
                 SetWindowPos(hwnd, NULL, 0, 0, r.right-r.left, r.bottom-r.top - scoot_factor, SWP_NOMOVE|SWP_NOZORDER);
@@ -247,10 +248,10 @@ BOOL CPluginShell::PluginShellFontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LP
 
 void EnableStuff(HWND hwnd, int bEnable)
 {
-    EnableWindow(GetDlgItem(hwnd, IDC_CB_BOX), bEnable);
-    EnableWindow(GetDlgItem(hwnd, IDC_CB_MANUAL_SCOOT), bEnable);
-    EnableWindow(GetDlgItem(hwnd, IDC_DM_ALPHA_FIX_CAPTION), bEnable);
-    EnableWindow(GetDlgItem(hwnd, IDC_DM_ALPHA_FIX), bEnable);
+	EnableControl(hwnd, IDC_CB_BOX, bEnable);
+	EnableControl(hwnd, IDC_CB_MANUAL_SCOOT, bEnable);
+	EnableControl(hwnd, IDC_DM_ALPHA_FIX_CAPTION, bEnable);
+	EnableControl(hwnd, IDC_DM_ALPHA_FIX, bEnable);
 }
 
 BOOL CALLBACK CPluginShell::DesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)

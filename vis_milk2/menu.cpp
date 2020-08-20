@@ -484,7 +484,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case VK_RIGHT:
 		case VK_SPACE:
 			if ((m_nCurSel < m_nChildMenus) && m_ppChildMenu)
-			{	
+			{
 				// go to sub-menu
 				g_plugin.m_pCurMenu = m_ppChildMenu[m_nCurSel];
 			}

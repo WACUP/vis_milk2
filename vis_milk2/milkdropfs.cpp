@@ -331,37 +331,37 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 	    {
 		    int mid = (lo+hi)/2;
 
-                // create new d3dx font at 'mid' size:
-                if (pCreateFontW(
-					    lpDevice, 
-						g_title_font_sizes[mid], 
-						0, 
-						m_supertext.bBold ? 900 : 400, 
-						1,                       
-						m_supertext.bItal, 
-						DEFAULT_CHARSET, 
-						OUT_DEFAULT_PRECIS, 
-						ANTIALIASED_QUALITY,//m_fontinfo[SONGTITLE_FONT].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY, 
-						DEFAULT_PITCH,
-						m_supertext.nFontFace, 
-						&d3dx_font
-				) == D3D_OK)
-                {
-                    if (lo == hi-1)
-                        break;      // DONE; but the 'lo'-size font is ready for use!
+            // create new d3dx font at 'mid' size:
+            if (pCreateFontW(
+					lpDevice,
+					g_title_font_sizes[mid],
+					0,
+					m_supertext.bBold ? 900 : 400,
+					1,
+					m_supertext.bItal,
+					DEFAULT_CHARSET,
+					OUT_DEFAULT_PRECIS,
+					ANTIALIASED_QUALITY,//m_fontinfo[SONGTITLE_FONT].bAntiAliased ? ANTIALIASED_QUALITY : DEFAULT_QUALITY,
+					DEFAULT_PITCH,
+					m_supertext.nFontFace,
+					&d3dx_font
+			) == D3D_OK)
+            {
+                if (lo == hi-1)
+                    break;      // DONE; but the 'lo'-size font is ready for use!
 
-                    // compute size of text if drawn w/font of THIS size:
-		            temp = rect;
-		            int h = d3dx_font->DrawTextW(NULL, szTextToDraw, -1, &temp, DT_SINGLELINE | DT_CALCRECT /*| DT_NOPREFIX*/, 0xFFFFFFFF);
+                // compute size of text if drawn w/font of THIS size:
+		        temp = rect;
+		        int h = d3dx_font->DrawTextW(NULL, szTextToDraw, -1, &temp, DT_SINGLELINE | DT_CALCRECT /*| DT_NOPREFIX*/, 0xFFFFFFFF);
 
-                    // adjust & prepare to reiterate:
-		            if (temp.right >= rect.right || h > rect.bottom-rect.top)
-			            hi = mid;
-		            else
-			            lo = mid;
+                // adjust & prepare to reiterate:
+		        if (temp.right >= rect.right || h > rect.bottom-rect.top)
+			        hi = mid;
+		        else
+			        lo = mid;
 
-                    SafeRelease(d3dx_font);
-                }
+                SafeRelease(d3dx_font);
+            }
 	    }
 
         if (d3dx_font)
@@ -393,10 +393,8 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
         int h = 0;
         int max_its = 6;
         int it = 0;
-        while (it < max_its)
+        while ((++it) < max_its)
         {
-            ++it;
-
             if (!str[0])
                 break;
 
@@ -420,7 +418,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
             int len = wcslen(str);
             float fPercentToKeep = 0.95f * m_nTitleTexSizeX / (float)(temp.right-temp.left);
             if (len > 8)
-                wcscpy( &str[ (int)(len*fPercentToKeep) ], L"...");            
+                wcscpy( &str[ (int)(len*fPercentToKeep) ], L"...");
             break;
         }
 
@@ -445,7 +443,7 @@ bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 	return ret;
 }
 
-void CPlugin::LoadPerFrameEvallibVars(CState* pState)
+void CPlugin::LoadPerFrameEvallibVars(CState* pState) const
 {
     // load the 'var_pf_*' variables in this CState object with the correct values.
     // for vars that affect pixel motion, that means evaluating them at time==-1,
@@ -1218,7 +1216,7 @@ void CPlugin::RenderFrame(int bRedraw)
     */
 }
 
-void CPlugin::DrawMotionVectors()
+void CPlugin::DrawMotionVectors() const
 {
 	// FLEXIBLE MOTION VECTOR FIELD
 	if ((float)*m_pState->var_pf_mv_a >= 0.001f)
@@ -1490,7 +1488,7 @@ void CPlugin::UpdateSongInfo()
 }
 */
 
-bool CPlugin::ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2)
+bool CPlugin::ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2) const
 {
 	//float fy = y/(float)nMotionVectorsY;
 	int   y0 = (int)(fy*m_nGridY);
@@ -2455,7 +2453,7 @@ void CPlugin::DrawCustomShapes()
 	lpDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 }
 
-void CPlugin::LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int instance)
+void CPlugin::LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int instance) const
 {
 	*pState->m_shape[i].var_pf_time		= (double)(GetTime() - m_fStartTime);
 	*pState->m_shape[i].var_pf_frame	= (double)GetFrame();
@@ -2497,7 +2495,7 @@ void CPlugin::LoadCustomShapePerFrameEvallibVars(CState* pState, int i, int inst
 	*pState->m_shape[i].var_pf_border_a = pState->m_shape[i].border_a;
 }
 
-void CPlugin::LoadCustomWavePerFrameEvallibVars(CState* pState, int i)
+void CPlugin::LoadCustomWavePerFrameEvallibVars(CState* pState, int i) const
 {
 	*pState->m_wave[i].var_pf_time		= (double)(GetTime() - m_fStartTime);
 	*pState->m_wave[i].var_pf_frame		= (double)GetFrame();
@@ -2602,8 +2600,7 @@ void CPlugin::DrawCustomWaves()
                 for (int vi=0; vi<NUM_T_VAR; vi++)
                     *pState->m_wave[i].var_pp_t[vi] = *pState->m_wave[i].var_pf_t[vi];
 
-                nSamples = (int)*pState->m_wave[i].var_pf_samples;
-                nSamples = min(512, nSamples);
+                nSamples = min(512, (int)*pState->m_wave[i].var_pf_samples);
 
                 if ((nSamples >= 2) || (pState->m_wave[i].bUseDots && nSamples >= 1))
                 {
@@ -3266,11 +3263,11 @@ void CPlugin::DrawWave(float *fL, float *fR)
 			v1[i].x = v1[i].x*(mix) + x*(mix2);
 			v1[i].y = v1[i].y*(mix) + y*(mix2);
 		}
-	}
+	/*}
 
 	// determine alpha
 	if (nVerts2 > 0)
-	{
+	{*/
 		alpha1 = alpha1*(mix) + alpha2*(1.0f-mix);
 	}
 
@@ -3352,7 +3349,7 @@ SKIP_DRAW_WAVE:
 	lpDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 }
 
-void CPlugin::DrawSprites()
+void CPlugin::DrawSprites() const
 {
     LPDIRECT3DDEVICE9 lpDevice = GetDevice();
     if (!lpDevice)
@@ -3846,7 +3843,7 @@ void CPlugin::UvToMathSpace(float u, float v, float* rad, float* ang)
         *ang += 6.2831853071796f;
 }
 
-void CPlugin::RestoreShaderParams()
+void CPlugin::RestoreShaderParams() const
 {
     LPDIRECT3DDEVICE9 lpDevice = GetDevice();
     for (int i=0; i<2; i++) 
@@ -3886,7 +3883,7 @@ void CPlugin::ApplyShaderParams(CShaderParams* p, LPD3DXCONSTANTTABLE pCT, CStat
         // also set up sampler stage, if anything is bound here...
         if (p->m_texcode[i]==TEX_VS || p->m_texture_bindings[i].texptr) 
         {
-            bool bAniso = false;  
+            const bool bAniso = false;  
             DWORD HQFilter = bAniso ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;     
             DWORD wrap   = p->m_texture_bindings[i].bWrap ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP;
             DWORD filter = p->m_texture_bindings[i].bBilinear ? HQFilter : D3DTEXF_POINT;
@@ -4364,9 +4361,9 @@ void CPlugin::ShowToUser_Shaders(int nPass, bool bAlphaBlend, bool bFlipAlpha, b
 		{ 1.0f, 1.0f, 1.0f },
 		{ 1.0f, 1.0f, 1.0f } };  // for each vertex, then each comp.
 
-	float fShaderAmount = 1;//since we don't know if shader uses it or not!  m_pState->m_fShader.eval(GetTime());
+	/*const float fShaderAmount = 1;//since we don't know if shader uses it or not!  m_pState->m_fShader.eval(GetTime());
 
-	if (fShaderAmount > 0.001f || m_pState->m_bBlending)
+	if (fShaderAmount > 0.001f || m_pState->m_bBlending)*/
 	{
         // pick 4 colors for the 4 corners
 		for (int i=0; i<4; i++)
@@ -4397,7 +4394,7 @@ void CPlugin::ShowToUser_Shaders(int nPass, bool bAlphaBlend, bool bFlipAlpha, b
                 float y = p->y*0.5f + 0.5f; 
 
                 float col[3] = { 1, 1, 1 };
-                if (fShaderAmount > 0.001f) 
+                //if (fShaderAmount > 0.001f) 
                 {
                     for (int c=0; c<3; c++) 
                         col[c] = shade[0][c]*(  x)*(  y) + 

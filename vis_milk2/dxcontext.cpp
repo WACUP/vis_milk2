@@ -409,16 +409,16 @@ void DXContext::WriteSafeWindowPos()
 	{
 		if (!m_current_mode.m_skin)
 		{
-		WritePrivateProfileIntW(64,     L"nMainWndTop",    m_szIniFile, L"settings");
-		WritePrivateProfileIntW(64,     L"nMainWndLeft",   m_szIniFile, L"settings");
-		WritePrivateProfileIntW(64+256, L"nMainWndRight",  m_szIniFile, L"settings");
-		WritePrivateProfileIntW(64+256, L"nMainWndBottom", m_szIniFile, L"settings");
+			WritePrivateProfileIntW(64, 0, L"nMainWndTop",    m_szIniFile, L"settings");
+			WritePrivateProfileIntW(64, 0, L"nMainWndLeft",   m_szIniFile, L"settings");
+			WritePrivateProfileIntW(64+256, 0, L"nMainWndRight",  m_szIniFile, L"settings");
+			WritePrivateProfileIntW(64+256, 0, L"nMainWndBottom", m_szIniFile, L"settings");
 		}
 
-		WritePrivateProfileIntW(64,     L"avs_wx",m_szIniFile,L"settings");
-		WritePrivateProfileIntW(64,     L"avs_wy",m_szIniFile,L"settings");
-		WritePrivateProfileIntW(256, L"avs_ww",m_szIniFile,L"settings");
-		WritePrivateProfileIntW(256, L"avs_wh",m_szIniFile,L"settings");
+		WritePrivateProfileIntW(64, 0, L"avs_wx",m_szIniFile,L"settings");
+		WritePrivateProfileIntW(64, 0, L"avs_wy",m_szIniFile,L"settings");
+		WritePrivateProfileIntW(256, 0, L"avs_ww",m_szIniFile,L"settings");
+		WritePrivateProfileIntW(256, 0, L"avs_wh",m_szIniFile,L"settings");
 	}
 }
 
@@ -639,16 +639,16 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		switch (m_current_mode.display_mode.Format)
 		{
-		case D3DFMT_R8G8B8  : m_bpp = 32; break;
-		case D3DFMT_A8R8G8B8: m_bpp = 32; break;
-		case D3DFMT_X8R8G8B8: m_bpp = 32; break;
-		case D3DFMT_R5G6B5  : m_bpp = 16; break;
-		case D3DFMT_X1R5G5B5: m_bpp = 16; break;
-		case D3DFMT_A1R5G5B5: m_bpp = 16; break;
-		case D3DFMT_A8R3G3B2: m_bpp = 16; break;
-		case D3DFMT_A4R4G4B4: m_bpp = 16; break;
-		case D3DFMT_X4R4G4B4: m_bpp = 16; break;
-		case D3DFMT_R3G3B2  : m_bpp =  8; break; // misleading?  implies a palette...
+			case D3DFMT_R8G8B8  : m_bpp = 32; break;
+			case D3DFMT_A8R8G8B8: m_bpp = 32; break;
+			case D3DFMT_X8R8G8B8: m_bpp = 32; break;
+			case D3DFMT_R5G6B5  : m_bpp = 16; break;
+			case D3DFMT_X1R5G5B5: m_bpp = 16; break;
+			case D3DFMT_A1R5G5B5: m_bpp = 16; break;
+			case D3DFMT_A8R3G3B2: m_bpp = 16; break;
+			case D3DFMT_A4R4G4B4: m_bpp = 16; break;
+			case D3DFMT_X4R4G4B4: m_bpp = 16; break;
+			case D3DFMT_R3G3B2  : m_bpp =  8; break; // misleading?  implies a palette...
 		}
 	}
 
@@ -678,28 +678,29 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		myWindowState.r.right  = myWindowState.r.left + GetPrivateProfileIntW(L"settings",L"avs_ww",size+24,m_szIniFile);
 		myWindowState.r.bottom = myWindowState.r.top  + GetPrivateProfileIntW(L"settings",L"avs_wh",size+40,m_szIniFile);
 
-		// only works on winamp 2.90+!
-		int success = 0;
-		/*if (GetWinampVersion(mod1.hwndParent) >= 0x2900)
-		{*/
-			SET_EMBED_GUID((&myWindowState), avs_guid);
-			myWindowState.flags |= EMBED_FLAGS_NOTRANSPARENCY | EMBED_FLAGS_NOWINDOWMENU;
-			HWND (*e)(embedWindowState *v);
-			*(void**)&e = (void *)SendMessage(mod1.hwndParent,WM_WA_IPC,(LPARAM)0,IPC_GET_EMBEDIF);
-			if (e)
+		SET_EMBED_GUID((&myWindowState), avs_guid);
+		myWindowState.flags = EMBED_FLAGS_NOTRANSPARENCY |
+							  EMBED_FLAGS_NOWINDOWMENU |
+							  EMBED_FLAGS_SCALEABLE_WND;
+		HWND(*e)(embedWindowState *v);
+		*(void**)&e = (void *)SendMessage(mod1.hwndParent, WM_WA_IPC, (LPARAM)0, IPC_GET_EMBEDIF);
+		if (e)
+		{
+			//m_current_mode.parent_window = (HWND)SendMessage(mod1.hwndParent, WM_WA_IPC, (LPARAM)(&myWindowState), IPC_GET_EMBEDIF);
+			m_current_mode.parent_window = e(&myWindowState);
+			if (IsWindow(m_current_mode.parent_window))
 			{
-				myWindowState.flags |= EMBED_FLAGS_SCALEABLE_WND;
-				m_current_mode.parent_window = e(&myWindowState);
-				if (IsWindow(m_current_mode.parent_window))
-				{
-					SetWindowTextW(m_current_mode.parent_window, m_szWindowCaption);
-					success = 1;
-				}
+				SetWindowTextW(m_current_mode.parent_window, m_szWindowCaption);
 			}
-		//}
-
-		if (!success)
+			else
+			{
+				m_current_mode.m_skin = 0;
+			}
+		}
+		else
+		{
 			m_current_mode.m_skin = 0;
+		}
 	}
 
 	// remember the client rect that was originally desired...
@@ -714,10 +715,10 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 	}
 	else
 	{
-	windowed_mode_desired_client_rect.top    = GetPrivateProfileIntW(L"settings",L"nMainWndTop",-1,m_szIniFile);
-	windowed_mode_desired_client_rect.left   = GetPrivateProfileIntW(L"settings",L"nMainWndLeft",-1,m_szIniFile);
-	windowed_mode_desired_client_rect.right  = GetPrivateProfileIntW(L"settings",L"nMainWndRight",-1,m_szIniFile);
-	windowed_mode_desired_client_rect.bottom = GetPrivateProfileIntW(L"settings",L"nMainWndBottom",-1,m_szIniFile);
+		windowed_mode_desired_client_rect.top    = GetPrivateProfileIntW(L"settings",L"nMainWndTop",-1,m_szIniFile);
+		windowed_mode_desired_client_rect.left   = GetPrivateProfileIntW(L"settings",L"nMainWndLeft",-1,m_szIniFile);
+		windowed_mode_desired_client_rect.right  = GetPrivateProfileIntW(L"settings",L"nMainWndRight",-1,m_szIniFile);
+		windowed_mode_desired_client_rect.bottom = GetPrivateProfileIntW(L"settings",L"nMainWndBottom",-1,m_szIniFile);
 	}
 
 	// ...and in case windowed mode init fails severely,
@@ -725,7 +726,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 	//WriteSafeWindowPos();
 
 	// 7. create the window, if not already created
-	if (!m_hwnd)
+	if (!IsWindow(m_hwnd))
 	{
 		m_hwnd = CreateWindowExW(
 		           MY_EXT_WINDOW_STYLE, // extended style
@@ -742,7 +743,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		           (LPVOID)m_uWindowLong
 		         ); // parms
 
-		if (!m_hwnd)
+		if (!IsWindow(m_hwnd))
 		{
 			wchar_t title[64] = {0};
 			m_lastErr = DXC_ERR_CREATEWIN;
@@ -1252,8 +1253,22 @@ BOOL DXContext::OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect)
 
 	m_window_width  = new_window_rect->right  - new_window_rect->left;
 	m_window_height = new_window_rect->bottom - new_window_rect->top;
+
+	// these are clamped to a minimum size as there's some modern skins
+	// which can cause a zero width / height but by the plug-in failing
+	// it's not then possible to resize the window to then see it again
 	m_REAL_client_width  = new_client_rect->right  - new_client_rect->left;
+	if (m_REAL_client_width <= 0)
+	{
+		m_REAL_client_width = 1;
+	}
+
 	m_REAL_client_height = new_client_rect->bottom - new_client_rect->top;
+	if (m_REAL_client_height <= 0)
+	{
+		m_REAL_client_height = 1;
+	}
+
 	GetSnappedClientSize();  //sets m_client_width/height, but with snapping, if in windowed mode.
 
 	m_d3dpp.BackBufferWidth  = m_client_width;
@@ -1278,9 +1293,7 @@ BOOL DXContext::OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect)
 
 void DXContext::SetViewport()
 {
-	D3DVIEWPORT9 v;
-	v.X = 0;
-	v.Y = 0;
+	D3DVIEWPORT9 v = { 0 };
 	v.Width = m_client_width;
 	v.Height = m_client_height;
 	v.MinZ = 0.0f;
@@ -1395,45 +1408,45 @@ void DXContext::SaveWindow()
 	{
 		if (!m_current_mode.m_skin)
 		{
-		RECT c;
-		GetClientRect(m_hwnd, &c);
+			RECT c;
+			GetClientRect(m_hwnd, &c);
 
-		// convert client rect from client coords to screen coords:
-		// (window rect is already in screen coords...)
-		POINT p;
-		p.x = c.left;
-		p.y = c.top;
-		if (ClientToScreen(m_hwnd, &p))
-		{
-			c.left += p.x;
-			c.right += p.x;
-			c.top += p.y;
-			c.bottom += p.y;
-		}
+			// convert client rect from client coords to screen coords:
+			// (window rect is already in screen coords...)
+			POINT p;
+			p.x = c.left;
+			p.y = c.top;
+			if (ClientToScreen(m_hwnd, &p))
+			{
+				c.left += p.x;
+				c.right += p.x;
+				c.top += p.y;
+				c.bottom += p.y;
+			}
 
-		// save bounds for window CLIENT area, but in screen coords
-		WritePrivateProfileIntW(c.top,   L"nMainWndTop",    m_szIniFile, L"settings");
-		WritePrivateProfileIntW(c.left,  L"nMainWndLeft",   m_szIniFile, L"settings");
-		WritePrivateProfileIntW(c.right, L"nMainWndRight",  m_szIniFile, L"settings");
-		WritePrivateProfileIntW(c.bottom,L"nMainWndBottom", m_szIniFile, L"settings");
+			// save bounds for window CLIENT area, but in screen coords
+			WritePrivateProfileIntW(c.top, 0, L"nMainWndTop",    m_szIniFile, L"settings");
+			WritePrivateProfileIntW(c.left, 0, L"nMainWndLeft",   m_szIniFile, L"settings");
+			WritePrivateProfileIntW(c.right, 0, L"nMainWndRight",  m_szIniFile, L"settings");
+			WritePrivateProfileIntW(c.bottom, 0, L"nMainWndBottom", m_szIniFile, L"settings");
 		}
 
 		// also save bounds for embedwnd
 		if (m_current_mode.m_skin && myWindowState.me)
 		{
-			WritePrivateProfileIntW(myWindowState.r.left,L"avs_wx",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.top ,L"avs_wy",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.right-myWindowState.r.left,L"avs_ww",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.bottom-myWindowState.r.top,L"avs_wh",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(myWindowState.r.left, 0, L"avs_wx",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(myWindowState.r.top, 0, L"avs_wy",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(myWindowState.r.right-myWindowState.r.left, 0, L"avs_ww",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(myWindowState.r.bottom-myWindowState.r.top, 0, L"avs_wh",m_szIniFile,L"settings");
 		}
 		else if (!m_current_mode.m_skin && m_hwnd)
 		{
 			RECT r;
 			GetWindowRect(m_hwnd, &r);
-			WritePrivateProfileIntW(r.left,L"avs_wx",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(r.top ,L"avs_wy",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(r.right-r.left,L"avs_ww",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(r.bottom-r.top,L"avs_wh",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(r.left, 0, L"avs_wx",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(r.top, 0, L"avs_wy",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(r.right-r.left, 0, L"avs_ww",m_szIniFile,L"settings");
+			WritePrivateProfileIntW(r.bottom-r.top, 0, L"avs_wh",m_szIniFile,L"settings");
 		}
 	}
 }

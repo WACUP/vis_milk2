@@ -47,9 +47,12 @@ float   AdjustRateToFPS(float per_frame_decay_rate_at_fps1, float fps1, float ac
 //int   GetPrivateProfileInt - part of Win32 API
 #define GetPrivateProfileBoolW(w,x,y,z) ((bool)(GetPrivateProfileIntW(w,x,y,z) != 0))
 #define GetPrivateProfileBOOLW(w,x,y,z) ((BOOL)(GetPrivateProfileIntW(w,x,y,z) != 0))
-float   GetPrivateProfileFloatW(wchar_t *szSectionName, wchar_t *szKeyName, float fDefault, wchar_t *szIniFile);
-bool    WritePrivateProfileIntW(int d, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName);
-bool    WritePrivateProfileFloatW(float f, wchar_t *szKeyName, wchar_t *szIniFile, wchar_t *szSectionName);
+float   GetPrivateProfileFloatW(const wchar_t *szSectionName, const wchar_t *szKeyName,
+								const float fDefault, const wchar_t *szIniFile);
+void    WritePrivateProfileIntW(const int d, const int dDefault, const wchar_t *szKeyName,
+								const wchar_t *szIniFile, const wchar_t *szSectionName);
+void    WritePrivateProfileFloatW(const float f, const float fDefault, const wchar_t *szKeyName,
+								  const wchar_t *szIniFile, const wchar_t *szSectionName);
 
 extern	char keyMappings[8];
 

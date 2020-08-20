@@ -69,6 +69,7 @@ CTextManager::CTextManager() : m_lpDevice(NULL), m_lpTextSurface(NULL), m_blit_a
 {
 	m_nMsg[0] = 0;
 	m_nMsg[1] = 0;
+	memset(&m_msg, 0, sizeof(m_msg));
 }
 
 CTextManager::~CTextManager()

@@ -69,10 +69,10 @@ class DXContext
         BOOL StartOrRestartDevice(DXCONTEXT_PARAMS *pParams); // also serves as Init() function
         BOOL OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect);
         inline HWND GetHwnd() { return m_hwnd; };
-        inline int  TempIgnoreDestroyMessages() { return m_ignore_wm_destroy; };
+        inline int  TempIgnoreDestroyMessages() const { return m_ignore_wm_destroy; };
         void OnTrulyExiting() { m_truly_exiting = 1; }
         void UpdateMonitorWorkRect();
-        int  GetBitDepth() { return m_bpp;     };
+        int  GetBitDepth() const { return m_bpp; };
         inline D3DFORMAT GetZFormat() { return m_zFormat; };
         char* GetDriver() { return m_szDriver; };
         char* GetDesc()   { return m_szDesc; };

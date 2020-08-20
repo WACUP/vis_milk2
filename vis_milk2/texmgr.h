@@ -102,19 +102,19 @@ public:
 
 	// data
 	td_tex          m_tex[NUM_TEX];
-	
+
 protected:
 	// members
 	//bool TryCreateDDrawSurface(int iSlot, int w, int h);
-	void FreeVars(int iSlot);
+	static void FreeVars(int iSlot);
 	void FreeCode(int iSlot);
 	void RegisterBuiltInVariables(int iSlot);
 	bool RunInitCode(int iSlot, char *szInitCode);
 	bool RecompileExpressions(int iSlot);
-	void StripLinefeedCharsAndComments(char *src, char *dest);
+	static void StripLinefeedCharsAndComments(char *src, char *dest);
 
 	// data
-	LPDIRECT3DDEVICE9 m_lpDD;					
+	LPDIRECT3DDEVICE9 m_lpDD;
 };
 
 #endif

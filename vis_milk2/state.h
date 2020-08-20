@@ -377,7 +377,7 @@ public:
     char            m_szCompShadersText[MAX_BIGSTRING_LEN]; // pixel shader code
 	void			FreeVarsAndCode(bool bFree = true);
 	void			RegisterBuiltInVariables(int flags);
-	void			StripLinefeedCharsAndComments(char *src, char *dest);
+	static void		StripLinefeedCharsAndComments(char *src, char *dest);
 
 	bool  m_bBlending;
 	float m_fBlendStartTime;
@@ -440,7 +440,7 @@ public:
 	double q_values_after_init_code[NUM_Q_VAR];  
     double monitor_after_init_code;
 
-    float GetPresetStartTime() { return m_fPresetStartTime; }
+    float GetPresetStartTime() const { return m_fPresetStartTime; }
     float m_fPresetStartTime;
 };
 

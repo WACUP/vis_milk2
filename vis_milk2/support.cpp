@@ -253,7 +253,7 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
 
 void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, const int nSize)
 {
-    szSongTitle[0] = 0;
+	szSongTitle[0] = 0;
 
 	// this has been changed to use SendMessageTimeout instead of the
 	// simpler SendMessage as crash reports indicated there were cases
@@ -281,30 +281,30 @@ void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, const int nSong
 						   SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret))
 	{
 		const int nSongPosMS = ret;
-    if (nSongPosMS > 0)
-    {
+		if (nSongPosMS > 0)
+		{
 			wchar_t tmp[16] = { L"00" };
-		float time_s = nSongPosMS*0.001f;
-		int minutes = (int)(time_s/60);
-		time_s -= minutes*60;
-		int seconds = (int)time_s;
-		time_s -= seconds;
+			float time_s = nSongPosMS * 0.001f;
+			int minutes = (int)(time_s / 60);
+			time_s -= minutes * 60;
+			int seconds = (int)time_s;
+			time_s -= seconds;
 			if (time_s)
 			{
 				_snwprintf(tmp, ARRAYSIZE(tmp), L"%.02f", time_s / 1.0f);
-}
+			}
 
 			// this converts to seconds which FormatTimeString
 			// needs otherwise it'll show it's playing days :)
 			FormatTimeString(szSongPos, nSongPos, (ret / 1000));
 
 			if (szSongPos[0] && tmp[0])
-		{
+			{
 				// move it on by one to avoid the zero
 				wcsncat(szSongPos, (tmp + 1), nSongPos);
+			}
 		}
-		}
-    }    
+	}
 }
 
 void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSongLen)
@@ -316,7 +316,7 @@ void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSong
 	DWORD_PTR ret = 0;
 	if (SendMessageTimeout(hWndWinamp, WM_WA_IPC, 1, IPC_GETOUTPUTTIME,
 		SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret))
-{
+	{
 		const int nSongLenMS = ret;
 		FormatTimeString(szSongLen, nSongLen, nSongLenMS);
 	}

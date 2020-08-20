@@ -61,7 +61,7 @@ public:
 
     // note: if you can't create lpTextSurface full-size, don't create it at all!
     void Init(LPDIRECT3DDEVICE9 lpDevice, IDirect3DTexture9* lpTextSurface, int bAdditive); // note: ok if lpTextSurface==NULL; in that case, text will be drawn directly to screen (but not til end anyway).
-    void Finish();
+    static void Finish();
 
     // note: pFont must persist until DrawNow() is called!
     int  DrawText(LPD3DXFONT pFont, char* szText, RECT* pRect, DWORD flags, DWORD color, bool bBox, DWORD boxColor=0xFF000000); // actually queues the text!

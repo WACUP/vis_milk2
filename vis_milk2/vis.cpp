@@ -99,11 +99,13 @@ winampVisModule *getModule(int which)
 winampVisHeader hdr = { VIS_HDRVER, DLLDESC, getModule };
 
 // use this to get our own HINSTANCE since overriding DllMain(..) causes instant crashes (should see why)
-static HINSTANCE GetMyInstance()
+static HINSTANCE GetMyInstance(void)
 {
-	MEMORY_BASIC_INFORMATION mbi = {0};
-	if(VirtualQuery(GetMyInstance, &mbi, sizeof(mbi)))
+	MEMORY_BASIC_INFORMATION mbi = { 0 };
+	if (VirtualQuery(GetMyInstance, &mbi, sizeof(mbi)))
+	{
 		return (HINSTANCE)mbi.AllocationBase;
+	}
 	return NULL;
 }
 
@@ -193,9 +195,11 @@ void config(struct winampVisModule *this_mod)
 
 int (*warand)(void) = 0;
 
+#if 0
 int fallback_rand_fn(void) {
-  return rand();
+	return rand();
 }
+#endif
 
 // initialization. Registers our window class, creates our window, etc. Again, this one works for
 // both modules, but you could make init1() and init2()...
@@ -204,11 +208,15 @@ int init(struct winampVisModule *this_mod)
 {
 	if (!warand)
     {
+#if 0
 		warand = (int (*)(void))SendMessage(this_mod->hwndParent, WM_WA_IPC, 0, IPC_GET_RANDFUNC);
         if ((size_t)warand <= 1)
         {
             warand = fallback_rand_fn;
         }
+#else
+		warand = RandIPCMethod;
+#endif
     }
     
     if (!WaitUntilPluginFinished(this_mod->hwndParent))

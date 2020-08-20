@@ -54,11 +54,11 @@ typedef struct
 
 typedef struct
 {
-    float   imm[2][3];                // bass, mids, treble, no damping, for each channel (long-term average is 1)
-    float    avg[2][3];               // bass, mids, treble, some damping, for each channel (long-term average is 1)
-    float     med_avg[2][3];          // bass, mids, treble, more damping, for each channel (long-term average is 1)
-    float      long_avg[2][3];        // bass, mids, treble, heavy damping, for each channel (long-term average is 1)
-    float       infinite_avg[2][3];   // bass, mids, treble: winamp's average output levels. (1)
+    float   imm[2][3];             // bass, mids, treble, no damping, for each channel (long-term average is 1)
+    float   avg[2][3];             // bass, mids, treble, some damping, for each channel (long-term average is 1)
+    float   med_avg[2][3];         // bass, mids, treble, more damping, for each channel (long-term average is 1)
+    float   long_avg[2][3];        // bass, mids, treble, heavy damping, for each channel (long-term average is 1)
+    float   infinite_avg[2][3];    // bass, mids, treble: winamp's average output levels. (1)
     float   fWaveform[2][576];             // Not all 576 are valid! - only NUM_WAVEFORM_SAMPLES samples are valid for each channel (note: NUM_WAVEFORM_SAMPLES is declared in shell_defines.h)
     float   fSpectrum[2][NUM_FREQUENCIES]; // NUM_FREQUENCIES samples for each channel (note: NUM_FREQUENCIES is declared in shell_defines.h)
 } td_soundinfo;                    // ...range is 0 Hz to 22050 Hz, evenly spaced.
@@ -68,10 +68,10 @@ class CPluginShell
 public:    
     // GET METHODS
     // ------------------------------------------------------------
-    int       GetFrame();          // returns current frame # (starts at zero)
-    float     GetTime();           // returns current animation time (in seconds) (starts at zero) (updated once per frame)
-    float     GetFps();            // returns current estimate of framerate (frames per second)
-    eScrMode  GetScreenMode();     // returns WINDOWED, FULLSCREEN, FAKE_FULLSCREEN, DESKTOP, or NOT_YET_KNOWN (if called before or during OverrideDefaults()).
+    int       GetFrame() const;    // returns current frame # (starts at zero)
+    float     GetTime() const;     // returns current animation time (in seconds) (starts at zero) (updated once per frame)
+    float     GetFps() const;      // returns current estimate of framerate (frames per second)
+    eScrMode  GetScreenMode() const;     // returns WINDOWED, FULLSCREEN, FAKE_FULLSCREEN, DESKTOP, or NOT_YET_KNOWN (if called before or during OverrideDefaults()).
     HWND      GetWinampWindow();   // returns handle to Winamp main window
     HINSTANCE GetInstance();       // returns handle to the plugin DLL module; used for things like loading resources (dialogs, bitmaps, icons...) that are built into the plugin.
     //const wchar_t*  GetPluginsDirPath(); // usually returns 'c:\\program files\\winamp\\plugins\\'
@@ -85,22 +85,22 @@ protected:
     //  If you call these from OverrideDefaults, MyPreInitialize, or MyReadConfig, 
     //    they will return NULL (zero).
     // ------------------------------------------------------------
-    HWND         GetPluginWindow();      // returns handle to the plugin window.  NOT persistent; can change!  
-    int          GetWidth();             // returns width of plugin window interior, in pixels.  Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
-    int          GetHeight();            // returns height of plugin window interior, in pixels. Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
-    int          GetBitDepth();          // returns 8, 16, 24 (rare), or 32
-    LPDIRECT3DDEVICE9  GetDevice();      // returns a pointer to the DirectX 8 Device.  NOT persistent; can change!
-    D3DCAPS9*    GetCaps();              // returns a pointer to the D3DCAPS9 structer for the device.  NOT persistent; can change.
-    D3DFORMAT    GetBackBufFormat();     // returns the pixelformat of the back buffer (probably D3DFMT_R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, D3DFMT_A4R4G4B4, D3DFMT_R3G3B2, D3DFMT_A8R3G3B2, D3DFMT_X4R4G4B4, or D3DFMT_UNKNOWN)
-    D3DFORMAT    GetBackBufZFormat();    // returns the pixelformat of the back buffer's Z buffer (probably D3DFMT_D16_LOCKABLE, D3DFMT_D32, D3DFMT_D15S1, D3DFMT_D24S8, D3DFMT_D16, D3DFMT_D24X8, D3DFMT_D24X4S4, or D3DFMT_UNKNOWN)
-    char*        GetDriverFilename();    // returns a text string with the filename of the current display adapter driver, such as "nv4_disp.dll"
-    char*        GetDriverDescription(); // returns a text string describing the current display adapter, such as "NVIDIA GeForce4 Ti 4200"
+    HWND         GetPluginWindow() const;      // returns handle to the plugin window.  NOT persistent; can change!  
+    int          GetWidth() const;       // returns width of plugin window interior, in pixels.  Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
+    int          GetHeight() const;      // returns height of plugin window interior, in pixels. Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
+    int          GetBitDepth() const;    // returns 8, 16, 24 (rare), or 32
+    LPDIRECT3DDEVICE9  GetDevice() const;      // returns a pointer to the DirectX 8 Device.  NOT persistent; can change!
+    D3DCAPS9*    GetCaps() const;              // returns a pointer to the D3DCAPS9 structer for the device.  NOT persistent; can change.
+    D3DFORMAT    GetBackBufFormat() const;     // returns the pixelformat of the back buffer (probably D3DFMT_R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, D3DFMT_A4R4G4B4, D3DFMT_R3G3B2, D3DFMT_A8R3G3B2, D3DFMT_X4R4G4B4, or D3DFMT_UNKNOWN)
+    D3DFORMAT    GetBackBufZFormat() const;    // returns the pixelformat of the back buffer's Z buffer (probably D3DFMT_D16_LOCKABLE, D3DFMT_D32, D3DFMT_D15S1, D3DFMT_D24S8, D3DFMT_D16, D3DFMT_D24X8, D3DFMT_D24X4S4, or D3DFMT_UNKNOWN)
+    char*        GetDriverFilename() const;    // returns a text string with the filename of the current display adapter driver, such as "nv4_disp.dll"
+    char*        GetDriverDescription() const; // returns a text string describing the current display adapter, such as "NVIDIA GeForce4 Ti 4200"
 
     // FONTS & TEXT
     // ------------------------------------------------------------
 public:
-    LPD3DXFONT   GetFont(eFontIndex idx);       // returns a D3DX font handle for drawing text; see shell_defines.h for the definition of the 'eFontIndex' enum.
-    int          GetFontHeight(eFontIndex idx); // returns the height of the font, in pixels; see shell_defines.h for the definition of the 'eFontIndex' enum.
+    LPD3DXFONT   GetFont(eFontIndex idx) const;       // returns a D3DX font handle for drawing text; see shell_defines.h for the definition of the 'eFontIndex' enum.
+    int          GetFontHeight(eFontIndex idx) const; // returns the height of the font, in pixels; see shell_defines.h for the definition of the 'eFontIndex' enum.
     CTextManager m_text;
 protected:
 
@@ -265,8 +265,9 @@ public:
     void ToggleHelp();
     void TogglePlaylist();
 
-	void READ_FONT(int n);
-	void WRITE_FONT(int n);
+	void READ_FONT(const int n);
+	void WRITE_FONT(const int n, const wchar_t *szFace, const int bBold,
+					const int bItalic, const int bAntiAliased);
     
     // config panel / windows messaging processes:
     static LRESULT CALLBACK WindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
@@ -302,10 +303,10 @@ private:
     void ToggleDesktop();
     void OnUserResizeWindow();
     void OnUserResizeTextWindow();
-    void PrepareFor2DDrawing_B(IDirect3DDevice9 *pDevice, int w, int h);
+    static void PrepareFor2DDrawing_B(IDirect3DDevice9 *pDevice, int w, int h);
     void RenderBuiltInTextMsgs();
-    int  GetCanvasMarginX();     // returns the # of pixels that exist on the canvas, on each side, that the user will never see.  Mainly here for windowed mode, where sometimes, up to 15 pixels get cropped at edges of the screen.
-    int  GetCanvasMarginY();     // returns the # of pixels that exist on the canvas, on each side, that the user will never see.  Mainly here for windowed mode, where sometimes, up to 15 pixels get cropped at edges of the screen.
+    int  GetCanvasMarginX() const;     // returns the # of pixels that exist on the canvas, on each side, that the user will never see.  Mainly here for windowed mode, where sometimes, up to 15 pixels get cropped at edges of the screen.
+    int  GetCanvasMarginY() const;     // returns the # of pixels that exist on the canvas, on each side, that the user will never see.  Mainly here for windowed mode, where sometimes, up to 15 pixels get cropped at edges of the screen.
 public:
     void ToggleFullScreen();
     void DrawDarkTranslucentBox(RECT* pr);
@@ -324,20 +325,20 @@ protected:
     void RenderDesktop();
 
     // SEPARATE TEXT WINDOW (FOR VJ MODE)
-	  int 		m_vj_mode;
-      int       m_hidden_textwnd;
-      int       m_resizing_textwnd;
-      protected:
-	   HWND		m_hTextWnd;
-      private:
-	  int		m_nTextWndWidth;
-	  int		m_nTextWndHeight;
-	  bool		m_bTextWindowClassRegistered;
-      LPDIRECT3D9 m_vjd3d9;
-      LPDIRECT3DDEVICE9 m_vjd3d9_device;
-	  //HDC		m_memDC;		// memory device context
-	  //HBITMAP m_memBM, m_oldBM;
-	  //HBRUSH  m_hBlackBrush;
+	int 	m_vj_mode;
+    int     m_hidden_textwnd;
+    int     m_resizing_textwnd;
+protected:
+	HWND	m_hTextWnd;
+private:
+	int		m_nTextWndWidth;
+	int		m_nTextWndHeight;
+	bool	m_bTextWindowClassRegistered;
+    LPDIRECT3D9 m_vjd3d9;
+    LPDIRECT3DDEVICE9 m_vjd3d9_device;
+	//HDC		m_memDC;		// memory device context
+	//HBITMAP m_memBM, m_oldBM;
+	//HBRUSH  m_hBlackBrush;
 
     // WINDOWPROC FUNCTIONS
     LRESULT PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);   // in windowproc.cpp
@@ -350,18 +351,19 @@ protected:
     BOOL    PluginShellFontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     BOOL    PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     BOOL    PluginShellDualheadDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
-    bool    InitConfig(HWND hDialogWnd);
-    void    EndConfig();
-    void    UpdateAdapters(int screenmode);
-    void    UpdateFSAdapterDispModes();   // (fullscreen only)
-    void    UpdateDispModeMultiSampling(int screenmode);
-    void    UpdateMaxFps(int screenmode);
-    int     GetCurrentlySelectedAdapter(int screenmode);
+    static bool    InitConfig(HWND hDialogWnd);
+    static void    EndConfig();
+	GUID    FindAdapter(const char *deviceName);
+    void    UpdateAdapters(const int screenmode);
+    void    UpdateFSAdapterDispModes() const;   // (fullscreen only)
+    void    UpdateDispModeMultiSampling(const int screenmode) const;
+    void    UpdateMaxFps(const int screenmode) const;
+    static int     GetCurrentlySelectedAdapter(const int screenmode);
     void    SaveDisplayMode();
-    void    SaveMultiSamp(int screenmode);
-    void    SaveAdapter(int screenmode);
-    void    SaveMaxFps(int screenmode);
-    void    OnTabChanged(int nNewTab);
+    void    SaveMultiSamp(const int screenmode);
+    void    SaveAdapter(const int screenmode);
+    void    SaveMaxFps(const int screenmode);
+    void    OnTabChanged(const int nNewTab);
 	LPDIRECT3DDEVICE9 GetTextDevice() { return (m_vjd3d9_device) ? m_vjd3d9_device : m_lpDX->m_lpDevice; }
 
     // CHANGES:

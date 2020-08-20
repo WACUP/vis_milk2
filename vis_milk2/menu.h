@@ -104,9 +104,9 @@ public:
 			pItem = pItem->m_pNext;
         return pItem;
     }
-    const wchar_t* GetName() { return m_szMenuName; }
+    const wchar_t* GetName() const { return m_szMenuName; }
     void Enable(bool bEnabled) { m_bEnabled = bEnabled; }
-    bool IsEnabled() { return m_bEnabled; }
+    bool IsEnabled() const { return m_bEnabled; }
     bool ItemIsEnabled(int j);
 
 protected:
@@ -117,7 +117,7 @@ protected:
 	wchar_t			m_szMenuName[64];
 	int				m_nChildMenus;
 	int				m_nChildItems;
-	int				m_nCurSel;    
+	int				m_nCurSel;
 	bool			m_bEditingCurSel;
     bool            m_bEnabled;
 };

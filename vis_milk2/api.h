@@ -1,5 +1,5 @@
-#ifndef NULLSOFT_APIH
-#define NULLSOFT_APIH
+#ifndef NULLSOFT_API_H
+#define NULLSOFT_API_H
 
 #include <api/service/api_service.h>
 #include <Agave/Language/api_language.h>

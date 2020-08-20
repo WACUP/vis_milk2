@@ -619,6 +619,9 @@
 #define IDS_ERROR_PARSING_X_X_SHADER    585
 #define IDS_UNABLE_TO_RESOLVE_TEXSIZE_FOR_A_TEXTURE_NOT_IN_USE 586
 #define IDS_KEY_MAPPINGS                587
+#define IDS_DIRECTX_INSTALL_ISSUE       588
+#define IDS_DIRECTX_INSTALL_FAILED      589
+#define IDS_DIRECTX_INSTALL_SUCCEEDED   590
 #define IDC_CB_FOG                      1000
 #define IDC_CB_SUPERTEX                 1001
 #define IDC_CB_HELP_MSG                 1001
