@@ -1434,14 +1434,21 @@ void DXContext::SaveWindow()
 		// also save bounds for embedwnd
 		if (m_current_mode.m_skin && myWindowState.me)
 		{
-			WritePrivateProfileIntW(myWindowState.r.left, 0, L"avs_wx",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.top, 0, L"avs_wy",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.right-myWindowState.r.left, 0, L"avs_ww",m_szIniFile,L"settings");
-			WritePrivateProfileIntW(myWindowState.r.bottom-myWindowState.r.top, 0, L"avs_wh",m_szIniFile,L"settings");
+			// unless we're closing as a classic skin then we'll
+			// skip saving the current window position otherwise
+			// we have the issue with windows being in the wrong
+			// places after modern -> exit -> modern -> classic
+			if (!myWindowState.wasabi_window)
+			{
+				WritePrivateProfileIntW(myWindowState.r.left, 0, L"avs_wx", m_szIniFile, L"settings");
+				WritePrivateProfileIntW(myWindowState.r.top, 0, L"avs_wy", m_szIniFile, L"settings");
+				WritePrivateProfileIntW(myWindowState.r.right - myWindowState.r.left, 0, L"avs_ww", m_szIniFile, L"settings");
+				WritePrivateProfileIntW(myWindowState.r.bottom - myWindowState.r.top, 0, L"avs_wh", m_szIniFile, L"settings");
+			}
 		}
 		else if (!m_current_mode.m_skin && m_hwnd)
 		{
-			RECT r;
+			RECT r = { 0 };
 			GetWindowRect(m_hwnd, &r);
 			WritePrivateProfileIntW(r.left, 0, L"avs_wx",m_szIniFile,L"settings");
 			WritePrivateProfileIntW(r.top, 0, L"avs_wy",m_szIniFile,L"settings");
