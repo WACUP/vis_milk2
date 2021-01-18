@@ -86,7 +86,7 @@ CMilkMenu::~CMilkMenu()
 
 bool CMilkMenu::ItemIsEnabled(int j)
 {
-    if ((j < m_nChildMenus) && m_ppChildMenu)
+    if (j < m_nChildMenus)
         return m_ppChildMenu[j]->IsEnabled();
     
     int i = m_nChildMenus;
@@ -483,7 +483,7 @@ LRESULT CMilkMenu::HandleKeydown(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case VK_RETURN:
 		case VK_RIGHT:
 		case VK_SPACE:
-			if ((m_nCurSel < m_nChildMenus) && m_ppChildMenu)
+			if (m_nCurSel < m_nChildMenus)
 			{
 				// go to sub-menu
 				g_plugin.m_pCurMenu = m_ppChildMenu[m_nCurSel];

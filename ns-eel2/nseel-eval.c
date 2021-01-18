@@ -164,7 +164,7 @@ INT_PTR nseel_setVar(compileContext *ctx, INT_PTR varNum)
   {
     int wb,ti;
     char *nameptr;
-    if (varNum < 0 || varNum >= ctx->varTable_numBlocks*NSEEL_VARS_PER_BLOCK) return -1;
+    if (/*varNum < 0 ||*/ varNum >= ctx->varTable_numBlocks*NSEEL_VARS_PER_BLOCK) return -1;
 
     wb=varNum/NSEEL_VARS_PER_BLOCK;
     ti=(varNum%NSEEL_VARS_PER_BLOCK);

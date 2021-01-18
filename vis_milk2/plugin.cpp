@@ -950,14 +950,6 @@ void CPlugin::MyPreInitialize()
     // seed the system's random number generator w/the current system time:
     //srand((unsigned)time(NULL));  -don't - let winamp do it
 
-	DWORD data_size = 0;
-	unsigned char *data = (unsigned char *)WASABI_API_LOADRESFROMFILEW(L"GZ", MAKEINTRESOURCEW(IDR_TEXT_GZ), &data_size),
-				  *output = NULL;
-
-	DecompressResource(data, data_size, &output, 0);
-	g_szHelp = AutoWideDup((LPCSTR)output, CP_UTF8);
-	DecompressResourceFree(output);
-
     // CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
     m_bInitialPresetSelected    = false;
 	m_fBlendTimeUser			= 1.7f;
@@ -1098,7 +1090,9 @@ void CPlugin::MyPreInitialize()
 	m_bShowFPS			= false;
 	m_bShowRating		= false;
 	m_bShowPresetInfo	= false;
+#ifdef _DEBUG
 	m_bShowDebugInfo	= false;
+#endif
 	m_bShowSongTitle	= false;
 	m_bShowSongTime		= false;
 	m_bShowSongLen		= false;
@@ -1193,7 +1187,9 @@ void CPlugin::MyReadConfig()
 	m_bShowFPS			= GetPrivateProfileBoolW(L"settings",L"bShowFPS",       m_bShowFPS			,pIni);
 	m_bShowRating		= GetPrivateProfileBoolW(L"settings",L"bShowRating",    m_bShowRating		,pIni);
 	m_bShowPresetInfo	= GetPrivateProfileBoolW(L"settings",L"bShowPresetInfo",m_bShowPresetInfo	,pIni);
+#ifdef _DEBUG
 	//m_bShowDebugInfo	= GetPrivateProfileBool("settings","bShowDebugInfo", m_bShowDebugInfo	,pIni);
+#endif
 	m_bShowSongTitle	= GetPrivateProfileBoolW(L"settings",L"bShowSongTitle", m_bShowSongTitle	,pIni);
 	m_bShowSongTime		= GetPrivateProfileBoolW(L"settings",L"bShowSongTime",  m_bShowSongTime	,pIni);
 	m_bShowSongLen		= GetPrivateProfileBoolW(L"settings",L"bShowSongLen",   m_bShowSongLen		,pIni);
@@ -1306,8 +1302,8 @@ void CPlugin::MyWriteConfig()
 	//WritePrivateProfileIntW(m_bWarningsDisabled,	    "bWarningsDisabled",	pIni, "settings");
 	WritePrivateProfileIntW(m_bWarningsDisabled2, 0, L"bWarningsDisabled2",	pIni, L"settings");
 	//WritePrivateProfileIntW(m_bAnisotropicFiltering,	"bAnisotropicFiltering",pIni, "settings");
-    WritePrivateProfileIntW(m_bPresetLockOnAtStartup, 0, L"bPresetLockOnAtStartup",pIni,L"settings");
-	WritePrivateProfileIntW(m_bPreventScollLockHandling, 0, L"m_bPreventScollLockHandling",pIni,L"settings");
+    //WritePrivateProfileIntW(m_bPresetLockOnAtStartup, 0, L"bPresetLockOnAtStartup",pIni,L"settings");
+	//WritePrivateProfileIntW(m_bPreventScollLockHandling, 0, L"m_bPreventScollLockHandling",pIni,L"settings");
     // note: this is also written @ exit of the visualizer
     
     WritePrivateProfileIntW(m_nCanvasStretch, 0,       L"nCanvasStretch",   	pIni, L"settings");
@@ -1461,8 +1457,8 @@ void CancelThread(int max_wait_time_ms)
     int waited = 0;
     while (g_bThreadAlive && waited < max_wait_time_ms)
     {
-        Sleep(30);
-        waited += 30;
+        Sleep(10);
+        waited += 10;
     }
     
     if (g_bThreadAlive)
@@ -1715,11 +1711,11 @@ int CPlugin::AllocateMyDX9Stuff()
             strstr(szGPU, "Radeon 7"     ) ||    // from Valve
             strstr(szGPU, "Radeon 8"     ) ||    
             strstr(szGPU, "SiS 661FX_760_741") ||    // from Valve
-                //FOR NOW, FOR THESE, ASSUME INTEL EITHER DOESN'T DO PS_2_0, 
-                //OR DRIVERS SUCK AND IT WOULDN'T WORK ANYWAY!
-                (strstr(szGPU,"Intel") && strstr(szGPU,"945G")) ||
-                (strstr(szGPU,"Intel") && strstr(szGPU,"915G")) ||  // ben allison's laptop - snow, freezing when you try ps_2_0
-                (strstr(szGPU,"Intel") && strstr(szGPU,"910G")) ||
+            //FOR NOW, FOR THESE, ASSUME INTEL EITHER DOESN'T DO PS_2_0, 
+            //OR DRIVERS SUCK AND IT WOULDN'T WORK ANYWAY!
+            (strstr(szGPU,"Intel") && strstr(szGPU,"945G")) ||
+            (strstr(szGPU,"Intel") && strstr(szGPU,"915G")) ||  // ben allison's laptop - snow, freezing when you try ps_2_0
+            (strstr(szGPU,"Intel") && strstr(szGPU,"910G")) ||
             (strstr(szGPU,"Intel") && strstr(szGPU,"8291")) ||     // gonna guess that this supports ps_2_0 but is SLOW
             (strstr(szGPU,"Intel") && strstr(szGPU,"8281")) ||     // definitely DOESN'T support pixel shaders
             (strstr(szGPU,"Intel") && strstr(szGPU,"8283")) ||     // definitely DOESN'T support pixel shaders
@@ -1780,16 +1776,22 @@ int CPlugin::AllocateMyDX9Stuff()
 		if (!RecompilePShader(m_szDefaultWarpPShaderText, &m_fallbackShaders_ps.warp, SHADER_WARP, true, 2))
 		{
 			wchar_t szSM[64] = {0};
-			switch(m_nMaxPSVersion_DX9)
+			switch (m_nMaxPSVersion_DX9)
 			{
-			case MD2_PS_2_0:
-			case MD2_PS_2_X:
-				WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_2,szSM,64); break;
-			case MD2_PS_3_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_3,szSM,64); break;
-			//case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
-			default:
-				_snwprintf(szSM, ARRAYSIZE(szSM), WASABI_API_LNGSTRINGW(IDS_UKNOWN_CASE_X), m_nMaxPSVersion_DX9);
-				break;
+				case MD2_PS_2_0:
+				case MD2_PS_2_X:
+				case MD2_PS_3_0:
+				{
+					_snwprintf(szSM, ARRAYSIZE(szSM), WASABI_API_LNGSTRINGW(IDS_SHADER_MODEL_X),
+							   (m_nMaxPSVersion_DX9 != MD2_PS_3_0 ? L"2.0" : L"3.0"));
+					break;
+				}
+				//case MD2_PS_4_0: WASABI_API_LNGSTRINGW_BUF(IDS_SHADER_MODEL_4,szSM,64); break;
+				default:
+				{
+					_snwprintf(szSM, ARRAYSIZE(szSM), WASABI_API_LNGSTRINGW(IDS_UKNOWN_CASE_X), m_nMaxPSVersion_DX9);
+					break;
+				}
 			}
 			if (m_nMaxPSVersion_ConfigPanel >= MD2_PS_NONE && m_nMaxPSVersion_DX9 < m_nMaxPSVersion_ConfigPanel) 
 				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_USING_X),szSM,PSVersion);
@@ -1967,13 +1969,20 @@ int CPlugin::AllocateMyDX9Stuff()
 	    if (!bSuccess)
 	    {
             wchar_t buffer[2048] = {0};
-			UINT err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM;
+			UINT err_id = 0;
+			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM, buffer, ARRAYSIZE(buffer));
+
 		    if (GetScreenMode() == FULLSCREEN)
 				err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_SMALLER_DISPLAY;
 		    else if (!(m_bTexSizeWasAutoExact || m_bTexSizeWasAutoPow2))
 				err_id = IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM_RECOMMENDATION;
 
-			WASABI_API_LNGSTRINGW_BUF(err_id,buffer,ARRAYSIZE(buffer));
+			if (err_id)
+			{
+				wchar_t buffer2[1024] = { 0 };
+				WASABI_API_LNGSTRINGW_BUF(err_id, buffer2, ARRAYSIZE(buffer2));
+				wcsncat(buffer, buffer2, ARRAYSIZE(buffer));
+			}
 		    //dumpmsg(buffer); 
 		    MessageBoxW(GetPluginWindow(), buffer, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
 		    return false;
@@ -2200,7 +2209,8 @@ int CPlugin::AllocateMyDX9Stuff()
 
 		do
 		{
-			hr = pCreateTexture(GetDevice(), m_nTitleTexSizeX, m_nTitleTexSizeY, 1, D3DUSAGE_RENDERTARGET, GetBackBufFormat(), D3DPOOL_DEFAULT, &m_lpDDSTitle);
+			hr = pCreateTexture(GetDevice(), m_nTitleTexSizeX, m_nTitleTexSizeY, 1, D3DUSAGE_RENDERTARGET,
+								GetBackBufFormat(), D3DPOOL_DEFAULT, &m_lpDDSTitle);
 			if (hr != D3D_OK)
 			{
 				if (m_nTitleTexSizeY < m_nTitleTexSizeX)
@@ -3785,7 +3795,7 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 
 //----------------------------------------------------------------------
 
-void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
+void CPlugin::CleanUpMyDX9Stuff(const int final_cleanup)
 {
     // Clean up all your DX9 and D3DX textures, fonts, buffers, etc. here.
     // EVERYTHING CREATED IN ALLOCATEMYDX9STUFF() SHOULD BE CLEANED UP HERE.
@@ -3929,19 +3939,13 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
 	}
 
     ClearErrors();
-
-    // This setting is closely tied to the modern skin "random" button.
-    // The "random" state should be preserved from session to session.
-    // It's pretty safe to do, because the Scroll Lock key is hard to
-    //   accidentally click... :)
-    WritePrivateProfileIntW(m_bPresetLockedByUser,0,L"bPresetLockOnAtStartup", GetConfigIniFile(),L"settings");
 }
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
-void CPlugin::MyRenderFn(int redraw)
+void CPlugin::MyRenderFn(const int redraw)
 {
 	EnterCriticalSection(&g_cs);
 
@@ -4015,7 +4019,7 @@ void CPlugin::MyRenderFn(int redraw)
                 break;
             cur = GetParent(cur);
         }
-        while (cur != NULL && cur != winamp);
+        while (IsWindow(cur) && (cur != winamp));
 
         if (m_hTextWnd && focus==m_hTextWnd)
             m_bHasFocus = 1;
@@ -4041,12 +4045,22 @@ void CPlugin::MyRenderFn(int redraw)
 
     if (!redraw)
     {
-		GetWinampSongTitle(GetWinampWindow(), m_szSongTitle, ARRAYSIZE(m_szSongTitle)-1);
+		/*GetWinampSongTitle(GetWinampWindow(), m_szSongTitle,
+						   ARRAYSIZE(m_szSongTitle) - 1);*/
+		// this is a WACUP specific change so instead of
+		// using the sendmessage api it'll get the title
+		// directly from the core so there is no locking
+		// whilst trying to get the information which is
+		// better for initial loading & some better fps.
+		GetSongTitle(m_szSongTitle, ARRAYSIZE(m_szSongTitle));
         if (wcscmp(m_szSongTitle, m_szSongTitlePrev))
         {
-            wcsncpy(m_szSongTitlePrev, m_szSongTitle, 512);
-            if (m_bSongTitleAnims)
-                LaunchSongTitleAnim();
+            wcsncpy(m_szSongTitlePrev, m_szSongTitle,
+					ARRAYSIZE(m_szSongTitlePrev) - 1);
+			if (m_bSongTitleAnims)
+			{
+				LaunchSongTitleAnim();
+			}
         }
     }
 
@@ -4252,13 +4266,10 @@ void CPlugin::MyRenderUI(
 
     RECT r = {0};
     LPD3DXFONT pFont = GetFont(DECORATIVE_FONT);
+	if (!pFont)
+		return;
+
     int h = GetFontHeight(DECORATIVE_FONT);
-
-    if (!pFont)
-        return;
-
-    if (!GetFont(DECORATIVE_FONT))
-        return;
 
     // 1. render text in upper-right corner - EXCEPT USER MESSAGE - it goes last b/c it draws a box under itself
     //                                        and it should be visible over everything else (usually an error msg)
@@ -4267,10 +4278,10 @@ void CPlugin::MyRenderUI(
 		if (m_bShowPresetInfo)
 		{
 			wchar_t buf[512] = {0};
-            _snwprintf(buf, ARRAYSIZE(buf), L"%s ", (m_nLoadingPreset != 0) ? m_pNewState->m_szDesc : m_pState->m_szDesc);
+            _snwprintf(buf, ARRAYSIZE(buf), L"%s ", (m_nLoadingPreset != 0) ?
+					   m_pNewState->m_szDesc : m_pState->m_szDesc);
 			if (buf[0])
 			{
-				SelectFont(DECORATIVE_FONT);
 				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 			}
 		}
@@ -4278,13 +4289,23 @@ void CPlugin::MyRenderUI(
         // b) preset rating
 		if (m_bShowRating || GetTime() < m_fShowRatingUntilThisTime)
 		{
+			static wchar_t rating_str[16] = { 0 },
+						   disabled_str[32] = { 0 };
+			if (!rating_str[0])
+			{
+				WASABI_API_LNGSTRINGW_BUF(IDS_RATING, rating_str, ARRAYSIZE(rating_str));
+			}
+			if (!disabled_str[0])
+			{
+				WASABI_API_LNGSTRINGW_BUF(IDS_DISABLED, disabled_str, ARRAYSIZE(disabled_str));
+			}
+
 			// see also: SetCurrentPresetRating() in milkdrop.cpp
 			wchar_t buf[512] = {0};
-			_snwprintf(buf, ARRAYSIZE(buf), L" %s: %d ", WASABI_API_LNGSTRINGW(IDS_RATING), (int)m_pState->m_fRating);	
-			if (!m_bEnableRating) wcsncat(buf, WASABI_API_LNGSTRINGW(IDS_DISABLED), ARRAYSIZE(buf));
+			_snwprintf(buf, ARRAYSIZE(buf), L" %s: %d ", rating_str, (int)m_pState->m_fRating);
+			if (!m_bEnableRating) wcsncat(buf, disabled_str, ARRAYSIZE(buf));
 			if (buf[0])
 			{
-				SelectFont(DECORATIVE_FONT);
 				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 			}
 		}
@@ -4292,15 +4313,22 @@ void CPlugin::MyRenderUI(
         // c) fps display
         if (m_bShowFPS)
         {
+			static wchar_t fps_str[16] = { 0 };
+			if (!fps_str[0])
+			{
+				WASABI_API_LNGSTRINGW_BUF(IDS_FPS, fps_str, ARRAYSIZE(fps_str));
+			}
+
 			wchar_t buf[512] = {0};
-            _snwprintf(buf, ARRAYSIZE(buf), L"%s: %4.2f ", WASABI_API_LNGSTRINGW(IDS_FPS), GetFps()); // leave extra space @ end, so italicized fonts don't get clipped
+			// leave extra space @ end, so italicized fonts don't get clipped
+            _snwprintf(buf, ARRAYSIZE(buf), (m_save_cpu ? L"%s: %2.f " : L"%s: %4.2f "), fps_str, GetFps());
 			if (buf[0])
 			{
-				SelectFont(DECORATIVE_FONT);
 				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 			}
         }
 
+#ifdef _DEBUG
         // d) debug information
 		if (m_bShowDebugInfo)
 		{
@@ -4312,6 +4340,7 @@ void CPlugin::MyRenderUI(
 				MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 			}
 		}
+#endif
 
         // NOTE: custom timed msg comes at the end!!
     }
@@ -4328,21 +4357,27 @@ void CPlugin::MyRenderUI(
     // 3. render text in lower-left corner
     {
         // render song title in lower-left corner:
+		// this was changed to use the cached value
+		// instead of re-querying which can affect
+		// the overall rendering performance seen
         if (m_bShowSongTitle)
         {
-			wchar_t buf4[512] = {0};
+			/*wchar_t buf4[512] = {0};
             GetWinampSongTitle(GetWinampWindow(), buf4, ARRAYSIZE(buf4)); // defined in utility.h/cpp
-			if (buf4[0])
+			if (buf4[0])*/
+			// this is a WACUP change since there's no
+			// point in re-querying the information as
+			// it's already being cached for us, nice!
+			if (m_szSongTitle[0])
 			{
-				SelectFont(DECORATIVE_FONT);
-				MyTextOut_Shadow(buf4, MTO_LOWER_LEFT);
+				MyTextOut_Shadow(m_szSongTitle/*/buf4/**/, MTO_LOWER_LEFT);
 			}
         }
 
         // render song time & len above that:
         if (m_bShowSongTime || m_bShowSongLen)
         {
-			wchar_t buf[512] = {0};
+			/*wchar_t buf[512] = {0};
 			wchar_t buf2[512] = {0};
 			wchar_t buf3[512+1] = {0}; // add two extra spaces to end, so italicized fonts don't get clipped
             GetWinampSongPosAsText(GetWinampWindow(), buf, ARRAYSIZE(buf)); // defined in utility.h/cpp
@@ -4358,11 +4393,18 @@ void CPlugin::MyRenderUI(
             else if (m_bShowSongTime)
                 wcsncpy(buf3, buf, 512);
             else
-                wcsncpy(buf3, buf2, 512);
+                wcsncpy(buf3, buf2, 512);*/
+
+			// this is a WACUP specific change so instead of
+			// using the sendmessage api it'll get the times
+			// directly from the core so there is no locking
+			// whilst trying to get the information which is
+			// better for initial loading & some better fps.
+			wchar_t buf3[512 + 1] = { 0 }; // add two extra spaces to end, so italicized fonts don't get clipped
+			GetSongDuration(m_bShowSongTime, m_bShowSongLen, buf3, ARRAYSIZE(buf3));
 
 			if (buf3[0])
 			{
-				SelectFont(DECORATIVE_FONT);
 				MyTextOut_Shadow(buf3, MTO_LOWER_LEFT);
 			}
         }
@@ -4390,19 +4432,16 @@ void CPlugin::MyRenderUI(
 								 !wcscmp(m_menuPreset.GetCurItem()->m_szName, L"[ edit composite shader ]");
             if (bIsWarp || bIsComp)
             {
-                if (m_bShowShaderHelp) {
-                    MyTextOut(WASABI_API_LNGSTRINGW(IDS_PRESS_F9_TO_HIDE_SHADER_QREF), MTO_UPPER_LEFT, true);
-                }
-                else {
-                    MyTextOut(WASABI_API_LNGSTRINGW(IDS_PRESS_F9_TO_SHOW_SHADER_QREF), MTO_UPPER_LEFT, true);
-                }
+                MyTextOut(WASABI_API_LNGSTRINGW((m_bShowShaderHelp ? IDS_PRESS_F9_TO_HIDE_SHADER_QREF :
+						  IDS_PRESS_F9_TO_SHOW_SHADER_QREF)), MTO_UPPER_LEFT, true);
                 *upper_left_corner_y  += h*2/3;
 
                 if (m_bShowShaderHelp)
                 {
                     // draw dark box - based on longest line & # lines...
                     SetRect(&r, 0, 0, 2048, 2048);
-                    m_text.DrawTextW(pFont, WASABI_API_LNGSTRINGW(IDS_STRING615), -1, &r, DT_NOPREFIX | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_CALCRECT, 0xFFFFFFFF, false, 0xFF000000);
+                    m_text.DrawTextW(pFont, WASABI_API_LNGSTRINGW(IDS_STRING615), -1, &r, DT_NOPREFIX | DT_SINGLELINE |
+									 DT_WORD_ELLIPSIS | DT_CALCRECT, 0xFFFFFFFF, false, 0xFF000000);
                     RECT darkbox;
                     SetRect(&darkbox, xL, *upper_left_corner_y-2, xL+r.right-r.left, *upper_left_corner_y + (r.bottom-r.top)*13 + 2);
                     DrawDarkTranslucentBox(&darkbox);
@@ -4754,55 +4793,95 @@ void CPlugin::MyRenderUI(
                 if (m_pState->m_nMinPSVersion != m_pState->m_nMaxPSVersion)
                 {
                     switch(m_pState->m_nMinPSVersion)
-										{
-										case MD2_PS_NONE: 
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS2), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_2_0:
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS2X), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_2_X:
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS3), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_3_0:
-											assert(false);
-											break;
-										default:
-											assert(0);
-											break;
-										}
+					{
+						case MD2_PS_NONE:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS_X), L"2.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_2_0:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS_X), L"2.X");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_2_X:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_SHADERS_TO_USE_PS_X), L"3.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_3_0:
+						{
+							assert(false);
+							break;
+						}
+						default:
+						{
+							assert(0);
+							break;
+						}
+					}
                 }
                 else
                 {
                     switch(m_pState->m_nMinPSVersion)
-										{
-										case MD2_PS_NONE: 
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_DOES_NOT_USE_PIXEL_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS2), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_2_0:
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS2), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS2X), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_2_X:
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS2X), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS3), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										case MD2_PS_3_0:
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS3), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS4), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
-											break;
-										default:
-											assert(0);
-											break;
-										}
+					{
+						case MD2_PS_NONE:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS_X), L"2.X");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_PRESET_DOES_NOT_USE_PIXEL_SHADERS), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_2_0:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS_X), L"2.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS_X), L"2.X");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_2_X:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS_X), L"2.X");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS_X), L"3.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						case MD2_PS_3_0:
+						{
+							wchar_t buffer[256] = { 0 };
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PRESET_CURRENTLY_USES_PS_X), L"3.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+
+							_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_UPGRADE_TO_USE_PS_X), L"4.0");
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), WASABI_API_LNGSTRINGW(IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET), -1, &rect, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX, MENU_COLOR, true);
+							break;
+						}
+						default:
+						{
+							assert(0);
+							break;
+						}
+					}
                 }
             }
             *upper_left_corner_y = rect.top;
@@ -6533,12 +6612,12 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 'I':	m_pState->m_fZoom -= 0.01f;		return 0; // we processed (or absorbed) the key
 	case 'i':	m_pState->m_fZoom += 0.01f;		return 0; // we processed (or absorbed) the key
-
+#ifdef _DEBUG
 	case 'n':
 	case 'N':
 		m_bShowDebugInfo = !m_bShowDebugInfo;
 		return 0; // we processed (or absorbed) the key
-
+#endif
 	case 'r':
 		m_bSequentialPresetOrder = !m_bSequentialPresetOrder;
         {
@@ -6559,10 +6638,8 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 'u':
 	case 'U':
-		if (SendMessage(GetWinampWindow(),WM_USER,0,250))
-            AddError(WASABI_API_LNGSTRINGW(IDS_SHUFFLE_IS_NOW_OFF), 3.0f, ERR_NOTIFY, false);
-		else
-            AddError(WASABI_API_LNGSTRINGW(IDS_SHUFFLE_IS_NOW_ON), 3.0f, ERR_NOTIFY, false);
+        AddError(WASABI_API_LNGSTRINGW((GetShuffle() ? IDS_SHUFFLE_IS_NOW_OFF :
+				 IDS_SHUFFLE_IS_NOW_ON)), 3.0f, ERR_NOTIFY, false);
 
 		//m_fShowUserMessageUntilThisTime = GetTime() + 4.0f;
 
@@ -7088,9 +7165,30 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				//m_bWarningsDisabled = DlgItemIsChecked(hwnd, IDC_CB_NOWARN);
 				m_bWarningsDisabled2 = DlgItemIsChecked(hwnd, IDC_CB_NOWARN2);
                 //m_bAnisotropicFiltering = DlgItemIsChecked(hwnd, IDC_CB_ANISO);
-                m_bPresetLockOnAtStartup = DlgItemIsChecked(hwnd, IDC_CB_SCROLLON);
+
+				const bool bPresetLockOnAtStartup = m_bPresetLockOnAtStartup;
+				m_bPresetLockOnAtStartup = DlgItemIsChecked(hwnd, IDC_CB_SCROLLON);
+
+				// This setting is closely tied to the modern skin "random" button.
+				// The "random" state should be preserved from session to session.
+				// It's pretty safe to do, because the Scroll Lock key is hard to
+				//   accidentally click... :)
+				if (m_bPresetLockOnAtStartup != bPresetLockOnAtStartup)
+				{
+					WritePrivateProfileIntW(m_bPresetLockedByUser, 0,
+											L"bPresetLockOnAtStartup",
+											GetConfigIniFile(), L"settings");
+				}
+
+				const bool bPreventScollLockHandling = m_bPreventScollLockHandling;
 				m_bPreventScollLockHandling = DlgItemIsChecked(hwnd, IDC_CB_SCROLLON2);
-				
+				if (m_bPreventScollLockHandling != bPreventScollLockHandling)
+				{
+					WritePrivateProfileIntW(m_bPreventScollLockHandling, 0,
+											L"m_bPreventScollLockHandling",
+											GetConfigIniFile(), L"settings");
+				}
+
 				//m_bFixPinkBug = DlgItemIsChecked(hwnd, IDC_CB_PINKFIX);
 				m_bEnableRating = !DlgItemIsChecked(hwnd, IDC_CB_NORATING);
 				m_bAutoGamma = DlgItemIsChecked(hwnd, IDC_CB_AUTOGAMMA);
@@ -7338,19 +7436,19 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				wchar_t buf[2048] = {0};
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fSongTitleAnimDuration = val;
 				}
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_RAND_TITLE ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fTimeBetweenRandomSongTitles = val;
 				}
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_RAND_MSG ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fTimeBetweenRandomCustomMsgs = val;
 				}
@@ -7453,32 +7551,32 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 
 				// soft cuts
 				GetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fTimeBetweenPresets = val;
 				}
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_BETWEEN_TIME_RANDOM ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fTimeBetweenPresetsRand = val;
 				}
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_AUTO ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fBlendTimeAuto = val;
 				}
 
 				GetWindowTextW( GetDlgItem( hwnd, IDC_BLEND_USER ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fBlendTimeUser = val;
 				}
 
 				// hard cuts
 				GetWindowTextW( GetDlgItem( hwnd, IDC_HARDCUT_BETWEEN_TIME ), buf, ARRAYSIZE(buf));
-				if (SafeWtoF(buf, &val))
+				if (WASABI_API_LNG->SafeWtoF(buf, &val))
 				{
 					m_fHardCutHalflife = val;
 				}
@@ -7744,12 +7842,12 @@ void CPlugin::BuildMenus()
 	m_menuPost.AddItem(MEN_T(IDS_MENU_FILTER_DARKEN),			&m_pState->m_bDarken,			MENUITEMTYPE_BOOL, MEN_TT(IDS_MENU_FILTER_DARKEN_TT));
 	m_menuPost.AddItem(MEN_T(IDS_MENU_FILTER_SOLARIZE),			&m_pState->m_bSolarize,			MENUITEMTYPE_BOOL, MEN_TT(IDS_MENU_FILTER_SOLARIZE_TT));
 	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR1_EDGE_DARKEN_AMOUNT),&m_pState->m_fBlur1EdgeDarken,	MENUITEMTYPE_FLOAT,	MEN_TT(IDS_MENU_BLUR1_EDGE_DARKEN_AMOUNT_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR1_MIN_COLOR_VALUE),	&m_pState->m_fBlur1Min,			MENUITEMTYPE_FLOAT,	MEN_TT(IDS_MENU_BLUR1_MIN_COLOR_VALUE_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR1_MAX_COLOR_VALUE),	&m_pState->m_fBlur1Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR1_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR2_MIN_COLOR_VALUE),	&m_pState->m_fBlur2Min,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR2_MIN_COLOR_VALUE_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR2_MAX_COLOR_VALUE),	&m_pState->m_fBlur2Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR2_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MIN_COLOR_VALUE),	&m_pState->m_fBlur3Min,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MIN_COLOR_VALUE_TT), 0.0f, 1.0f);
-	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MAX_COLOR_VALUE),	&m_pState->m_fBlur3Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR1_MIN_COLOR_VALUE),	&m_pState->m_fBlur1Min,			MENUITEMTYPE_FLOAT,	MEN_TT(IDS_MENU_BLUR1_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR1_MAX_COLOR_VALUE),	&m_pState->m_fBlur1Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR1_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR2_MIN_COLOR_VALUE),	&m_pState->m_fBlur2Min,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR2_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR2_MAX_COLOR_VALUE),	&m_pState->m_fBlur2Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR2_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MIN_COLOR_VALUE),	&m_pState->m_fBlur3Min,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
+	m_menuPost.AddItem(MEN_T(IDS_MENU_BLUR3_MAX_COLOR_VALUE),	&m_pState->m_fBlur3Max,			MENUITEMTYPE_FLOAT, MEN_TT(IDS_MENU_BLUR3_MIN_MAX_COLOR_VALUE_TT), 0.0f, 1.0f);
 
     for (int i=0; i<MAX_CUSTOM_WAVES; i++)
     {
@@ -8426,7 +8524,8 @@ retry:
             goto retry;
         }
 
-        g_plugin.AddError(WASABI_API_LNGSTRINGW(IDS_SCANNING_PRESETS), 8.0f, ERR_SCANNING_PRESETS, false);
+		static wchar_t *scanning = WASABI_API_LNGSTRINGW_DUP(IDS_SCANNING_PRESETS);
+        g_plugin.AddError(scanning, 8.0f, ERR_SCANNING_PRESETS, false);
     }
 
     if (g_plugin.m_bPresetListReady)
@@ -8555,7 +8654,7 @@ retry:
 								p = NextLine(p);
 								if (p && !strncmp(p, "fRating=", 8)) 
 								{
-									SafeAtoF(&p[8], &fRating);
+									WASABI_API_LNG->SafeAtoF(&p[8], &fRating);
 									bRatingKnown = true;
 									break;
 								}
@@ -8724,16 +8823,27 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
     DWORD flags = (bForce ? 1 : 0) | (bTryReselectCurrentPreset ? 2 : 0);
     g_bThreadShouldQuit = false;
     g_bThreadAlive = true;
-    g_hThread = (HANDLE)_beginthreadex(NULL,0,__UpdatePresetList,(void*)flags,0,0);
+    g_hThread = (HANDLE)_beginthreadex(NULL,0,__UpdatePresetList,(void*)flags,CREATE_SUSPENDED,0);
+	if (g_hThread)
+	{
+		SetThreadPriority(g_hThread, THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+		ResumeThread(g_hThread);
+	}
+	else
+	{
+		g_bThreadAlive = false;
+		return;
+	}
 
     if (!bBackground) 
     {
         // crank up priority, wait for it to finish, and then return
-	    SetThreadPriority(g_hThread,THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+	    //SetThreadPriority(g_hThread,THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+		//ResumeThread(g_hThread);
 
         // wait for it to finish
         while (g_bThreadAlive)
-            Sleep(30);
+            SleepEx(10, TRUE);
     
         assert(g_hThread != INVALID_HANDLE_VALUE);
         CloseHandle(g_hThread);
@@ -8745,17 +8855,18 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
         // however, we want to wait until at least ~32 presets are found (or failure) before returning,
         // so we know we have *something* in the preset list to start with.
 
-	    SetThreadPriority(g_hThread,THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+	    //SetThreadPriority(g_hThread,THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+		//ResumeThread(g_hThread);
 
         // wait until either the thread exits, or # of presets is >32, before returning.
         // also make sure you enter the CS whenever you check on it!
         // (thread will update preset list every so often, with the newest presets scanned in...)
         while (g_bThreadAlive)
         {
-            Sleep(30);
+			SleepEx(10, TRUE);
 
 	        EnterCriticalSection(&g_cs);
-            int nPresets = g_plugin.m_nPresets;
+            const int nPresets = g_plugin.m_nPresets;
 	        LeaveCriticalSection(&g_cs);
 
             if (nPresets >= 30)
@@ -8770,8 +8881,6 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
         	SetThreadPriority(g_hThread,THREAD_PRIORITY_ABOVE_NORMAL); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
         }
     }
-
-    return;
 }
 
 void CPlugin::MergeSortPresets(int left, int right)
@@ -9367,63 +9476,77 @@ void CPlugin::ReadCustomMessages()
 		m_CustomMessage[n].nRandB = 0;
 	}
 
-	// Then read in the new file
-	for (n=0; n<MAX_CUSTOM_MESSAGE_FONTS; n++)
+	// because ini reading can be slow & it's unlikely that there
+	// will be all the font & message sections present, this gets
+	// the ini section names & then we can just process as needed
+	// for what is actually present within the milk2_msg.ini file
+	wchar_t *buffer = (wchar_t *)calloc(32767, sizeof(wchar_t)), *szSectionName = buffer;
+	if (GetPrivateProfileSectionNamesW(buffer, 32767, m_szMsgIniFile))
 	{
-		wchar_t szSectionName[32] = {0};
-		_snwprintf(szSectionName, ARRAYSIZE(szSectionName), L"font%02d", n);
+		while (szSectionName && *szSectionName)
+		{
+			if (!wcsncmp(szSectionName, L"font", 4))
+			{
+				n = _wtoi(szSectionName + 4);
+				if (n >= 0 && n < MAX_CUSTOM_MESSAGE_FONTS)
+				{
+					// get face, bold, italic, x, y for this custom message FONT
+					GetPrivateProfileStringW(szSectionName, L"face", L"arial", m_CustomMessageFont[n].szFace, ARRAYSIZE(m_CustomMessageFont[n].szFace), m_szMsgIniFile);
+					m_CustomMessageFont[n].bBold = GetPrivateProfileBoolW(szSectionName, L"bold", m_CustomMessageFont[n].bBold, m_szMsgIniFile);
+					m_CustomMessageFont[n].bItal = GetPrivateProfileBoolW(szSectionName, L"ital", m_CustomMessageFont[n].bItal, m_szMsgIniFile);
+					m_CustomMessageFont[n].nColorR = GetPrivateProfileIntW(szSectionName, L"r", m_CustomMessageFont[n].nColorR, m_szMsgIniFile);
+					m_CustomMessageFont[n].nColorG = GetPrivateProfileIntW(szSectionName, L"g", m_CustomMessageFont[n].nColorG, m_szMsgIniFile);
+					m_CustomMessageFont[n].nColorB = GetPrivateProfileIntW(szSectionName, L"b", m_CustomMessageFont[n].nColorB, m_szMsgIniFile);
+				}
+			}
+			else if (!wcsncmp(szSectionName, L"message", 7))
+			{
+				n = _wtoi(szSectionName + 7);
+				if (n >= 0 && n < MAX_CUSTOM_MESSAGES)
+				{
+					// get fontID, size, text, etc. for this custom message:
+					GetPrivateProfileStringW(szSectionName, L"text", L"", m_CustomMessage[n].szText, ARRAYSIZE(m_CustomMessage[n].szText), m_szMsgIniFile);
+					if (m_CustomMessage[n].szText[0])
+					{
+						m_CustomMessage[n].nFont = GetPrivateProfileIntW(szSectionName, L"font", m_CustomMessage[n].nFont, m_szMsgIniFile);
+						m_CustomMessage[n].fSize = GetPrivateProfileFloatW(szSectionName, L"size", m_CustomMessage[n].fSize, m_szMsgIniFile);
+						m_CustomMessage[n].x = GetPrivateProfileFloatW(szSectionName, L"x", m_CustomMessage[n].x, m_szMsgIniFile);
+						m_CustomMessage[n].y = GetPrivateProfileFloatW(szSectionName, L"y", m_CustomMessage[n].y, m_szMsgIniFile);
+						m_CustomMessage[n].randx = GetPrivateProfileFloatW(szSectionName, L"randx", m_CustomMessage[n].randx, m_szMsgIniFile);
+						m_CustomMessage[n].randy = GetPrivateProfileFloatW(szSectionName, L"randy", m_CustomMessage[n].randy, m_szMsgIniFile);
 
-		// get face, bold, italic, x, y for this custom message FONT
-		GetPrivateProfileStringW(szSectionName,L"face",L"arial",m_CustomMessageFont[n].szFace,ARRAYSIZE(m_CustomMessageFont[n].szFace), m_szMsgIniFile);
-		m_CustomMessageFont[n].bBold	= GetPrivateProfileBoolW(szSectionName,L"bold",m_CustomMessageFont[n].bBold,  m_szMsgIniFile);
-		m_CustomMessageFont[n].bItal	= GetPrivateProfileBoolW(szSectionName,L"ital",m_CustomMessageFont[n].bItal,  m_szMsgIniFile);
-		m_CustomMessageFont[n].nColorR  = GetPrivateProfileIntW (szSectionName,L"r"     ,m_CustomMessageFont[n].nColorR, m_szMsgIniFile);
-		m_CustomMessageFont[n].nColorG  = GetPrivateProfileIntW (szSectionName,L"g"     ,m_CustomMessageFont[n].nColorG, m_szMsgIniFile);
-		m_CustomMessageFont[n].nColorB  = GetPrivateProfileIntW (szSectionName,L"b"     ,m_CustomMessageFont[n].nColorB, m_szMsgIniFile);
+						m_CustomMessage[n].growth = GetPrivateProfileFloatW(szSectionName, L"growth", m_CustomMessage[n].growth, m_szMsgIniFile);
+						m_CustomMessage[n].fTime = GetPrivateProfileFloatW(szSectionName, L"time", m_CustomMessage[n].fTime, m_szMsgIniFile);
+						m_CustomMessage[n].fFade = GetPrivateProfileFloatW(szSectionName, L"fade", m_CustomMessage[n].fFade, m_szMsgIniFile);
+						m_CustomMessage[n].nColorR = GetPrivateProfileIntW(szSectionName, L"r", m_CustomMessage[n].nColorR, m_szMsgIniFile);
+						m_CustomMessage[n].nColorG = GetPrivateProfileIntW(szSectionName, L"g", m_CustomMessage[n].nColorG, m_szMsgIniFile);
+						m_CustomMessage[n].nColorB = GetPrivateProfileIntW(szSectionName, L"b", m_CustomMessage[n].nColorB, m_szMsgIniFile);
+						m_CustomMessage[n].nRandR = GetPrivateProfileIntW(szSectionName, L"randr", m_CustomMessage[n].nRandR, m_szMsgIniFile);
+						m_CustomMessage[n].nRandG = GetPrivateProfileIntW(szSectionName, L"randg", m_CustomMessage[n].nRandG, m_szMsgIniFile);
+						m_CustomMessage[n].nRandB = GetPrivateProfileIntW(szSectionName, L"randb", m_CustomMessage[n].nRandB, m_szMsgIniFile);
+
+						// overrides: r,g,b,face,bold,ital
+						GetPrivateProfileStringW(szSectionName, L"face", L"", m_CustomMessage[n].szFace, ARRAYSIZE(m_CustomMessage[n].szFace), m_szMsgIniFile);
+						m_CustomMessage[n].bBold = GetPrivateProfileIntW(szSectionName, L"bold", -1, m_szMsgIniFile);
+						m_CustomMessage[n].bItal = GetPrivateProfileIntW(szSectionName, L"ital", -1, m_szMsgIniFile);
+						m_CustomMessage[n].nColorR = GetPrivateProfileIntW(szSectionName, L"r", -1, m_szMsgIniFile);
+						m_CustomMessage[n].nColorG = GetPrivateProfileIntW(szSectionName, L"g", -1, m_szMsgIniFile);
+						m_CustomMessage[n].nColorB = GetPrivateProfileIntW(szSectionName, L"b", -1, m_szMsgIniFile);
+
+						m_CustomMessage[n].bOverrideFace = (m_CustomMessage[n].szFace[0] != 0);
+						m_CustomMessage[n].bOverrideBold = (m_CustomMessage[n].bBold != -1);
+						m_CustomMessage[n].bOverrideItal = (m_CustomMessage[n].bItal != -1);
+						m_CustomMessage[n].bOverrideColorR = (m_CustomMessage[n].nColorR != -1);
+						m_CustomMessage[n].bOverrideColorG = (m_CustomMessage[n].nColorG != -1);
+						m_CustomMessage[n].bOverrideColorB = (m_CustomMessage[n].nColorB != -1);
+					}
+				}
+			}
+
+			szSectionName += (wcslen(szSectionName) + 1);
+		}
 	}
-
-	for (n=0; n<MAX_CUSTOM_MESSAGES; n++)
-	{
-		wchar_t szSectionName[64] = {0};
-		_snwprintf(szSectionName, ARRAYSIZE(szSectionName), L"message%02d", n);
-
-		// get fontID, size, text, etc. for this custom message:
-		GetPrivateProfileStringW(szSectionName,L"text",L"",m_CustomMessage[n].szText,ARRAYSIZE(m_CustomMessage[n].szText), m_szMsgIniFile);
-        if (m_CustomMessage[n].szText[0])
-        {
-		    m_CustomMessage[n].nFont	= GetPrivateProfileIntW  (szSectionName,L"font"  ,m_CustomMessage[n].nFont,   m_szMsgIniFile);
-		    m_CustomMessage[n].fSize	= GetPrivateProfileFloatW(szSectionName,L"size"  ,m_CustomMessage[n].fSize,   m_szMsgIniFile);
-		    m_CustomMessage[n].x		= GetPrivateProfileFloatW(szSectionName,L"x"     ,m_CustomMessage[n].x,       m_szMsgIniFile);
-		    m_CustomMessage[n].y		= GetPrivateProfileFloatW(szSectionName,L"y"     ,m_CustomMessage[n].y,       m_szMsgIniFile);
-		    m_CustomMessage[n].randx    = GetPrivateProfileFloatW(szSectionName,L"randx" ,m_CustomMessage[n].randx,   m_szMsgIniFile);
-		    m_CustomMessage[n].randy    = GetPrivateProfileFloatW(szSectionName,L"randy" ,m_CustomMessage[n].randy,   m_szMsgIniFile);
-
-		    m_CustomMessage[n].growth   = GetPrivateProfileFloatW(szSectionName,L"growth",m_CustomMessage[n].growth,  m_szMsgIniFile);
-		    m_CustomMessage[n].fTime    = GetPrivateProfileFloatW(szSectionName,L"time"  ,m_CustomMessage[n].fTime,   m_szMsgIniFile);
-		    m_CustomMessage[n].fFade    = GetPrivateProfileFloatW(szSectionName,L"fade"  ,m_CustomMessage[n].fFade,   m_szMsgIniFile);
-		    m_CustomMessage[n].nColorR  = GetPrivateProfileIntW  (szSectionName,L"r"     ,m_CustomMessage[n].nColorR, m_szMsgIniFile);
-		    m_CustomMessage[n].nColorG  = GetPrivateProfileIntW  (szSectionName,L"g"     ,m_CustomMessage[n].nColorG, m_szMsgIniFile);
-		    m_CustomMessage[n].nColorB  = GetPrivateProfileIntW  (szSectionName,L"b"     ,m_CustomMessage[n].nColorB, m_szMsgIniFile);
-		    m_CustomMessage[n].nRandR   = GetPrivateProfileIntW  (szSectionName,L"randr" ,m_CustomMessage[n].nRandR,  m_szMsgIniFile);
-		    m_CustomMessage[n].nRandG   = GetPrivateProfileIntW  (szSectionName,L"randg" ,m_CustomMessage[n].nRandG,  m_szMsgIniFile);
-		    m_CustomMessage[n].nRandB   = GetPrivateProfileIntW  (szSectionName,L"randb" ,m_CustomMessage[n].nRandB,  m_szMsgIniFile);
-
-		    // overrides: r,g,b,face,bold,ital
-		    GetPrivateProfileStringW(szSectionName,L"face",L"",m_CustomMessage[n].szFace,ARRAYSIZE(m_CustomMessage[n].szFace), m_szMsgIniFile);
-		    m_CustomMessage[n].bBold	= GetPrivateProfileIntW (szSectionName, L"bold", -1, m_szMsgIniFile);
-		    m_CustomMessage[n].bItal  	= GetPrivateProfileIntW (szSectionName, L"ital", -1, m_szMsgIniFile);
-		    m_CustomMessage[n].nColorR  = GetPrivateProfileIntW (szSectionName, L"r"   , -1, m_szMsgIniFile);
-		    m_CustomMessage[n].nColorG  = GetPrivateProfileIntW (szSectionName, L"g"   , -1, m_szMsgIniFile);
-		    m_CustomMessage[n].nColorB  = GetPrivateProfileIntW (szSectionName, L"b"   , -1, m_szMsgIniFile);
-
-		    m_CustomMessage[n].bOverrideFace   = (m_CustomMessage[n].szFace[0] != 0);
-		    m_CustomMessage[n].bOverrideBold   = (m_CustomMessage[n].bBold != -1);
-		    m_CustomMessage[n].bOverrideItal   = (m_CustomMessage[n].bItal != -1);
-		    m_CustomMessage[n].bOverrideColorR = (m_CustomMessage[n].nColorR != -1);
-		    m_CustomMessage[n].bOverrideColorG = (m_CustomMessage[n].nColorG != -1);
-		    m_CustomMessage[n].bOverrideColorB = (m_CustomMessage[n].nColorB != -1);
-        }
-	}
+	free(buffer);
 }
 
 void CPlugin::LaunchCustomMessage(int nMsgNum)
@@ -9518,8 +9641,8 @@ void CPlugin::LaunchSongTitleAnim()
 {
 	m_supertext.bRedrawSuperText = true;
 	m_supertext.bIsSongTitle = true;
-	wcsncpy(m_supertext.szTextW, m_szSongTitle, ARRAYSIZE(m_supertext.szTextW));
-	wcsncpy(m_supertext.nFontFace, m_fontinfo[SONGTITLE_FONT].szFace, ARRAYSIZE(m_supertext.nFontFace));
+	wcsncpy(m_supertext.szTextW, m_szSongTitle, ARRAYSIZE(m_supertext.szTextW) - 1);
+	wcsncpy(m_supertext.nFontFace, m_fontinfo[SONGTITLE_FONT].szFace, ARRAYSIZE(m_supertext.nFontFace) - 1);
 	m_supertext.fFontSize   = (float)m_fontinfo[SONGTITLE_FONT].nSize;
 	m_supertext.bBold       = m_fontinfo[SONGTITLE_FONT].bBold;
 	m_supertext.bItal       = m_fontinfo[SONGTITLE_FONT].bItalic;
@@ -9753,21 +9876,27 @@ void CPlugin::GenWarpPShaderText(char *szShaderText, int szShaderTextLen, float 
     // find the pixel shader body and replace it with custom code.
 
     strncpy(szShaderText, m_szDefaultWarpPShaderText, szShaderTextLen);
+#ifdef _DEBUG
     char LF = LINEFEED_CONTROL_CHAR;
+#endif
+
     char *p = strrchr( szShaderText, '{' );
-    if (!p) 
+    if (!p)
         return;
     ++p;
-    p += sprintf(p, "%c", 1);
-
+#ifdef _DEBUG
+    p += sprintf(p, "%c", LINEFEED_CONTROL_CHAR);
     p += sprintf(p, "    // sample previous frame%c", LF);
-    p += sprintf(p, "    ret = tex2D( sampler%s_main, uv ).xyz;%c", bWrap ? "" : "_fc", LF);
-    p += sprintf(p, "    %c", LF);
+	p += sprintf(p, "    ret = tex2D( sampler%s_main, uv ).xyz;%c", bWrap ? "" : "_fc", LF);
+	p += sprintf(p, "    %c", LF);
     p += sprintf(p, "    // darken (decay) over time%c", LF);
     p += sprintf(p, "    ret *= %.2f; //or try: ret -= 0.004;%c", decay, LF);
     //p += sprintf(p, "    %c", LF);
     //p += sprintf(p, "    ret.w = vDiffuse.w; // pass alpha along - req'd for preset blending%c", LF);
     p += sprintf(p, "}%c", LF);
+#else
+	sprintf(p, "ret=tex2D(sampler%s_main,uv).xyz;ret*=%.2f;}", bWrap ? "" : "_fc", decay);
+#endif
 }
 
 void CPlugin::GenCompPShaderText(char *szShaderText, int szShaderTextLen,
@@ -9778,42 +9907,85 @@ void CPlugin::GenCompPShaderText(char *szShaderText, int szShaderTextLen,
     // find the pixel shader body and replace it with custom code.
 
     strncpy(szShaderText, m_szDefaultCompPShaderText, szShaderTextLen);
+#ifdef _DEBUG
     char LF = LINEFEED_CONTROL_CHAR;
+#endif
     char *p = strrchr( szShaderText, '{' );
     if (!p) 
         return;
     ++p;
-    p += sprintf(p, "%c", 1);
+
+#ifdef _DEBUG
+    p += sprintf(p, "%c", LINEFEED_CONTROL_CHAR);
+#endif
 
     if (ve_alpha > 0.001f) 
     {
-        int orient_x = (ve_orient %  2) ? -1 : 1;
-        int orient_y = (ve_orient >= 2) ? -1 : 1;
+        const int orient_x = (ve_orient %  2) ? -1 : 1,
+				  orient_y = (ve_orient >= 2) ? -1 : 1;
+#ifdef _DEBUG
         p += sprintf(p, "    float2 uv_echo = (uv - 0.5)*%.3f*float2(%d,%d) + 0.5;%c", 1.0f/ve_zoom, orient_x, orient_y, LF);
         p += sprintf(p, "    ret = lerp( tex2D(sampler_main, uv).xyz, %c", LF);
         p += sprintf(p, "                tex2D(sampler_main, uv_echo).xyz, %c", LF);
         p += sprintf(p, "                %.2f %c", ve_alpha, LF);
         p += sprintf(p, "              ); //video echo%c", LF);
         p += sprintf(p, "    ret *= %.2f; //gamma%c", brightness, LF);
+#else
+        p += sprintf(p, "float2 uv_echo=(uv-0.5)*%.3f*float2(%d,%d)+0.5;"
+						"ret=lerp(tex2D(sampler_main,uv).xyz,"
+						"tex2D(sampler_main,uv_echo).xyz,%.2f);ret*=%.2f;",
+						1.0f / ve_zoom, orient_x, orient_y, ve_alpha, brightness);
+#endif
     }
     else 
     {
-        p += sprintf(p, "    ret = tex2D(sampler_main, uv).xyz;%c", LF);
-        p += sprintf(p, "    ret *= %.2f; //gamma%c", brightness, LF);
+#ifdef _DEBUG
+        p += sprintf(p, "    ret = tex2D(sampler_main, uv).xyz;%c    ret *= %.2f; //gamma%c", LF, brightness, LF);
+#else
+		p += sprintf(p, "ret=tex2D(sampler_main,uv).xyz;ret*=%.2f;", brightness);
+#endif
     }
     if (hue_shader >= 1.0f)
+#ifdef _DEBUG
         p += sprintf(p, "    ret *= hue_shader; //old hue shader effect%c", LF);
+#else
+		p += sprintf(p, "ret*=hue_shader;");
+#endif
     else if (hue_shader > 0.001f)
+#ifdef _DEBUG
         p += sprintf(p, "    ret *= %.2f + %.2f*hue_shader; //old hue shader effect%c", 1-hue_shader, hue_shader, LF);
+#else
+        p += sprintf(p, "ret*=%.2f+%.2f*hue_shader;", 1-hue_shader, hue_shader);
+#endif
 
     if (bBrighten)
+#ifdef _DEBUG
         p += sprintf(p, "    ret = sqrt(ret); //brighten%c", LF);
+#else
+        p += sprintf(p, "ret=sqrt(ret);");
+#endif
     if (bDarken)
+#ifdef _DEBUG
         p += sprintf(p, "    ret *= ret; //darken%c", LF);
+#else
+		p += sprintf(p, "ret*=ret;");
+#endif
     if (bSolarize)
+#ifdef _DEBUG
         p += sprintf(p, "    ret = ret*(1-ret)*4; //solarize%c", LF);
+#else
+        p += sprintf(p, "ret=ret*(1-ret)*4;");
+#endif
     if (bInvert)
+#ifdef _DEBUG
         p += sprintf(p, "    ret = 1 - ret; //invert%c", LF);
+#else
+        p += sprintf(p, "ret=1-ret;");
+#endif
     //p += sprintf(p, "    ret.w = vDiffuse.w; // pass alpha along - req'd for preset blending%c", LF);
+#ifdef _DEBUG
     p += sprintf(p, "}%c", LF);
+#else
+    p += sprintf(p, "}");
+#endif
 }

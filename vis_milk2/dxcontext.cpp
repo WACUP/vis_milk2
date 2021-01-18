@@ -35,13 +35,20 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COMPILE_MULTIMON_STUBS 1
 #include <multimon.h>
 #include <strsafe.h>
+#include <loader/loader/utils.h>
 
 // note: added WS_EX_CONTROLPARENT and WS_TABSTOP for embedwnd so window frame will pass on KB commands to us, if it has focus & receives them.
 //       however, it is still not working.  Maksim says he needs to use GetNextDlgTabItem() and then it will work.
 //       aha- had to remove WS_EX_CONTROLPARENT and WS_OVERLAPPED.  Should now work with winamp 5.5 build 1620.
+#ifdef NON_SKIN_MODE
 #define MY_EXT_WINDOW_STYLE (m_current_mode.m_skin ? 0/*WS_EX_CONTROLPARENT*/ : ((m_current_mode.screenmode==DESKTOP) ? (WS_EX_TOOLWINDOW) : 0)) // note: changed from TOOLWINDOW to APPWINDOW b/c we wanted the plugin to appear in the taskbar.
 #define SKINNED_WS (WS_VISIBLE|WS_CHILDWINDOW/*|WS_OVERLAPPED*/|WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TABSTOP)
 #define MY_WINDOW_STYLE (m_current_mode.m_skin ? SKINNED_WS : ((m_current_mode.screenmode==FAKE_FULLSCREEN || m_current_mode.screenmode==DESKTOP) ? WS_POPUP : WS_OVERLAPPEDWINDOW))   // note: WS_POPUP (by itself) removes all borders, captions, etc.
+#else
+#define MY_EXT_WINDOW_STYLE ((m_current_mode.screenmode == WINDOWED) ? 0/*WS_EX_CONTROLPARENT*/ : ((m_current_mode.screenmode == DESKTOP) ? (WS_EX_TOOLWINDOW) : 0)) // note: changed from TOOLWINDOW to APPWINDOW b/c we wanted the plugin to appear in the taskbar.
+#define SKINNED_WS (WS_VISIBLE|WS_CHILDWINDOW/*|WS_OVERLAPPED*/|WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TABSTOP)
+#define MY_WINDOW_STYLE ((m_current_mode.screenmode == WINDOWED) ? SKINNED_WS : ((m_current_mode.screenmode == FAKE_FULLSCREEN || m_current_mode.screenmode == DESKTOP) ? WS_POPUP : WS_OVERLAPPEDWINDOW))   // note: WS_POPUP (by itself) removes all borders, captions, etc.
+#endif
 
 #include <Winamp/vis.h>
 extern winampVisModule mod1;
@@ -68,6 +75,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_frame_delay = 0;
 	StringCchCopyW(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
 	memset(&myWindowState,0,sizeof(myWindowState));
+	memset(&initialRect,0,sizeof(initialRect));
 	m_szDriver[0] = 0;
 	m_szDesc[0] = 0;
 	m_window_width = 0;
@@ -95,8 +103,8 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	wc.lpfnWndProc = (WNDPROC) pProc;
 	wc.cbWndExtra = sizeof(DWORD);
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLUGIN_ICON));//NULL;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	//wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLUGIN_ICON));//NULL;
+	//wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
 	wc.lpszMenuName = NULL;
 	wc.lpszClassName = szClassName;
@@ -368,8 +376,7 @@ int DXContext::GetWindowedModeAutoSize(int iteration)
 		wp.length = sizeof(wp);
 		if (GetWindowPlacement(m_hwnd_winamp, &wp))
 		{
-			int winamp_center_x = (wp.rcNormalPosition.right + wp.rcNormalPosition.left)/2;
-			if (winamp_center_x > x)
+			if (((wp.rcNormalPosition.right + wp.rcNormalPosition.left) / 2) > x)
 			{
 				m_monitor_rect.left += x;
 				m_monitor_rect.right += x;
@@ -385,8 +392,7 @@ int DXContext::GetWindowedModeAutoSize(int iteration)
 		wp.length = sizeof(wp);
 		if (GetWindowPlacement(m_hwnd_winamp, &wp))
 		{
-			int winamp_center_y = (wp.rcNormalPosition.top + wp.rcNormalPosition.bottom)/2;
-			if (winamp_center_y > y)
+			if (((wp.rcNormalPosition.top + wp.rcNormalPosition.bottom) / 2) > y)
 			{
 				m_monitor_rect.top += y;
 				m_monitor_rect.bottom += y;
@@ -407,6 +413,7 @@ void DXContext::WriteSafeWindowPos()
 {
 	if (m_current_mode.screenmode == WINDOWED)
 	{
+#ifdef NON_SKIN_MODE
 		if (!m_current_mode.m_skin)
 		{
 			WritePrivateProfileIntW(64, 0, L"nMainWndTop",    m_szIniFile, L"settings");
@@ -414,7 +421,7 @@ void DXContext::WriteSafeWindowPos()
 			WritePrivateProfileIntW(64+256, 0, L"nMainWndRight",  m_szIniFile, L"settings");
 			WritePrivateProfileIntW(64+256, 0, L"nMainWndBottom", m_szIniFile, L"settings");
 		}
-
+#endif
 		WritePrivateProfileIntW(64, 0, L"avs_wx",m_szIniFile,L"settings");
 		WritePrivateProfileIntW(64, 0, L"avs_wy",m_szIniFile,L"settings");
 		WritePrivateProfileIntW(256, 0, L"avs_ww",m_szIniFile,L"settings");
@@ -426,17 +433,28 @@ void DXContext::WriteSafeWindowPos()
 const GUID avs_guid =
   { 10, 12, 16, { 255, 123, 1, 1, 66, 99, 69, 12 } };
 
+int CALLBACK EmbedWndCallback(embedWindowState *windowState, INT eventId, LPARAM param)
+{
+	if (eventId == 2)
+	{
+		PostMessage(windowState->me, WM_USER + (!param ? 102 : 105), 0, 0);
+	}
+	return 0;
+}
+
 BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 {
 	memcpy(&m_current_mode, pParams, sizeof(DXCONTEXT_PARAMS));
 	memset(&myWindowState,0,sizeof(myWindowState));
 
+#ifdef NON_SKIN_MODE
 	// various checks
 	if (m_current_mode.screenmode != WINDOWED)
 		m_current_mode.m_skin = 0;
+#endif
 
 	// 1. destroy old window
-	if (m_hwnd)
+	if (IsWindow(m_hwnd))
 	{
 		m_ignore_wm_destroy = 1;
 		DestroyWindow(m_hwnd);
@@ -666,53 +684,84 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		}
 	}
 
+//#define MAIN_WND
+#ifndef MAIN_WND
 	// 6. embedded window stuff [where the plugin window is integrated w/winamp]
+#ifdef NON_SKIN_MODE
 	if (m_current_mode.m_skin)
+#else
+	if (m_current_mode.screenmode == WINDOWED)
+#endif
 	{
 		// set up the window's position on screen
 		// note that we'd prefer to set the CLIENT size we want, but we can't, so we'll just do
 		// this here, and later, adjust the client rect size to what's left...
-		int size = GetWindowedModeAutoSize(0);  // note: requires 'm_monitor_rect' has been set!
+		const int size = GetWindowedModeAutoSize(0);  // note: requires 'm_monitor_rect' has been set!
 		myWindowState.r.left   = GetPrivateProfileIntW(L"settings",L"avs_wx",0,m_szIniFile);
 		myWindowState.r.top    = GetPrivateProfileIntW(L"settings",L"avs_wy",0,m_szIniFile);
 		myWindowState.r.right  = myWindowState.r.left + GetPrivateProfileIntW(L"settings",L"avs_ww",size+24,m_szIniFile);
 		myWindowState.r.bottom = myWindowState.r.top  + GetPrivateProfileIntW(L"settings",L"avs_wh",size+40,m_szIniFile);
+		CopyRect(&initialRect, &myWindowState.r);
 
 		SET_EMBED_GUID((&myWindowState), avs_guid);
 		myWindowState.flags = EMBED_FLAGS_NOTRANSPARENCY |
 							  EMBED_FLAGS_NOWINDOWMENU |
 							  EMBED_FLAGS_SCALEABLE_WND;
 		HWND(*e)(embedWindowState *v);
-		*(void**)&e = (void *)SendMessage(mod1.hwndParent, WM_WA_IPC, (LPARAM)0, IPC_GET_EMBEDIF);
+		*(void**)&e = (void *)SendMessage(m_hwnd_winamp, WM_WA_IPC, (LPARAM)0, IPC_GET_EMBEDIF);
 		if (e)
 		{
-			//m_current_mode.parent_window = (HWND)SendMessage(mod1.hwndParent, WM_WA_IPC, (LPARAM)(&myWindowState), IPC_GET_EMBEDIF);
+			//m_current_mode.parent_window = (HWND)SendMessage(m_hwnd_winamp, WM_WA_IPC, (LPARAM)(&myWindowState), IPC_GET_EMBEDIF);
 			m_current_mode.parent_window = e(&myWindowState);
 			if (IsWindow(m_current_mode.parent_window))
 			{
 				SetWindowTextW(m_current_mode.parent_window, m_szWindowCaption);
+
+				// if the parent is minimised then this will
+				// help to prevent it appearing on screen as
+				// it otherwise looks odd showing on its own
+				if (IsIconic(m_hwnd_winamp) &&
+					(myWindowState.wasabi_window == NULL))
+				{
+					myWindowState.callback = EmbedWndCallback;
+				}
 			}
+#ifdef NON_SKIN_MODE
 			else
 			{
 				m_current_mode.m_skin = 0;
 			}
+#endif
 		}
+#ifdef NON_SKIN_MODE
 		else
 		{
 			m_current_mode.m_skin = 0;
 		}
+#endif
 	}
+#else
+	m_current_mode.parent_window = m_hwnd_winamp;//GetWindow(m_hwnd_winamp, GW_CHILD);
+	//m_current_mode.m_skin = 0;
+#endif
 
 	// remember the client rect that was originally desired...
-	RECT windowed_mode_desired_client_rect;
+	// cppcheck-suppress unreadVariable
+	int dsize = 0;
+	RECT windowed_mode_desired_client_rect = { 0 };
+#ifdef NON_SKIN_MODE
 	if (m_current_mode.m_skin)
+#else
+	if (m_current_mode.screenmode == WINDOWED)
+#endif
 	{
-		const int dsize = SendMessage(mod1.hwndParent, WM_WA_IPC, 0, IPC_ISDOUBLESIZE);
-		windowed_mode_desired_client_rect.top    = myWindowState.r.top + (20 * (!dsize ? 1 : 2));
-		windowed_mode_desired_client_rect.left   = myWindowState.r.left + (11 * (!dsize ? 1 : 2));
-		windowed_mode_desired_client_rect.right  = myWindowState.r.right - (8 * (!dsize ? 1 : 2));
+		dsize = GetDoubleSize(0);
+		windowed_mode_desired_client_rect.top = myWindowState.r.top + (20 * (!dsize ? 1 : 2));
+		windowed_mode_desired_client_rect.left = myWindowState.r.left + (11 * (!dsize ? 1 : 2));
+		windowed_mode_desired_client_rect.right = myWindowState.r.right - (8 * (!dsize ? 1 : 2));
 		windowed_mode_desired_client_rect.bottom = myWindowState.r.bottom - (14 * (!dsize ? 1 : 2));
 	}
+#ifdef NON_SKIN_MODE
 	else
 	{
 		windowed_mode_desired_client_rect.top    = GetPrivateProfileIntW(L"settings",L"nMainWndTop",-1,m_szIniFile);
@@ -720,12 +769,26 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		windowed_mode_desired_client_rect.right  = GetPrivateProfileIntW(L"settings",L"nMainWndRight",-1,m_szIniFile);
 		windowed_mode_desired_client_rect.bottom = GetPrivateProfileIntW(L"settings",L"nMainWndBottom",-1,m_szIniFile);
 	}
+#endif
 
 	// ...and in case windowed mode init fails severely,
 	// set it up to try next time for a simple 256x256 window.
 	//WriteSafeWindowPos();
 
-	// 7. create the window, if not already created
+	// 7. create the window, if not already created or change
+	//	  what window is to be used based on the current mode
+#ifndef LEGACY_DESKTOP_MODE
+	if (m_current_mode.screenmode == DESKTOP)
+	{
+		HWND m_hWndProgMan = NULL;
+		FindDesktopWindows(&m_hWndProgMan, &m_hwnd);
+		// note: we're not going to check for this
+		// being invalid (e.g. running on Win7) as
+		// the desktop mode option should've been
+		// disabled before this is even attempted!
+	}
+#endif
+
 	if (!IsWindow(m_hwnd))
 	{
 		m_hwnd = CreateWindowExW(
@@ -733,10 +796,12 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		           MAKEINTATOM(m_classAtom), // class
 		           m_szWindowCaption, // caption
 		           MY_WINDOW_STYLE, // style
-		           myWindowState.r.left, // left
-		           myWindowState.r.top, // top
-		           (myWindowState.r.right - myWindowState.r.left),  // temporary width
-		           (myWindowState.r.bottom - myWindowState.r.top),  // temporary height
+		           windowed_mode_desired_client_rect.left, // left
+		           windowed_mode_desired_client_rect.top, // top
+		           (windowed_mode_desired_client_rect.right -
+					windowed_mode_desired_client_rect.left),  // temporary width
+		           (windowed_mode_desired_client_rect.bottom -
+					windowed_mode_desired_client_rect.top),  // temporary height
 		           m_current_mode.parent_window,  // parent window
 		           NULL, // menu
 		           m_hInstance, // instance
@@ -753,15 +818,29 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			return FALSE;
 		}
 
-		SendMessage(m_hwnd_winamp, WM_WA_IPC, (WPARAM)m_hwnd, IPC_SETVISWND);
+		// a trick from the classic skin windows that helps to prevent
+		// the caption area from being briefly when things are setup &
+		// so removes some of the weirdness of a white area flash seen
+		SetWindowLongPtr(m_hwnd, GWL_STYLE, GetWindowLongPtr(m_hwnd, GWL_STYLE) & ~(WS_CAPTION | WS_THICKFRAME));
 
-		if (m_current_mode.m_skin)
+#ifdef MAIN_WND
+		HWND vis = FindWindowEx(m_hwnd_winamp, NULL, L"WinampVis", NULL);
+		if (IsWindow(vis))
 		{
-			/*if (GetWinampVersion(mod1.hwndParent) < 0x5051)
-				ShowWindow(m_current_mode.parent_window,SW_SHOWNA); // showing the parent wnd will make it size the child, too
-			else*/
-				SendMessage(m_current_mode.parent_window, WM_USER+102, 0, 0); // benski> major hack alert. winamp's embedwnd will call ShowWindow in response.  SendMessage moves us over to the main thread (we're currently sitting on the viz thread)
-		}		
+			ShowWindow(vis, SW_HIDE);
+		}
+
+		if (!GetDoubleSize(0))
+		{
+			SetWindowPos(m_hwnd, HWND_TOP, 24, 43, 76, 16, SWP_NOACTIVATE);
+		}
+		else
+		{
+			SetWindowPos(m_hwnd, HWND_TOP, 48, 86, 152, 32, SWP_NOACTIVATE);
+		}
+#endif
+
+		SendMessage(m_hwnd_winamp, WM_WA_IPC, (WPARAM)m_hwnd, IPC_SETVISWND);
 	}
 
 	// 8. minimize winamp before creating devices & such, so there aren't
@@ -776,8 +855,8 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 	do
 	{
 		// set the window position
-		if (m_current_mode.screenmode==DESKTOP ||
-		    m_current_mode.screenmode==FAKE_FULLSCREEN)
+		if (m_current_mode.screenmode == DESKTOP ||
+		    m_current_mode.screenmode == FAKE_FULLSCREEN)
 		{
 			int x = m_monitor_rect.right - m_monitor_rect.left;
 			int y = m_monitor_rect.bottom - m_monitor_rect.top;
@@ -904,7 +983,8 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 					//SetWindowPos(m_hwnd,HWND_TOP,m_monitor_rect.left,m_monitor_rect.top,m_window_width,m_window_height,SWP_SHOWWINDOW);
 				}
 
-				SetWindowPos(m_hwnd,HWND_TOPMOST,m_monitor_rect.left,m_monitor_rect.top,m_window_width,m_window_height,SWP_SHOWWINDOW);
+				SetWindowPos(m_hwnd, HWND_TOPMOST, m_monitor_rect.left, m_monitor_rect.top,
+							 m_window_width, m_window_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 			}
 		}
 		else if (m_current_mode.screenmode == FULLSCREEN)
@@ -946,13 +1026,16 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			m_client_height = y;
 			m_window_width  = x;
 			m_window_height = y;
-			SetWindowPos(m_hwnd,HWND_TOPMOST,m_monitor_rect.left,m_monitor_rect.top,m_window_width,m_window_height,SWP_SHOWWINDOW);
+			SetWindowPos(m_hwnd, HWND_TOPMOST, m_monitor_rect.left, m_monitor_rect.top,
+						 m_window_width, m_window_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 		}
 		else // WINDOWED
 		{
 			RECT margin;
+#ifdef NON_SKIN_MODE
 			if (m_current_mode.m_skin)
 			{
+#endif
 				RECT r1, r2;
 				GetWindowRect(m_current_mode.parent_window, &r1);
 				GetWindowRect(m_hwnd , &r2);
@@ -960,6 +1043,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				margin.right = r1.right - r2.right;
 				margin.top   = r2.top - r1.top;
 				margin.bottom= r1.bottom - r2.bottom;
+#ifdef NON_SKIN_MODE
 			}
 			else
 			{
@@ -971,9 +1055,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				margin.top   = 0 - r1.top;
 				margin.bottom= r1.bottom - 256;
 			}
+#endif
 
 			int autosize = 1;
-
 			RECT r = windowed_mode_desired_client_rect;
 			if (iteration==0 && r.top != -1 && r.left != -1 && r.bottom != -1 && r.right != -1)
 			{
@@ -1006,37 +1090,44 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				// changed: factor in the size of the skinned window frame
 				//			as it otherwiae resets the window position even
 				//			if it was in a valid position on the set monitor
-				const int dsize = (m_current_mode.m_skin ? SendMessage(mod1.hwndParent, WM_WA_IPC, 0, IPC_ISDOUBLESIZE) : 0);
-				if (r.top    >= (m_monitor_work_rect.top - (m_current_mode.m_skin ? (20 * (!dsize ? 1 : 2)) : 0)) &&
-				    r.left   >= (m_monitor_work_rect.left - (m_current_mode.m_skin ? (11 * (!dsize ? 1 : 2)) : 0)) &&
-				    r.right  <= (m_monitor_work_rect.right + (m_current_mode.m_skin ? (8 * (!dsize ? 1 : 2)) : 0)) &&
-				    r.bottom <= (m_monitor_work_rect.bottom + (m_current_mode.m_skin ? (14 * (!dsize ? 1 : 2)) : 0)))
+#ifdef NON_SKIN_MODE
+				dsize = (m_current_mode.m_skin ? GetDoubleSize(0) : 0);
+				if (r.top >= (m_monitor_work_rect.top - (m_current_mode.m_skin ? (20 * (!dsize ? 1 : 2)) : 0)) &&
+					r.left >= (m_monitor_work_rect.left - (m_current_mode.m_skin ? (11 * (!dsize ? 1 : 2)) : 0)) &&
+					r.right <= (m_monitor_work_rect.right + (m_current_mode.m_skin ? (8 * (!dsize ? 1 : 2)) : 0)) &&
+					r.bottom <= (m_monitor_work_rect.bottom + (m_current_mode.m_skin ? (14 * (!dsize ? 1 : 2)) : 0)))
+#else
+				if (r.top >= (m_monitor_work_rect.top - (20 * (!dsize ? 1 : 2))) &&
+					r.left >= (m_monitor_work_rect.left - (11 * (!dsize ? 1 : 2))) &&
+					r.right <= (m_monitor_work_rect.right + (8 * (!dsize ? 1 : 2))) &&
+					r.bottom <= (m_monitor_work_rect.bottom + (14 * (!dsize ? 1 : 2))))
+#endif
 				{
 					// NOTE: this used to do some re-positioning of
 					//		 the skinned window but that was causing
 					//		 issues with odd re-positioning for some
 					//		 users which not doing fixes as we set
 					//		 the wanted position elsewhere anyway.
+#ifdef NON_SKIN_MODE
 					if (!m_current_mode.m_skin)
 					{
 						m_window_width  = r.right - r.left;
 						m_window_height = r.bottom - r.top;
-						SetWindowPos(m_hwnd,HWND_NOTOPMOST,r.left,r.top,m_window_width,m_window_height,SWP_SHOWWINDOW);
+						SetWindowPos(m_hwnd, HWND_NOTOPMOST, r.left, r.top, m_window_width,
+									 m_window_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 					}
-
+#endif
 					autosize = 0;
 				}
 			}
 
 			if (autosize)
 			{
-				int size = GetWindowedModeAutoSize(iteration); // note: requires 'm_monitor_rect' has been set!
-
-				m_REAL_client_width  = size;
-				m_REAL_client_height = size;
+				// note: requires 'm_monitor_rect' has been set!
+				m_REAL_client_width = m_REAL_client_height = GetWindowedModeAutoSize(iteration);
 				GetSnappedClientSize();
 
-				if (m_current_mode.m_skin)
+				if (IsWindow(myWindowState.me))
 				{
 					// STRANGE ALIGNMENTS FOR THE WINDOW FRAME: (required by winamp 2):
 					// the window frame's width must be divisible by 25, and height by 29.
@@ -1049,9 +1140,14 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 					m_window_width  = m_client_width ; // m_window_width/height are for OUR [borderless] window, not the parent window (which is the embedwnd frame).
 					m_window_height = m_client_height;
-					SetWindowPos(m_current_mode.parent_window,HWND_NOTOPMOST, m_monitor_work_rect.left, m_monitor_work_rect.top, m_client_width + margin.left + margin.right, m_client_height + margin.top + margin.bottom, /*SWP_SHOWWINDOW|*//*SWP_ASYNCWINDOWPOS*/0);
-					SetWindowPos(m_hwnd ,HWND_NOTOPMOST, m_monitor_work_rect.left+32 + margin.left, m_monitor_work_rect.top+32 + margin.top, m_client_width, m_client_height, SWP_SHOWWINDOW);
+					SetWindowPos(m_current_mode.parent_window,HWND_NOTOPMOST, m_monitor_work_rect.left,
+								 m_monitor_work_rect.top, m_client_width + margin.left + margin.right,
+								 m_client_height + margin.top + margin.bottom, 0);
+					SetWindowPos(m_hwnd ,HWND_NOTOPMOST, m_monitor_work_rect.left+32 + margin.left,
+								 m_monitor_work_rect.top+32 + margin.top, m_client_width,
+								 m_client_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 				}
+#ifdef NON_SKIN_MODE
 				else
 				{
 					SetRect(&r, 0, 0, size, size);
@@ -1060,8 +1156,11 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 					m_window_width  = r.right - r.left;
 					m_window_height = r.bottom - r.top;
 
-					SetWindowPos(m_hwnd,HWND_NOTOPMOST, m_monitor_work_rect.left+32, m_monitor_work_rect.top+32, m_window_width, m_window_height, SWP_SHOWWINDOW);
+					SetWindowPos(m_hwnd,HWND_NOTOPMOST, m_monitor_work_rect.left+32,
+								 m_monitor_work_rect.top+32, m_window_width,
+								 m_window_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 				}
+#endif
 			}
 		}
 
@@ -1102,7 +1201,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			                    m_ordinal_adapter,
 			                    D3DDEVTYPE_HAL,
 			                    m_hwnd,
-			                    (m_caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) ? D3DCREATE_MIXED_VERTEXPROCESSING : D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+			                    (m_caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) ?
+												  D3DCREATE_MIXED_VERTEXPROCESSING :
+												  D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 			                    &m_d3dpp,
 			                    &m_lpDevice)))
 			{
@@ -1115,21 +1216,20 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 					wchar_t str[2048] = {0};
 					WASABI_API_LNGSTRINGW_BUF(IDS_UNABLE_TO_CREATE_DIRECTX_DEVICE, str, 2048);
 
-					if (m_current_mode.screenmode == FULLSCREEN)
-						StringCchCatW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION));
-					else
-						StringCchCatW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2));
+					wcsncat(str, WASABI_API_LNGSTRINGW(((m_current_mode.screenmode == FULLSCREEN) ?
+							IDS_OLDER_DISPLAY_ADAPTER_CATENATION :
+							IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2)), ARRAYSIZE(str));
 
 					MessageBoxW(m_hwnd,str,
 							   WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
 							   MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
 					return FALSE;
 				}
-				else if (m_current_mode.screenmode==WINDOWED && m_client_width>64)
+				else if ((m_current_mode.screenmode == WINDOWED) && (m_client_width > 64))
 				{
 					// DO NOTHING; try again w/smaller window
 				}
-				else if (m_current_mode.screenmode != WINDOWED || m_client_width <= 64)
+				else if ((m_current_mode.screenmode != WINDOWED) || (m_client_width <= 64))
 				{
 					wchar_t str[2048] = {0};
 					// usually, code==2154 here, which is D3DERR_OUTOFVIDEOMEMORY
@@ -1156,29 +1256,35 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 	// set initial viewport
 	SetViewport();
 
+#ifdef LEGACY_DESKTOP_MODE
 	// for desktop mode, push window to back again:
 	if (m_current_mode.screenmode==DESKTOP)
 		SetWindowPos(m_hwnd,HWND_BOTTOM,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
-
-	if (m_current_mode.m_skin)
+#else
+	// for desktop mode we need to ensure that the
+	// window being rendered to is set as visible!
+	if (m_current_mode.screenmode == DESKTOP)
 	{
-		/*if (GetWinampVersion(mod1.hwndParent) < 0x5051) 
-			SetFocus(m_current_mode.parent_window);
-		else*/
-			PostMessage(m_current_mode.parent_window, WM_USER+103, 0, 0); 
-		
-		//SetActiveWindow(m_current_mode.parent_window);
-		//SetForegroundWindow(m_current_mode.parent_window);
+		ShowWindow(m_hwnd, SW_SHOWNA);
+	}
+#endif
+
+	m_ready = TRUE;
+
+	if (m_current_mode.screenmode == WINDOWED)
+	{
+		PostMessage(m_current_mode.parent_window, WM_USER + 103, 0, 0);
+		PostMessage(m_hwnd, WM_USER + 555, 0, 0);
+
+		// to better match the current visible state of WACUP it's
+		// necessary to avoid showing our window when minimised :)
+		if (!IsIconic(m_hwnd_winamp))
+		{
+			PostMessage(m_current_mode.parent_window, WM_USER + 102, 0, 0);
+		}
 	}
 
-	/*if (m_current_mode.screenmode == WINDOWED)
-		SaveWindow();*/
-
 	// return success
-	m_ready = TRUE;
-	// benski> a little hack to get the window size correct. it seems to work
-	if (m_current_mode.screenmode==WINDOWED)
-		PostMessage(m_hwnd, WM_USER+555, 0, 0);
 	return TRUE;
 }
 
@@ -1406,6 +1512,7 @@ void DXContext::SaveWindow()
 {
 	if (m_current_mode.screenmode == WINDOWED)
 	{
+#ifdef NON_SKIN_MODE
 		if (!m_current_mode.m_skin)
 		{
 			RECT c;
@@ -1430,15 +1537,21 @@ void DXContext::SaveWindow()
 			WritePrivateProfileIntW(c.right, 0, L"nMainWndRight",  m_szIniFile, L"settings");
 			WritePrivateProfileIntW(c.bottom, 0, L"nMainWndBottom", m_szIniFile, L"settings");
 		}
+#endif
 
 		// also save bounds for embedwnd
-		if (m_current_mode.m_skin && myWindowState.me)
+#ifdef NON_SKIN_MODE
+		if (m_current_mode.m_skin && IsWindow(myWindowState.me))
+#else
+		if (IsWindow(myWindowState.me))
+#endif
 		{
 			// unless we're closing as a classic skin then we'll
 			// skip saving the current window position otherwise
 			// we have the issue with windows being in the wrong
 			// places after modern -> exit -> modern -> classic
-			if (!myWindowState.wasabi_window)
+			if (!myWindowState.wasabi_window &&
+				!EqualRect(&initialRect, &myWindowState.r))
 			{
 				WritePrivateProfileIntW(myWindowState.r.left, 0, L"avs_wx", m_szIniFile, L"settings");
 				WritePrivateProfileIntW(myWindowState.r.top, 0, L"avs_wy", m_szIniFile, L"settings");
@@ -1446,7 +1559,8 @@ void DXContext::SaveWindow()
 				WritePrivateProfileIntW(myWindowState.r.bottom - myWindowState.r.top, 0, L"avs_wh", m_szIniFile, L"settings");
 			}
 		}
-		else if (!m_current_mode.m_skin && m_hwnd)
+#ifdef NON_SKIN_MODE
+		else if (!m_current_mode.m_skin && IsWindow(m_hwnd))
 		{
 			RECT r = { 0 };
 			GetWindowRect(m_hwnd, &r);
@@ -1455,5 +1569,6 @@ void DXContext::SaveWindow()
 			WritePrivateProfileIntW(r.right-r.left, 0, L"avs_ww",m_szIniFile,L"settings");
 			WritePrivateProfileIntW(r.bottom-r.top, 0, L"avs_wh",m_szIniFile,L"settings");
 		}
+#endif
 	}
 }

@@ -37,6 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utility.h"
 #include <assert.h>
 #include <math.h>
+#include <shlwapi.h>
 
 #define D3DCOLOR_RGBA_01(r,g,b,a) D3DCOLOR_RGBA(((int)(r*255)),((int)(g*255)),((int)(b*255)),((int)(a*255)))
 #define FRAND ((warand() % 7381)/7380.0f)
@@ -731,9 +732,9 @@ void CPlugin::RunPerFrameEquations(int code)
     }
 }
 
-void CPlugin::RenderFrame(int bRedraw)
+void CPlugin::RenderFrame(const int bRedraw)
 {
-    float fDeltaT = 1.0f/GetFps();
+    const float fDeltaT = 1.0f/GetFps();
 
     if (bRedraw)
     {
@@ -851,7 +852,8 @@ void CPlugin::RenderFrame(int bRedraw)
 	    // randomly spawn Song Title, if time
 	    if (m_fTimeBetweenRandomSongTitles > 0 && 
 		    !m_supertext.bRedrawSuperText &&
-		    GetTime() >= m_supertext.fStartTime + m_supertext.fDuration + 1.0f/GetFps())
+		    GetTime() >= m_supertext.fStartTime +
+			m_supertext.fDuration + 1.0f/GetFps())
 	    {		
 		    int n = GetNumToSpawn(GetTime(), fDeltaT, 1.0f/m_fTimeBetweenRandomSongTitles, 0.5f, m_nSongTitlesSpawned);
 		    if (n > 0)
@@ -864,9 +866,10 @@ void CPlugin::RenderFrame(int bRedraw)
 	    // randomly spawn Custom Message, if time
 	    if (m_fTimeBetweenRandomCustomMsgs > 0 && 
 		    !m_supertext.bRedrawSuperText &&
-		    GetTime() >= m_supertext.fStartTime + m_supertext.fDuration + 1.0f/GetFps())
+		    GetTime() >= m_supertext.fStartTime +
+			m_supertext.fDuration + 1.0f/GetFps())
 	    {		
-		    int n = GetNumToSpawn(GetTime(), fDeltaT, 1.0f/m_fTimeBetweenRandomCustomMsgs, 0.5f, m_nCustMsgsSpawned);
+		    const int n = GetNumToSpawn(GetTime(), fDeltaT, 1.0f/m_fTimeBetweenRandomCustomMsgs, 0.5f, m_nCustMsgsSpawned);
 		    if (n > 0)
 		    {
 			    LaunchCustomMessage(-1);
@@ -922,16 +925,16 @@ void CPlugin::RenderFrame(int bRedraw)
 	    }
     }
 
-    bool bOldPresetUsesWarpShader = (m_pOldState->m_nWarpPSVersion > 0);
-    bool bNewPresetUsesWarpShader = (m_pState->m_nWarpPSVersion > 0);
-    bool bOldPresetUsesCompShader = (m_pOldState->m_nCompPSVersion > 0);
-    bool bNewPresetUsesCompShader = (m_pState->m_nCompPSVersion > 0);
+	const bool bOldPresetUsesWarpShader = (m_pOldState->m_nWarpPSVersion > 0);
+	const bool bNewPresetUsesWarpShader = (m_pState->m_nWarpPSVersion > 0);
+	const bool bOldPresetUsesCompShader = (m_pOldState->m_nCompPSVersion > 0);
+	const bool bNewPresetUsesCompShader = (m_pState->m_nCompPSVersion > 0);
 
     // note: 'code' is only meaningful if we are BLENDING.
-    int code = (bOldPresetUsesWarpShader ? 8 : 0) | 
-               (bOldPresetUsesCompShader ? 4 : 0) | 
-               (bNewPresetUsesWarpShader ? 2 : 0) | 
-               (bNewPresetUsesCompShader ? 1 : 0);
+    const int code = (bOldPresetUsesWarpShader ? 8 : 0) | 
+					 (bOldPresetUsesCompShader ? 4 : 0) | 
+					 (bNewPresetUsesWarpShader ? 2 : 0) | 
+					 (bNewPresetUsesCompShader ? 1 : 0);
 
 	RunPerFrameEquations(code);
 
@@ -1015,7 +1018,7 @@ void CPlugin::RenderFrame(int bRedraw)
 	    lpDevice->SetTexture(0, NULL);
 
         IDirect3DSurface9* pNewTarget = NULL;
-        if (m_lpVS[0]->GetSurfaceLevel(0, &pNewTarget) != D3D_OK) 
+        if (!m_lpVS[0] || m_lpVS[0]->GetSurfaceLevel(0, &pNewTarget) != D3D_OK)
             return;
         lpDevice->SetRenderTarget(0, pNewTarget );
          //lpDevice->SetDepthStencilSurface( NULL );
@@ -1055,7 +1058,7 @@ void CPlugin::RenderFrame(int bRedraw)
 
     if (m_bAutoGamma && GetFrame()==0)
 	{
-		if (strstr(GetDriverDescription(), "nvidia") ||
+		/*if (strstr(GetDriverDescription(), "nvidia") ||
 			strstr(GetDriverDescription(), "nVidia") ||
 			strstr(GetDriverDescription(), "NVidia") ||
 			strstr(GetDriverDescription(), "NVIDIA"))
@@ -1063,7 +1066,11 @@ void CPlugin::RenderFrame(int bRedraw)
 		else if (strstr(GetDriverDescription(), "ATI RAGE MOBILITY M"))
 	        m_n16BitGamma = 2;
 		else 
-            m_n16BitGamma = 0;
+            m_n16BitGamma = 0;*/
+		LPCSTR driver_desc = GetDriverDescription();
+		m_n16BitGamma = ((driver_desc && *driver_desc &&
+		 				strstr(driver_desc, "ATI RAGE MOBILITY M") ||
+						StrStrIA(driver_desc, "nVidia")) ? 2 : 0);
 	}
 
     ComputeGridAlphaValues();
@@ -1119,7 +1126,7 @@ void CPlugin::RenderFrame(int bRedraw)
 	DrawWave(mysound.fWave[0], mysound.fWave[1]);
 	DrawSprites();
 
-	float fProgress = (GetTime() - m_supertext.fStartTime) / m_supertext.fDuration;
+	const float fProgress = (GetTime() - m_supertext.fStartTime) / m_supertext.fDuration;
 
 	// if song title animation just ended, burn it into the VS:
 	if (m_supertext.fStartTime >= 0 &&
@@ -1458,7 +1465,7 @@ void CPlugin::UpdateSongInfo()
 		}
 	}
 
-	m_nTrackPlaying = SendMessage(m_hWndParent,WM_USER, 0, 125);
+	m_nTrackPlaying = GetPlaylistPosition();
 
 	// append song time
 	if (m_bShowSongTime && m_nSongPosMS >= 0)
@@ -2268,7 +2275,7 @@ void CPlugin::WarpedBlit_Shaders(int nPass, bool bAlphaBlend, bool bFlipAlpha, b
     RestoreShaderParams();
 }
 
-void CPlugin::DrawCustomShapes()
+void CPlugin::DrawCustomShapes() const
 {
     LPDIRECT3DDEVICE9 lpDevice = GetDevice();
     if (!lpDevice)
@@ -2548,7 +2555,7 @@ int SmoothWave(WFVERTEX* vi, int nVertsIn, WFVERTEX* vo)
     return j;
 }
 
-void CPlugin::DrawCustomWaves()
+void CPlugin::DrawCustomWaves() const
 {
     LPDIRECT3DDEVICE9 lpDevice = GetDevice();
     if (!lpDevice)
@@ -2571,26 +2578,26 @@ void CPlugin::DrawCustomWaves()
         {
             if (pState->m_wave[i].enabled)
             {
-                int nSamples = pState->m_wave[i].samples;
+                //int nSamples = pState->m_wave[i].samples;
                 int max_samples = pState->m_wave[i].bSpectrum ? 512 : NUM_WAVEFORM_SAMPLES;
-                if (nSamples > max_samples)
+                /*if (nSamples > max_samples)
                     nSamples = max_samples;
-                nSamples -= pState->m_wave[i].sep;
+                nSamples -= pState->m_wave[i].sep;*/
 
                 // 1. execute per-frame code
                 LoadCustomWavePerFrameEvallibVars(pState, i);
 
 			    // 2.a. do just a once-per-frame init for the *per-point* *READ-ONLY* variables
 			    //     (the non-read-only ones will be reset/restored at the start of each vertex)
-			    *pState->m_wave[i].var_pp_time		= *pState->m_wave[i].var_pf_time;	
+			    *pState->m_wave[i].var_pp_time		= *pState->m_wave[i].var_pf_time;
 			    *pState->m_wave[i].var_pp_fps       = *pState->m_wave[i].var_pf_fps;
 			    *pState->m_wave[i].var_pp_frame		= *pState->m_wave[i].var_pf_frame;
 		        *pState->m_wave[i].var_pp_progress  = *pState->m_wave[i].var_pf_progress;
-			    *pState->m_wave[i].var_pp_bass		= *pState->m_wave[i].var_pf_bass;	
-			    *pState->m_wave[i].var_pp_mid		= *pState->m_wave[i].var_pf_mid;		
-			    *pState->m_wave[i].var_pp_treb		= *pState->m_wave[i].var_pf_treb;	
+			    *pState->m_wave[i].var_pp_bass		= *pState->m_wave[i].var_pf_bass;
+			    *pState->m_wave[i].var_pp_mid		= *pState->m_wave[i].var_pf_mid;
+			    *pState->m_wave[i].var_pp_treb		= *pState->m_wave[i].var_pf_treb;
 			    *pState->m_wave[i].var_pp_bass_att	= *pState->m_wave[i].var_pf_bass_att;
-			    *pState->m_wave[i].var_pp_mid_att	= *pState->m_wave[i].var_pf_mid_att;	
+			    *pState->m_wave[i].var_pp_mid_att	= *pState->m_wave[i].var_pf_mid_att;
 			    *pState->m_wave[i].var_pp_treb_att	= *pState->m_wave[i].var_pf_treb_att;
 
 				NSEEL_code_execute(pState->m_wave[i].m_pf_codehandle);
@@ -2600,15 +2607,15 @@ void CPlugin::DrawCustomWaves()
                 for (int vi=0; vi<NUM_T_VAR; vi++)
                     *pState->m_wave[i].var_pp_t[vi] = *pState->m_wave[i].var_pf_t[vi];
 
-                nSamples = min(512, (int)*pState->m_wave[i].var_pf_samples);
+                int nSamples = min(512, (int)*pState->m_wave[i].var_pf_samples);
 
                 if ((nSamples >= 2) || (pState->m_wave[i].bUseDots && nSamples >= 1))
                 {
                     int j;
                     float tempdata[2][512];
                     float mult = ((pState->m_wave[i].bSpectrum) ? 0.15f : 0.004f) * pState->m_wave[i].scaling * pState->m_fWaveScale.eval(-1);
-                    float *pdata1 = (pState->m_wave[i].bSpectrum) ? m_sound.fSpectrum[0] : m_sound.fWaveform[0];
-                    float *pdata2 = (pState->m_wave[i].bSpectrum) ? m_sound.fSpectrum[1] : m_sound.fWaveform[1];
+                    const float *pdata1 = (pState->m_wave[i].bSpectrum) ? m_sound.fSpectrum[0] : m_sound.fWaveform[0];
+					const float *pdata2 = (pState->m_wave[i].bSpectrum) ? m_sound.fSpectrum[1] : m_sound.fWaveform[1];
                 
                     // initialize tempdata[2][512]
                     int j0 = (pState->m_wave[i].bSpectrum) ? 0 : (max_samples - nSamples)/2/**(1-pState->m_wave[i].bSpectrum)*/ - pState->m_wave[i].sep/2;

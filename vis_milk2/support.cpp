@@ -251,6 +251,7 @@ void MakeProjectionMatrix( D3DXMATRIX* pOut,
     pOut->_34 = 1;
 }
 
+#if 0
 void GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, const int nSize)
 {
 	szSongTitle[0] = 0;
@@ -321,6 +322,7 @@ void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSong
 		FormatTimeString(szSongLen, nSongLen, nSongLenMS);
 	}
 }
+#endif
 
 int GetDX9TexFormatBitsPerPixel(D3DFORMAT fmt)
 {

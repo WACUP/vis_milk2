@@ -54,8 +54,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern winampVisModule mod1;
 
 IDirect3D9* g_lpDX;
-HMODULE     g_hmod_d3d9;
-HMODULE     g_hmod_d3dx9;
+HINSTANCE   g_hmod_d3d9;
+HINSTANCE   g_hmod_d3dx9;
 D3DADAPTER_IDENTIFIER9 g_disp_adapter_w[MAX_DISPLAY_ADAPTERS];   // NOTE: indices into this list might not equal the ordinal adapter indices!
 D3DADAPTER_IDENTIFIER9 g_disp_adapter_fs[MAX_DISPLAY_ADAPTERS];  // NOTE: indices into this list might not equal the ordinal adapter indices!
 D3DADAPTER_IDENTIFIER9 g_disp_adapter_dm[MAX_DISPLAY_ADAPTERS];  // NOTE: indices into this list might not equal the ordinal adapter indices!
@@ -202,14 +202,16 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS);
 			pGUID = &m_adapter_guid_fullscreen;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_fullscreen);
+			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+						   m_adapter_devicename_fullscreen);
 			break;
 		}
 		case WINDOWED:
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_W);
 			pGUID = &m_adapter_guid_windowed;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_windowed);
+			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+						   m_adapter_devicename_windowed);
 			break;
 		}
 		/*case FAKE_FULLSCREEN:
@@ -223,7 +225,8 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_DMS);
 			pGUID = &m_adapter_guid_desktop;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName), m_adapter_devicename_desktop);
+			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+						   m_adapter_devicename_desktop);
 			break;
 		}
     }
@@ -234,130 +237,125 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		SendMessage(ctrl, CB_RESETCONTENT, 0, 0);
 
 		// repopulate the combo box with a list of adapters
+		D3DADAPTER_IDENTIFIER9* global_adapter_list = 0;
+		switch(screenmode)
 		{
-			D3DADAPTER_IDENTIFIER9* global_adapter_list = 0;
-			switch(screenmode)
+			case FULLSCREEN:
 			{
-				case FULLSCREEN:
-				{
-					global_adapter_list = g_disp_adapter_fs;
-					break;
-				}
-				case WINDOWED:
-				{
-					global_adapter_list = g_disp_adapter_w;
-					break;
-				}
-				/*case FAKE_FULLSCREEN:
-				{
-					global_adapter_list = g_disp_adapter_w;     // [sic]
-					break;
-				}*/
-				case DESKTOP:
-				{
-					global_adapter_list = g_disp_adapter_dm;
-					break;
-				}
+				global_adapter_list = g_disp_adapter_fs;
+				break;
 			}
-
-			const int nAdapters = g_lpDX->GetAdapterCount();
-
-			// re-populate it:
-
-			int nDispAdapters = 0;
-#ifdef _DEBUG
-			wchar_t szDebugFile[MAX_PATH] = {0};
-			StringCchCopyW(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
-			wchar_t* p = wcsrchr(szDebugFile, L'\\');
-			if (p)
+			case WINDOWED:
 			{
-				wcscpy(p+1, ADAPTERSFILE);
-				FILE* f = _wfopen(szDebugFile, L"w");
-				if (f)
-				{
-					DWORD winamp_version = SendMessage(GetWinampWindow(),WM_WA_IPC,0,0);
-					fprintf(f, "Winamp version = 0x%04X\n", winamp_version);
-					fprintf(f, "Plugin long name = \"%s\", version=%d, subversion=%d\n", LONGNAME, INT_VERSION, INT_SUBVERSION);
-					fprintf(f, "Enumeration of Display Adapters:\n");
+				global_adapter_list = g_disp_adapter_w;
+				break;
+			}
+			/*case FAKE_FULLSCREEN:
+			{
+				global_adapter_list = g_disp_adapter_w;     // [sic]
+				break;
+			}*/
+			case DESKTOP:
+			{
+				global_adapter_list = g_disp_adapter_dm;
+				break;
+			}
+		}
+
+		const int nAdapters = g_lpDX->GetAdapterCount();
+
+		// re-populate it:
+
+		int nDispAdapters = 0;
+#ifdef _DEBUG
+		wchar_t szDebugFile[MAX_PATH] = {0};
+		StringCchCopyW(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
+		wchar_t* p = wcsrchr(szDebugFile, L'\\');
+		if (p)
+		{
+			wcscpy(p+1, ADAPTERSFILE);
+			FILE* f = _wfopen(szDebugFile, L"w");
+			if (f)
+			{
+				fprintf(f, "Winamp version = 0x%04X\n", SendMessage(GetWinampWindow(), WM_WA_IPC, 0, IPC_GETVERSION));
+				fprintf(f, "Plugin long name = \"%s\", version=%d, subversion=%d\n", LONGNAME, INT_VERSION, INT_SUBVERSION);
+				fprintf(f, "Enumeration of Display Adapters:\n");
 #endif
-					//fprintf(f, "...this is a temporary debug file created by MilkDrop 2.\n");
-					//fprintf(f, "...don't worry - the final release of the plug-in will NOT generate this file.\n");
-					for (int i=0; i<nAdapters && nDispAdapters<MAX_DISPLAY_ADAPTERS; i++)
+				//fprintf(f, "...this is a temporary debug file created by MilkDrop 2.\n");
+				//fprintf(f, "...don't worry - the final release of the plug-in will NOT generate this file.\n");
+				for (int i=0; i<nAdapters && nDispAdapters<MAX_DISPLAY_ADAPTERS; i++)
+				{
+					if (g_lpDX->GetAdapterIdentifier(i, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &global_adapter_list[nDispAdapters]) == D3D_OK)
 					{
-						if (g_lpDX->GetAdapterIdentifier(i, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &global_adapter_list[nDispAdapters]) == D3D_OK)
+						// Now get the caps, and filter out any graphics cards that can't
+						// do, say, gouraud shading:
+
+						//int adapter_ok = 1;
+
+						/*
+						D3DCAPS9 caps;
+						if (g_lpDX->GetDeviceCaps(i, D3DDEVTYPE_HAL, &caps)==D3D_OK)
 						{
-							// Now get the caps, and filter out any graphics cards that can't
-							// do, say, gouraud shading:
-
-							//int adapter_ok = 1;
-
-							/*
-							D3DCAPS9 caps;
-							if (g_lpDX->GetDeviceCaps(i, D3DDEVTYPE_HAL, &caps)==D3D_OK)
-							{
-								// check the caps here, make sure the device is up to par.  example:
-								if (caps.ShadeCaps & D3DPSHADECAPS_COLORGOURAUDRGB)
-								  adapter_ok = 0;
-							}
-							*/
-#ifdef _DEBUG
-							fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
-							fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
-							fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
-							fprintf(f, "    DriverVersion=0x%08X\n",global_adapter_list[nDispAdapters].DriverVersion);
-							fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
-							fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
-							fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
-							fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
-							//fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
-							char szGuidText[512] = {0};
-							GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, ARRAYSIZE(szGuidText));
-							fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
-							fprintf(f, "    GUID=%s\n", szGuidText);
-#endif
-
-							/*if (adapter_ok)
-							{*/
-								wchar_t szDesc[1024] = {0};
-								_snwprintf(szDesc, ARRAYSIZE(szDesc), L"%d. %hs   [%hs]", nDispAdapters+1,
-										   global_adapter_list[nDispAdapters].Description, global_adapter_list[nDispAdapters].Driver);
-								SendMessageW( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
-								++nDispAdapters;
-							//}
+							// check the caps here, make sure the device is up to par.  example:
+							if (caps.ShadeCaps & D3DPSHADECAPS_COLORGOURAUDRGB)
+								adapter_ok = 0;
 						}
-					}
+						*/
 #ifdef _DEBUG
-					fclose(f);
-				}
-			}
+						fprintf(f, "%d. Driver=%s\n", nDispAdapters+1, global_adapter_list[nDispAdapters].Driver);
+						fprintf(f, "    Description=%s\n",      global_adapter_list[nDispAdapters].Description);
+						fprintf(f, "    DeviceName=%s\n",       global_adapter_list[nDispAdapters].DeviceName);
+						fprintf(f, "    DriverVersion=0x%08X\n",global_adapter_list[nDispAdapters].DriverVersion);
+						fprintf(f, "    VendorId=%d\n",         global_adapter_list[nDispAdapters].VendorId);
+						fprintf(f, "    DeviceId=%d\n",         global_adapter_list[nDispAdapters].DeviceId);
+						fprintf(f, "    SubSysId=0x%08X\n",         global_adapter_list[nDispAdapters].SubSysId);
+						fprintf(f, "    Revision=%d\n",         global_adapter_list[nDispAdapters].Revision);
+						//fprintf(f, "    DeviceIdentifier=0x%08X\n", global_adapter_list[nDispAdapters].DeviceIdentifier);
+						char szGuidText[512] = {0};
+						GuidToText(&global_adapter_list[nDispAdapters].DeviceIdentifier, szGuidText, ARRAYSIZE(szGuidText));
+						fprintf(f, "    WHQLLevel=%d\n",        global_adapter_list[nDispAdapters].WHQLLevel);
+						fprintf(f, "    GUID=%s\n", szGuidText);
 #endif
 
-			// set selection(s):
-			// find i where global_adapter_list[i].DeviceIdentifier is the same as last time,
-			// and select it.
-			int found = 0;
-			for (int i=0; i<nDispAdapters; i++)
-			{
-				if (!found && 
-					memcmp(&global_adapter_list[i].DeviceIdentifier, pGUID, sizeof(GUID))==0 &&
-					!strcmp(global_adapter_list[i].DeviceName, deviceName)
-					)
-				{
-					SendMessage( ctrl, CB_SETCURSEL, i, 0);
-					found = 1;
+						/*if (adapter_ok)
+						{*/
+							wchar_t szDesc[256] = {0};
+							_snwprintf(szDesc, ARRAYSIZE(szDesc), L"%d. %hs"/*"   [%hs]"*/, nDispAdapters+1,
+									   global_adapter_list[nDispAdapters].Description/*,
+									   global_adapter_list[nDispAdapters].Driver*/);
+							SendMessageW( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
+							++nDispAdapters;
+						//}
+					}
 				}
+#ifdef _DEBUG
+				fclose(f);
 			}
+		}
+#endif
 
-			if (screenmode != DESKTOP)
+		// set selection(s):
+		// find i where global_adapter_list[i].DeviceIdentifier is the same as last time,
+		// and select it.
+		int found = 0;
+		for (int i=0; i<nDispAdapters; i++)
+		{
+			if (!found && 
+				memcmp(&global_adapter_list[i].DeviceIdentifier, pGUID, sizeof(GUID))==0 &&
+				!strcmp(global_adapter_list[i].DeviceName, deviceName)
+				)
 			{
-				SendMessageW(ctrl, CB_INSERTSTRING, 0,
-							 (LPARAM)WASABI_API_LNGSTRINGW(IDS_AUTO));
+				SendMessage( ctrl, CB_SETCURSEL, i, 0);
+				found = 1;
 			}
+		}
 
-			if (!found)
-			{
-				SendMessage(ctrl, CB_SETCURSEL, 0, 0);
-			}
+		SendMessageW(ctrl, CB_INSERTSTRING, 0, (LPARAM)
+					 WASABI_API_LNGSTRINGW(IDS_AUTO));
+
+		if (!found)
+		{
+			SendMessage(ctrl, CB_SETCURSEL, 0, 0);
 		}
 
 		if (screenmode == FULLSCREEN)
@@ -972,11 +970,20 @@ void CPluginShell::SaveAdapter(const int screenmode)
 				}*/
 				case DESKTOP:
 				{
-					m_adapter_guid_desktop = g_disp_adapter_dm[n].DeviceIdentifier;
-					StringCchCopyA(m_adapter_devicename_desktop,
-								   ARRAYSIZE(m_adapter_devicename_desktop),
-								   g_disp_adapter_fs[n].DeviceName);
-					//strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
+					if (!n)
+					{
+						m_adapter_guid_desktop = GUID_NULL;
+						m_adapter_devicename_desktop[0] = 0;
+					}
+					else
+					{
+						--n;
+						m_adapter_guid_desktop = g_disp_adapter_dm[n].DeviceIdentifier;
+						StringCchCopyA(m_adapter_devicename_desktop,
+									   ARRAYSIZE(m_adapter_devicename_desktop),
+									   g_disp_adapter_fs[n].DeviceName);
+						//strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
+					}
 					break;
 				}
 			}
@@ -1009,9 +1016,9 @@ void CPluginShell::OnTabChanged(const int nNewTab)
         // which is where 'g_subwnd' will get set.
 
         // do this here to ensure that the current prefs page is correctly themed
-        if(!SendMessage(this->m_hWndWinamp,WM_WA_IPC,IPC_ISWINTHEMEPRESENT,IPC_USE_UXTHEME_FUNC))
+        if(!UXThemeFunc(IPC_ISWINTHEMEPRESENT))
         {
-            SendMessage(this->m_hWndWinamp,WM_WA_IPC,(WPARAM)h,IPC_USE_UXTHEME_FUNC);
+			UXThemeFunc((WPARAM)h);
         }
     }
 }
@@ -1085,14 +1092,18 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             // set checkboxes
             CheckDlgButton(hwnd, IDC_CB_FS,  m_start_fullscreen);
             CheckDlgButton(hwnd, IDC_CB_DMS,  m_start_desktop);
+			EnableControl(hwnd, IDC_CB_DMS, m_desktop_supported);
             CheckDlgButton(hwnd, IDC_CB_FAKE, m_fake_fullscreen_mode);
             CheckDlgButton(hwnd, IDC_CB_PRESS_F1_MSG, m_show_press_f1_msg);
             CheckDlgButton(hwnd, IDC_CB_WPT, m_allow_page_tearing_w);
             CheckDlgButton(hwnd, IDC_CB_FSPT, m_allow_page_tearing_fs);
             CheckDlgButton(hwnd, IDC_CB_DMSPT, m_allow_page_tearing_dm);
+			EnableControl(hwnd, IDC_CB_DMSPT, m_desktop_supported);
             CheckDlgButton(hwnd, IDC_CB_MIN, m_minimize_winamp);
             CheckDlgButton(hwnd, IDC_CB_SAVE_CPU, m_save_cpu);
+#ifdef NON_SKIN_MODE
             CheckDlgButton(hwnd, IDC_CB_SKIN, m_skin);
+#endif
 			CheckDlgButton(hwnd, IDC_CB_FIXSLOWTEXT, m_fix_slow_text);
             CheckDlgButton(hwnd, IDC_CB_VJMODE, m_vj_mode);
 
@@ -1108,7 +1119,19 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
               //-then calls UpdateDispModeMultiSampling(2).
             UpdateMaxFps(0);
             UpdateMaxFps(1);
-            UpdateMaxFps(3); // desktop
+			UpdateMaxFps(3); // desktop
+
+			if (!m_desktop_supported)
+			{
+				SetDlgItemText(hwnd, IDC_DMS_LABEL, WASABI_API_LNGSTRINGW(IDS_DESKTOP_NOT_SUPPORTED));
+				EnableControl(hwnd, IDC_DMS_LABEL, FALSE);
+				EnableControl(hwnd, IDC_DMS_ADAPTER_CAPTION, FALSE);
+				EnableControl(hwnd, IDC_DMS_MAXFPS_CAPTION, FALSE);
+				EnableControl(hwnd, IDC_ADAPTER_DMS, FALSE);
+				EnableControl(hwnd, IDC_DMS_MAXFPS, FALSE);
+				EnableControl(hwnd, IDC_DMS_MULTISAMPLING_CAPTION, FALSE);
+				EnableControl(hwnd, IDC_DMSMS, FALSE);
+			}
 
             // disable a few things if fake fullscreen mode enabled:
 			EnableControl(hwnd, IDC_DISP_MODE, !m_fake_fullscreen_mode);
@@ -1130,11 +1153,12 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             m_save_cpu             = DlgItemIsChecked(hwnd, IDC_CB_SAVE_CPU );
             m_fix_slow_text        = DlgItemIsChecked(hwnd, IDC_CB_FIXSLOWTEXT);
             m_vj_mode              = DlgItemIsChecked(hwnd, IDC_CB_VJMODE);
+#ifdef NON_SKIN_MODE
 #if 0
             if (mod1.hwndParent && SendMessage(mod1.hwndParent,WM_WA_IPC,0,0) >= 0x2900)
 #endif
                 m_skin             = DlgItemIsChecked(hwnd, IDC_CB_SKIN );
-
+#endif
             // read all 3 adapters
             SaveAdapter(0);
             SaveAdapter(1);
@@ -1165,11 +1189,11 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
 			case ID_FONTS:
                 WASABI_API_DIALOGBOXPARAMW(IDD_FONTDIALOG, hwnd, FontDialogProc, (LPARAM)this);
                 break;
-
+#ifdef LEGACY_DESKTOP_MODE
 			case ID_DM_MORE:
                 WASABI_API_DIALOGBOXPARAMW(IDD_DESKTOPMODE, hwnd, DesktopOptionsDialogProc, (LPARAM)this);
                 break;
-
+#endif
 			case ID_DUALHEAD:
                 WASABI_API_DIALOGBOXPARAMW(IDD_DUALHEAD, hwnd, DualheadDialogProc, (LPARAM)this);
                 break;
@@ -1357,12 +1381,12 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 WASABI_API_LNGSTRINGW_BUF(IDS_HELP_ON_F1, title, 1024);
 				WASABI_API_LNGSTRINGW_BUF(IDS_HELP_ON_F1_HELP, buf, 2048);
                 break;
-
+#ifdef NON_SKIN_MODE
             case IDC_CB_SKIN:
 				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_CB_SKIN_HELP, buf, 2048);
                 break;
-
+#endif
             case IDC_CB_SAVE_CPU:
                 WASABI_API_LNGSTRINGW_BUF(IDS_SAVE_CPU_CHECKBOX, title, 1024);
 				WASABI_API_LNGSTRINGW_BUF(IDS_SAVE_CPU_CHECKBOX_HELP, buf, 2048);
@@ -1397,11 +1421,12 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_W_LABEL_HELP, buf, 2048);
                 break;
-
+#ifdef LEGACY_DESKTOP_MODE
             case ID_DM_MORE:
                 StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_DM_MORE_HELP, buf, 2048);
                 break;
+#endif
             }
 
             if (buf[0])

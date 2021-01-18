@@ -61,8 +61,6 @@ void    RemoveExtension(wchar_t *str);
 void    RemoveSingleAmpersands(wchar_t *str);
 void    TextToGuid(char *str, GUID *pGUID);
 void    GuidToText(GUID *pGUID, char *str, int nStrLen);
-//int    GetPentiumTimeRaw(unsigned __int64 *cpu_timestamp);
-//double GetPentiumTimeAsDouble(unsigned __int64 frequency);
 #ifdef _DEBUG
     void    OutputDebugMessage(char *szStartText, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam); // only available in RELEASE builds!
 #endif
@@ -73,13 +71,17 @@ void    GetDesktopFolder(wchar_t *szDesktopFolder); // should be MAX_PATH len.
 #include <shlobj.h>
 #include <list>
 
+#ifdef LEGACY_DESKTOP_MODE
 BOOL    DoExplorerMenu (HWND hwnd, LPITEMIDLIST pidlMain, POINT point);
 UINT    GetItemCount (LPITEMIDLIST pidl);
 LPITEMIDLIST GetNextItem (LPITEMIDLIST pidl);
 LPITEMIDLIST DuplicateItem (LPMALLOC pMalloc, LPITEMIDLIST pidl);
-void    FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *listview_wnd);
+void	FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *listview_wnd);
 void    ExecutePidl(LPITEMIDLIST pidl, wchar_t *szPathAndFile, wchar_t *szWorkingDirectory, HWND hWnd);
 int     GetDesktopIconSize();
+#else
+void	FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd);
+#endif
 
 // handy functions for populating Combo Boxes:
 inline void AddItem(HWND ctrl, const wchar_t* text, DWORD itemdata) {
@@ -95,7 +97,7 @@ bool ReadCBValue(HWND hwnd, DWORD ctrl_id, int* pRetValue);
 //LRESULT GetWinampVersion(HWND winamp);
 //void* GetTextResource(UINT id, int no_fallback);
 
-HMODULE FindD3DX9(HWND winamp);
+HINSTANCE FindD3DX9(HWND winamp);
 
 intptr_t myOpenURL(HWND hwnd, LPCWSTR loc);
 

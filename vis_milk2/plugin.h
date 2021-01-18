@@ -484,7 +484,9 @@ public:
         bool		m_bShowFPS;
         bool		m_bShowRating;
         bool		m_bShowPresetInfo;
+#ifdef _DEBUG
         bool		m_bShowDebugInfo;
+#endif
         bool		m_bShowSongTitle;
         bool		m_bShowSongTime;
         bool		m_bShowSongLen;
@@ -595,7 +597,7 @@ public:
    //====[ 2. methods added: ]=====================================================================================
         
         void RefreshTab2(HWND hwnd);
-        void RenderFrame(int bRedraw);
+        void RenderFrame(const int bRedraw);
         void AlignWave(int nSamples);
 
         void        DrawTooltip(wchar_t* str, int xR, int yB);
@@ -636,8 +638,8 @@ public:
 	    bool		RenderStringToTitleTexture();
 	    void		ShowSongTitleAnim(/*IDirect3DTexture9* lpRenderTarget,*/ int w, int h, float fProgress);
 	    void		DrawWave(float *fL, float *fR);
-        void        DrawCustomWaves();
-        void        DrawCustomShapes();
+        void        DrawCustomWaves() const;
+        void        DrawCustomShapes() const;
 	    void		DrawSprites() const;
         void        ComputeGridAlphaValues();
         //void        WarpedBlit();
@@ -676,8 +678,8 @@ public:
         virtual int  AllocateMyNonDx9Stuff();
         virtual void  CleanUpMyNonDx9Stuff();
         virtual int  AllocateMyDX9Stuff();
-        virtual void  CleanUpMyDX9Stuff(int final_cleanup);
-        virtual void MyRenderFn(int redraw);
+        virtual void  CleanUpMyDX9Stuff(const int final_cleanup);
+        virtual void MyRenderFn(const int redraw);
         virtual void MyRenderUI(int *upper_left_corner_y, int *upper_right_corner_y, int *lower_left_corner_y, int *lower_right_corner_y, int xL, int xR);
         virtual LRESULT MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
         virtual BOOL    MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);

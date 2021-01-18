@@ -53,7 +53,9 @@ typedef struct
     HWND parent_window;
     int m_dualhead_horz; // 0 = span both, 1 = left only, 2 = right only
     int m_dualhead_vert; // 0 = span both, 1 = top only, 2 = bottom only
-    int m_skin; 
+#ifdef NON_SKIN_MODE
+    int m_skin;
+#endif
 } 
 DXCONTEXT_PARAMS;
 
@@ -100,11 +102,14 @@ class DXContext
         LPDIRECT3D9            m_lpD3D;
         D3DCAPS9               m_caps;
 
+		embedWindowState myWindowState;
+		RECT initialRect;
+
     protected:
         D3DMULTISAMPLE_TYPE    m_multisamp;
         D3DFORMAT              m_zFormat;
         D3DFORMAT              m_orig_windowed_mode_format[MAX_DXC_ADAPTERS];
-        HMODULE m_hmod_d3d9, m_hmod_d3dx9;
+		HINSTANCE m_hmod_d3d9, m_hmod_d3dx9;
         int  m_ordinal_adapter;
         HWND m_hwnd;
         HWND m_hwnd_winamp;
@@ -120,8 +125,6 @@ class DXContext
         int  m_winamp_minimized;
         int  m_truly_exiting;
         int  m_bpp;
-
-        embedWindowState myWindowState;
 
         void WriteSafeWindowPos();
         int GetWindowedModeAutoSize(int iteration);

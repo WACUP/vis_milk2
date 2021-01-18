@@ -110,11 +110,11 @@ float GetPrivateProfileFloatW(const wchar_t *szSectionName, const wchar_t *szKey
     wchar_t szDefault[64] = {0};
     float ret = fDefault;
 
-    SafePrintfL(szDefault, ARRAYSIZE(szDefault), L"%f", fDefault);
+	WASABI_API_LNG->SafePrintfL(szDefault, ARRAYSIZE(szDefault), L"%f", fDefault);
 
     if (GetPrivateProfileStringW(szSectionName, szKeyName, szDefault, string, 64, szIniFile) > 0)
     {
-        SafeWtoF(string, &ret);
+        WASABI_API_LNG->SafeWtoF(string, &ret);
     }
     return ret;
 }
@@ -125,7 +125,7 @@ void WritePrivateProfileFloatW(const float f, const float fDefault, const wchar_
     wchar_t szValue[32] = {0};
 	if (f != fDefault)
 	{
-		SafePrintfL(szValue, ARRAYSIZE(szValue), L"%f", f);
+		WASABI_API_LNG->SafePrintfL(szValue, ARRAYSIZE(szValue), L"%f", f);
 	}
     WritePrivateProfileStringW(szSectionName, szKeyName, (szValue[0] ? szValue : NULL), szIniFile);
 }
@@ -239,79 +239,6 @@ void GuidToText(GUID *pGUID, char *str, int nStrLen)
     _snprintf(str, nStrLen, "%08X %04X %04X %02X %02X %02X %02X %02X %02X %02X %02X", 
 			  d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10]);
 }
-
-/*
-int GetPentiumTimeRaw(unsigned __int64 *cpu_timestamp)
-{
-    // returns 0 on failure, 1 on success 
-    // warning: watch out for wraparound!
-    
-    // note: it's probably better to use QueryPerformanceFrequency 
-    // and QueryPerformanceCounter()!
-
-    // get high-precision time:
-    __try
-    {
-        unsigned __int64 *dest = (unsigned __int64 *)cpu_timestamp;
-        __asm 
-        {
-            _emit 0xf        // these two bytes form the 'rdtsc' asm instruction,
-            _emit 0x31       //  available on Pentium I and later.
-            mov esi, dest
-            mov [esi  ], eax    // lower 32 bits of tsc
-            mov [esi+4], edx    // upper 32 bits of tsc
-        }
-        return 1;
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER)
-    {
-        return 0;
-    }
-
-    return 0;
-}
-        
-double GetPentiumTimeAsDouble(unsigned __int64 frequency)
-{
-    // returns < 0 on failure; otherwise, returns current cpu time, in seconds.
-    // warning: watch out for wraparound!
-
-    // note: it's probably better to use QueryPerformanceFrequency 
-    // and QueryPerformanceCounter()!
-
-    if (frequency==0)
-        return -1.0;
-
-    // get high-precision time:
-    __try
-    {
-        unsigned __int64 high_perf_time;
-        unsigned __int64 *dest = &high_perf_time;
-        __asm 
-        {
-            _emit 0xf        // these two bytes form the 'rdtsc' asm instruction,
-            _emit 0x31       //  available on Pentium I and later.
-            mov esi, dest
-            mov [esi  ], eax    // lower 32 bits of tsc
-            mov [esi+4], edx    // upper 32 bits of tsc
-        }
-        __int64 time_s     = (__int64)(high_perf_time / frequency);  // unsigned->sign conversion should be safe here
-        __int64 time_fract = (__int64)(high_perf_time % frequency);  // unsigned->sign conversion should be safe here
-        // note: here, we wrap the timer more frequently (once per week) 
-        // than it otherwise would (VERY RARELY - once every 585 years on
-        // a 1 GHz), to alleviate floating-point precision errors that start 
-        // to occur when you get to very high counter values.  
-        double ret = (time_s % (60*60*24*7)) + (double)time_fract/(double)((__int64)frequency);
-        return ret;
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER)
-    {
-        return -1.0;
-    }
-
-    return -1.0;
-}
-*/
 
 #ifdef _DEBUG
     void OutputDebugMessage(char *szStartText, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
@@ -599,8 +526,73 @@ double GetPentiumTimeAsDouble(unsigned __int64 frequency)
     }
 #endif
 
+extern "C" __declspec(dllimport) bool SetupFile(LPSTR setup_url, LPCWSTR filename);
+extern "C" __declspec(dllimport) void ExtractLZMA(LPCWSTR filename, LPCWSTR folder);
 void DownloadDirectX(HWND hwnd)
 {
+	wchar_t folder[MAX_PATH] = { 0 };
+	if (ExpandEnvironmentStrings(L"%localappdata%\\WACUP\\DirectX\\",
+								 folder, ARRAYSIZE(folder)) && folder[0])
+	{
+		CreateDirectory(folder, NULL);
+		if (PathIsDirectory(folder))
+		{
+			DWORD exit_code = (DWORD)-1;
+			wchar_t file[MAX_PATH] = { 0 };
+			PathCombine(file, folder, L"WACUP_DirectX_9_0c_Specific_Setup.7z");
+			SetupFile("https://getwacup.com/files/wacup_d3dx9_31_43_x86_embed.7z", file);
+			ExtractLZMA(file, folder);
+
+			PathCombine(file, folder, L"dxsetup.exe");
+			if (PathFileExists(file))
+			{
+				SHELLEXECUTEINFO lpExecInfo = {0};
+				lpExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+				lpExecInfo.lpFile = file;
+				lpExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_UNICODE |
+								   SEE_MASK_FLAG_NO_UI | SEE_MASK_DOENVSUBST;
+				lpExecInfo.nShow = SW_SHOWNORMAL;
+
+				// build an appropriate set of command-line
+				// options to have the installer install in
+				// portable mode local to the wacup install
+				wchar_t cl[MAX_PATH] = {L"/silent"};
+				lpExecInfo.lpParameters = cl;
+				lpExecInfo.lpDirectory = folder;
+
+				ShellExecuteEx(&lpExecInfo);
+				if (lpExecInfo.hProcess != NULL)
+				{
+					WaitForSingleObject(lpExecInfo.hProcess, INFINITE);
+					GetExitCodeProcess(lpExecInfo.hProcess, &exit_code);
+					::CloseHandle(lpExecInfo.hProcess);
+				}
+			}
+			else
+			{
+				exit_code = (DWORD)-2;
+			}
+
+			wchar_t message[256] = { 0 };
+			if (exit_code)
+			{
+				_snwprintf(message, ARRAYSIZE(message), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INSTALL_FAILED), exit_code);
+			}
+			else
+			{
+				WASABI_API_LNGSTRINGW_BUF(IDS_DIRECTX_INSTALL_SUCCEEDED, message, ARRAYSIZE(message));
+			}
+			TimedMessageBox(hwnd, message, WASABI_API_LNGSTRINGW(IDS_DIRECTX_INSTALL_ISSUE),
+							MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL|(exit_code ?
+							MB_ICONEXCLAMATION : MB_ICONINFORMATION), 5000);
+
+			SHFILEOPSTRUCT FileStruct = { hwnd, FO_DELETE, folder, 0,
+										 FOF_ALLOWUNDO | FOF_NOCONFIRMATION |
+										 FOF_SILENT | FOF_RENAMEONCOLLISION, 0 };
+			SHFileOperation(&FileStruct);
+		}
+	}
+
 #if 0
     const wchar_t szUrl[] = L"https://www.microsoft.com/download/details.aspx?id=35";
     const intptr_t ret = myOpenURL(NULL, szUrl);
@@ -663,6 +655,7 @@ void MissingDirectX(HWND hwnd)
 	}
 }
 
+#ifdef LEGACY_DESKTOP_MODE
 void GetDesktopFolder(wchar_t *szDesktopFolder) // should be MAX_PATH len.
 {
     // returns the path to the desktop folder, WITHOUT a trailing backslash.
@@ -1033,6 +1026,7 @@ LPITEMIDLIST DuplicateItem (LPMALLOC pMalloc, LPITEMIDLIST pidl)
 
     return pidlNew;
 }
+#endif
 
 //----------------------------------------------------------------------
 // A special thanks goes out to Jeroen-bart Engelen (Yeep) for providing
@@ -1041,11 +1035,46 @@ LPITEMIDLIST DuplicateItem (LPMALLOC pMalloc, LPITEMIDLIST pidl)
 // http://www.digiwar.com/scripts/renderpage.php?section=2&subsection=2
 //----------------------------------------------------------------------
 
-void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *listview_wnd)
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    *desktop_progman = NULL;
+	HWND p = FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", NULL);
+	HWND* ret = (HWND*)lParam;
+
+	if (p)
+	{
+		// Gets the WorkerW Window after the current one.
+		*ret = FindWindowEx(NULL, hwnd, L"WorkerW", NULL);
+	}
+	return true;
+}
+
+HWND GetDesktopWorkerWindow(HWND progman)
+{
+	// this will cause a WorkerW to be created (if not already) behind the desktop
+	// icons so we don't have to mess around with the likes of hooks to do it all!
+	if (IsWindow(progman))
+	{
+		DWORD_PTR ret = 0;
+		SendMessageTimeout(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, &ret);
+	}
+
+	// the WorkerW to then be used will be the next sibling after the parent of the
+	// SHELLDLL_DefView so we need to enumerate the windows to find what we need :)
+	HWND wallpaper_hwnd = NULL;
+	EnumWindows(EnumWindowsProc, (LPARAM)&wallpaper_hwnd);
+	return wallpaper_hwnd;
+}
+
+#ifdef LEGACY_DESKTOP_MODE
+void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *listview_wnd)
+#else
+void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd)
+#endif
+{
 	*desktopview_wnd = NULL;
+#ifdef LEGACY_DESKTOP_MODE
 	*listview_wnd = NULL;
+#endif
 
 	*desktop_progman = FindWindow(NULL, (TEXT("Program Manager")));
 	if(*desktop_progman == NULL)
@@ -1053,7 +1082,15 @@ void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *list
 		//MessageBox(NULL, "Unable to get the handle to the Program Manager.", "Fatal error", MB_OK|MB_ICONERROR);
 		return;
 	}
-	
+
+	*desktopview_wnd = GetDesktopWorkerWindow(*desktop_progman);
+	if (IsWindow(*desktopview_wnd))
+	{
+		return;
+	}
+
+#ifdef LEGACY_DESKTOP_MODE
+	// if we didn't get a window above then we're going to have to use the older method
 	*desktopview_wnd = FindWindowEx(*desktop_progman, NULL, TEXT("SHELLDLL_DefView"), NULL);
 	if(*desktopview_wnd == NULL)
 	{
@@ -1068,6 +1105,7 @@ void FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd, HWND *list
 		//MessageBox(NULL, "Unable to get the handle to the folderview.", "Fatal error", MB_OK|MB_ICONERROR);
 		return;
 	}
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -1139,9 +1177,9 @@ D3DXCOMPILESHADER pCompileShader=0;
 D3DXMATRIXLOOKATLH pMatrixLookAtLH=0;
 D3DXCREATETEXTURE pCreateTexture=0;
 //----------------------------------------------------------------------
-HMODULE FindD3DX9(HWND winamp)
+HINSTANCE FindD3DX9(HWND winamp)
 {
-	HMODULE d3dx9 = /*NULL;/*/(HMODULE)SendMessage(winamp, WM_WA_IPC, 0, IPC_GET_D3DX9)/**/;
+	HINSTANCE d3dx9 = GetD3DX9();///*NULL;/*/(HINSTANCE)SendMessage(winamp, WM_WA_IPC, 0, IPC_GET_D3DX9)/**/;
 	if (d3dx9)
 	{
 		pCreateFontW = (D3DXCREATEFONTW) GetProcAddress(d3dx9,"D3DXCreateFontW");

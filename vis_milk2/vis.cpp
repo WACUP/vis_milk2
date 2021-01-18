@@ -160,16 +160,16 @@ bool WaitUntilPluginFinished(HWND hWndWinamp)
     int slept = 0;
     while (!g_bFullyExited && slept < 1000)
     {
-        Sleep(50);
-        slept += 50;
+        Sleep(10);
+        slept += 10;
     }
 
     if (!g_bFullyExited)
     {
-		wchar_t title[64] = {0};
-        MessageBoxW(hWndWinamp, WASABI_API_LNGSTRINGW(IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		wchar_t title[64] = { 0 };
+		TimedMessageBox(hWndWinamp, WASABI_API_LNGSTRINGW(IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
         return false;
     }
 
@@ -227,7 +227,7 @@ int init(struct winampVisModule *this_mod)
     /*if (GetWinampVersion(mod1.hwndParent) < 0x4000)
     {
         // query winamp for its playback state
-        LRESULT ret = SendMessage(this_mod->hwndParent, WM_USER, 0, 104); 
+        LRESULT ret = SendMessage(this_mod->hwndParent, WM_WA_IPC, 0, IPC_ISPLAYING); 
         // ret=1: playing, ret=3: paused, other: stopped
 
         if (ret != 1)
@@ -262,10 +262,8 @@ int init(struct winampVisModule *this_mod)
 // render function for oscilloscope. Returns 0 if successful, 1 if visualization should end.
 int render1(struct winampVisModule *this_mod)
 {
-	if (g_plugin.PluginRender(this_mod->waveformData[0], this_mod->waveformData[1]))
-		return 0;    // ok
-	else
-		return 1;    // failed
+	return !g_plugin.PluginRender(this_mod->waveformData[0],
+								  this_mod->waveformData[1]);
 }
 
 // cleanup (opposite of init()). Should destroy the window, unregister the window class, etc.

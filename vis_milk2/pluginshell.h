@@ -55,10 +55,12 @@ typedef struct
 typedef struct
 {
     float   imm[2][3];             // bass, mids, treble, no damping, for each channel (long-term average is 1)
+#ifdef UNUSED_PROCESSING
     float   avg[2][3];             // bass, mids, treble, some damping, for each channel (long-term average is 1)
     float   med_avg[2][3];         // bass, mids, treble, more damping, for each channel (long-term average is 1)
     float   long_avg[2][3];        // bass, mids, treble, heavy damping, for each channel (long-term average is 1)
     float   infinite_avg[2][3];    // bass, mids, treble: winamp's average output levels. (1)
+#endif
     float   fWaveform[2][576];             // Not all 576 are valid! - only NUM_WAVEFORM_SAMPLES samples are valid for each channel (note: NUM_WAVEFORM_SAMPLES is declared in shell_defines.h)
     float   fSpectrum[2][NUM_FREQUENCIES]; // NUM_FREQUENCIES samples for each channel (note: NUM_FREQUENCIES is declared in shell_defines.h)
 } td_soundinfo;                    // ...range is 0 Hz to 22050 Hz, evenly spaced.
@@ -112,6 +114,7 @@ protected:
     // CONFIG PANEL SETTINGS
     // ------------------------------------------------------------
     // *** only read/write these values during CPlugin::OverrideDefaults! ***
+    int          m_desktop_supported;        // 0 or 1
     int          m_start_fullscreen;        // 0 or 1
     int          m_start_desktop;           // 0 or 1
     int          m_fake_fullscreen_mode;    // 0 or 1
@@ -123,14 +126,18 @@ protected:
     int          m_allow_page_tearing_fs;   // 0 or 1
     int          m_allow_page_tearing_dm;   // 0 or 1
     int          m_minimize_winamp;         // 0 or 1
+#ifdef LEGACY_DESKTOP_MODE
     int          m_desktop_show_icons;      // 0 or 1
     int          m_desktop_textlabel_boxes; // 0 or 1
     int          m_desktop_manual_icon_scoot; // 0 or 1
     int          m_desktop_555_fix;         // 0 = 555, 1 = 565, 2 = 888
+#endif
     int          m_dualhead_horz;           // 0 = both, 1 = left, 2 = right
     int          m_dualhead_vert;           // 0 = both, 1 = top, 2 = bottom
     int          m_save_cpu;                // 0 or 1
+#ifdef NON_SKIN_MODE
     int          m_skin;                    // 0 or 1
+#endif
     int          m_fix_slow_text;           // 0 or 1
     td_fontinfo  m_fontinfo[NUM_BASIC_FONTS + NUM_EXTRA_FONTS];
     D3DDISPLAYMODE m_disp_mode_fs;          // a D3DDISPLAYMODE struct that specifies the width, height, refresh rate, and color format to use when the plugin goes fullscreen.
@@ -144,8 +151,8 @@ protected:
     virtual int  AllocateMyNonDx9Stuff() = 0;
     virtual void  CleanUpMyNonDx9Stuff() = 0;
     virtual int  AllocateMyDX9Stuff()    = 0;
-    virtual void  CleanUpMyDX9Stuff(int final_cleanup) = 0;
-    virtual void MyRenderFn(int redraw)  = 0;
+    virtual void  CleanUpMyDX9Stuff(const int final_cleanup) = 0;
+    virtual void MyRenderFn(const int redraw)  = 0;
     virtual void MyRenderUI(int *upper_left_corner_y, int *upper_right_corner_y, int *lower_left_corner_y, int *lower_right_corner_y, int xL, int xR) = 0;
     virtual LRESULT MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam) = 0;
     virtual BOOL MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam) = 0;
@@ -208,6 +215,7 @@ private:
     HMENU               m_main_menu;
     HMENU               m_context_menu;
 
+#ifdef LEGACY_DESKTOP_MODE
     // PRIVATE - DESKTOP MODE STUFF
     //typedef std::list<icon_t> IconList;
     typedef Vector<icon_t> IconList;
@@ -235,6 +243,7 @@ private:
     int                 m_desktop_icons_disabled;
     int                 m_vms_desktop_loaded;
     int                 m_desktop_hook_set;
+#endif
     bool                m_bClearVJWindow;
 
     // PRIVATE - MORE TIMEKEEPING
@@ -271,16 +280,22 @@ public:
     
     // config panel / windows messaging processes:
     static LRESULT CALLBACK WindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
+#ifdef LEGACY_DESKTOP_MODE
     static LRESULT CALLBACK DesktopWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
+#endif
     static LRESULT CALLBACK VJModeWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK ConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     static INT_PTR CALLBACK TabCtrlProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     static INT_PTR CALLBACK FontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
+#ifdef LEGACY_DESKTOP_MODE
     static INT_PTR CALLBACK DesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
+#endif
     static INT_PTR CALLBACK DualheadDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
 
 private:
+#ifdef LEGACY_DESKTOP_MODE
     void PushWindowToJustBeforeDesktop(HWND h);
+#endif
     void DrawAndDisplay(int redraw);
     void ReadConfig();
     void WriteConfig();
@@ -301,7 +316,7 @@ private:
     void CleanUpFonts();
     void AllocateTextSurface();
     void ToggleDesktop();
-    void OnUserResizeWindow();
+    void OnUserResizeWindow(const BOOL skip_saving);
     void OnUserResizeTextWindow();
     static void PrepareFor2DDrawing_B(IDirect3DDevice9 *pDevice, int w, int h);
     void RenderBuiltInTextMsgs();
@@ -316,8 +331,8 @@ protected:
     void EnforceMaxFPS();
 
     // DESKTOP MODE FUNCTIONS (found in desktop_mode.cpp)
-    int  InitDesktopMode();
-    void CleanUpDesktopMode();
+    int  InitDesktopMode() const;
+    void CleanUpDesktopMode() const;
     int  CreateDesktopIconTexture(IDirect3DTexture9** ppTex);
     void DeselectDesktop();
     void UpdateDesktopBitmaps();
@@ -342,14 +357,18 @@ private:
 
     // WINDOWPROC FUNCTIONS
     LRESULT PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);   // in windowproc.cpp
+#ifdef LEGACY_DESKTOP_MODE
     LRESULT PluginShellDesktopWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
+#endif
     LRESULT PluginShellVJModeWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam);
 
     // CONFIG PANEL FUNCTIONS:
     BOOL    PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     BOOL    PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     BOOL    PluginShellFontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
+#ifdef LEGACY_DESKTOP_MODE
     BOOL    PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
+#endif
     BOOL    PluginShellDualheadDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam);
     static bool    InitConfig(HWND hDialogWnd);
     static void    EndConfig();

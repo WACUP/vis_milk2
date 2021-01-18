@@ -145,11 +145,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Winamp/wa_ipc.h>
 #include <nu/AutoCharFn.h>
 #include <mmsystem.h>
-#ifdef OLD_WINDOWS_SUPPORT
-#pragma comment(lib,"winmm.lib")    // for timeGetTime
-#endif
 #include <loader/loader/utils.h>
 #include <loader/loader/paths.h>
+#include <loader/hook/squash.h>
 
 // STATE VALUES & VERTEX FORMATS FOR HELP SCREEN TEXTURE:
 #define TEXT_SURFACE_NOT_READY  0
@@ -305,9 +303,7 @@ char* CPluginShell::GetDriverDescription() const
 
 int CPluginShell::InitNondx9Stuff()
 {
-#ifdef OLD_WINDOWS_SUPPORT
 	timeBeginPeriod(1);
-#endif
 	m_fftobj.Init(576, NUM_FREQUENCIES);
 	if (!InitGDIStuff()) return false;
 	return AllocateMyNonDx9Stuff();
@@ -315,9 +311,7 @@ int CPluginShell::InitNondx9Stuff()
 
 void CPluginShell::CleanUpNondx9Stuff()
 {
-#ifdef OLD_WINDOWS_SUPPORT
 	timeEndPeriod(1);
-#endif
 	CleanUpMyNonDx9Stuff();
 	CleanUpGDIStuff();
 	m_fftobj.CleanUp();
@@ -445,11 +439,11 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		WNDCLASS wc = {0};
 		wc.lpfnWndProc = VJModeWndProc;				// our window procedure
 		wc.hInstance = GetInstance();	// hInstance of DLL
-		wc.hIcon = LoadIcon(GetInstance(), MAKEINTRESOURCE(IDI_PLUGIN_ICON));
+		//wc.hIcon = LoadIcon(GetInstance(), MAKEINTRESOURCE(IDI_PLUGIN_ICON));
 		wc.lpszClassName = TEXT_WINDOW_CLASSNAME;			// our window class name
 		wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS; // CS_DBLCLKS lets the window receive WM_LBUTTONDBLCLK, for toggling fullscreen mode...
 		wc.cbWndExtra = sizeof(DWORD);
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+		//wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wc.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
 
 		if (!RegisterClass(&wc))
@@ -461,9 +455,6 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 			return false;
 		}
 		m_bTextWindowClassRegistered = true;
-
-		//DWORD nThreadID;
-		//CreateThread(NULL, 0, TextWindowThread, &rect, 0, &nThreadID);
 
 		// Create the text window
 		m_hTextWnd = CreateWindowEx(
@@ -622,9 +613,12 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 	// get actual font heights
 	for (int i=0; i<NUM_BASIC_FONTS + NUM_EXTRA_FONTS; i++)
 	{
-		RECT r = {0, 0, 1024, 1024};
-		const int h = m_d3dx_font[i]->DrawText(NULL, TEXT("M"), -1, &r, DT_CALCRECT, 0xFFFFFFFF);
-		if (h>0) m_fontinfo[i].nSize = h;
+		if (m_d3dx_font[i])
+		{
+			RECT r = { 0, 0, 1024, 1024 };
+			const int h = m_d3dx_font[i]->DrawText(NULL, TEXT("M"), -1, &r, DT_CALCRECT, 0xFFFFFFFF);
+			if (h > 0) m_fontinfo[i].nSize = h;
+		}
 	}
 
 	return true;
@@ -789,10 +783,10 @@ void CPluginShell::OnUserResizeTextWindow()
 	}
 }
 
-void CPluginShell::OnUserResizeWindow()
+void CPluginShell::OnUserResizeWindow(const BOOL skip_saving)
 {
 	// Update window properties
-	RECT w, c;
+	RECT w = { 0 }, c = { 0 };
 	GetWindowRect(m_lpDX->GetHwnd(), &w);
 	GetClientRect(m_lpDX->GetHwnd(), &c);
 
@@ -844,8 +838,13 @@ void CPluginShell::OnUserResizeWindow()
 		}
 
 		// save the new window position:
-		if (wp.showCmd==SW_SHOWNORMAL)
+		// though try to avoid it when
+		// there's a resize in-progress
+		if ((wp.showCmd == SW_SHOWNORMAL) && !skip_saving &&
+			!m_resizing && (GetCapture() != m_lpDX->myWindowState.me))
+		{
 			m_lpDX->SaveWindow();
+		}
 	}
 }
 
@@ -856,7 +855,9 @@ void CPluginShell::StuffParams(DXCONTEXT_PARAMS *pParams)
 	pParams->nbackbuf     = 1;
 	pParams->m_dualhead_horz = m_dualhead_horz;
 	pParams->m_dualhead_vert = m_dualhead_vert;
+#ifdef NON_SKIN_MODE
 	pParams->m_skin = (m_screenmode==WINDOWED) ? m_skin : 0;
+#endif
 
 	BOOL auto_mode = FALSE;
 	switch (m_screenmode)
@@ -895,9 +896,16 @@ void CPluginShell::StuffParams(DXCONTEXT_PARAMS *pParams)
 		case DESKTOP:
 		{
 			pParams->allow_page_tearing = m_allow_page_tearing_dm;
-			pParams->adapter_guid       = m_adapter_guid_desktop;
 			pParams->multisamp          = m_multisample_desktop;
-			strcpy(pParams->adapter_devicename, m_adapter_devicename_desktop);
+			if (m_adapter_guid_desktop != GUID_NULL)
+			{
+				pParams->adapter_guid = m_adapter_guid_desktop;
+				strcpy(pParams->adapter_devicename, m_adapter_devicename_desktop);
+			}
+			else
+			{
+				auto_mode = TRUE;
+			}
 			break;
 		}
 	}
@@ -921,11 +929,22 @@ void CPluginShell::StuffParams(DXCONTEXT_PARAMS *pParams)
 		}
 	}
 
+#ifdef LEGACY_DESKTOP_MODE
 	pParams->parent_window = (m_screenmode==DESKTOP) ? m_hWndDesktopListView : NULL;
+#else
+	pParams->parent_window = NULL;
+#endif
 }
 
 void CPluginShell::ToggleDesktop()
 {
+#ifndef LEGACY_DESKTOP_MODE
+	if (!m_desktop_supported)
+	{
+		return;
+	}
+#endif
+
 	CleanUpDX9Stuff(0);
 
 	switch (m_screenmode)
@@ -1079,6 +1098,14 @@ void CPluginShell::CleanUpDirectX()
 
 int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance)
 {
+#ifndef LEGACY_DESKTOP_MODE
+	HWND m_hWndProgMan = NULL, m_hwnd = NULL;
+	FindDesktopWindows(&m_hWndProgMan, &m_hwnd);
+	m_desktop_supported = !!IsWindow(m_hwnd);
+#else
+	m_desktop_supported = 1;
+#endif
+
 	// PROTECTED CONFIG PANEL SETTINGS (also see 'private' settings, below)
 	m_start_fullscreen      = 0;
 	m_start_desktop         = 0;
@@ -1091,14 +1118,18 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_allow_page_tearing_fs = 0;
 	m_allow_page_tearing_dm = 0;
 	m_minimize_winamp       = 1;
+#ifdef LEGACY_DESKTOP_MODE
 	m_desktop_show_icons    = 1;
 	m_desktop_textlabel_boxes = 1;
 	m_desktop_manual_icon_scoot = 0;
 	m_desktop_555_fix       = 2;
+#endif
 	m_dualhead_horz         = 2;
 	m_dualhead_vert         = 1;
 	m_save_cpu              = 1;
+#ifdef NON_SKIN_MODE
 	m_skin                  = 1;
+#endif
 	m_fix_slow_text         = 0;
 
 	// initialize font settings:
@@ -1190,11 +1221,13 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_d3dx_desktop_font = NULL;
 	m_lpDDSText = NULL;
 	memset(&m_sound, 0, sizeof(td_soundinfo));
+#ifdef UNUSED_PROCESSING
 	for (int ch=0; ch<2; ch++)
 		for (int i=0; i<3; i++)
 		{
 			m_sound.infinite_avg[ch][i] = m_sound.avg[ch][i] = m_sound.med_avg[ch][i] = m_sound.long_avg[ch][i] = 1.0f;
 		}
+#endif
 
 	// GENERAL PRIVATE STUFF
 	//m_screenmode: set at end (derived setting)
@@ -1307,6 +1340,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_font_desktop = NULL;
 
 	// PRIVATE - DESKTOP MODE STUFF
+#ifdef LEGACY_DESKTOP_MODE
 	m_icon_list.clear();
 	for (int i=0; i<MAX_ICON_TEXTURES; i++)
 		m_desktop_icons_texture[i] = NULL;
@@ -1326,6 +1360,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_desktop_icons_disabled  = 0;
 	m_vms_desktop_loaded      = 0;
 	m_desktop_hook_set        = 0;
+#endif
 
 	// PRIVATE - MORE TIMEKEEPING
 	m_last_raw_time = 0;
@@ -1373,7 +1408,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 			m_screenmode = FAKE_FULLSCREEN;
 		}
 	}
-	else if (m_start_desktop)
+	else if (m_desktop_supported && m_start_desktop)
 		m_screenmode = DESKTOP;
 	else
 		m_screenmode = WINDOWED;
@@ -1490,14 +1525,18 @@ void CPluginShell::ReadConfig()
 	m_allow_page_tearing_fs= GetPrivateProfileIntW(L"settings",L"allow_page_tearing_fs",m_allow_page_tearing_fs,m_szConfigIniFile);
 	m_allow_page_tearing_dm= GetPrivateProfileIntW(L"settings",L"allow_page_tearing_dm",m_allow_page_tearing_dm,m_szConfigIniFile);
 	m_minimize_winamp      = GetPrivateProfileIntW(L"settings",L"minimize_winamp",m_minimize_winamp,m_szConfigIniFile);
+#ifdef LEGACY_DESKTOP_MODE
 	m_desktop_show_icons   = GetPrivateProfileIntW(L"settings",L"desktop_show_icons",m_desktop_show_icons,m_szConfigIniFile);
 	m_desktop_textlabel_boxes = GetPrivateProfileIntW(L"settings",L"desktop_textlabel_boxes",m_desktop_textlabel_boxes,m_szConfigIniFile);
 	m_desktop_manual_icon_scoot = GetPrivateProfileIntW(L"settings",L"desktop_manual_icon_scoot",m_desktop_manual_icon_scoot,m_szConfigIniFile);
 	m_desktop_555_fix      = GetPrivateProfileIntW(L"settings",L"desktop_555_fix",m_desktop_555_fix,m_szConfigIniFile);
+#endif
 	m_dualhead_horz        = GetPrivateProfileIntW(L"settings",L"dualhead_horz",m_dualhead_horz,m_szConfigIniFile);
 	m_dualhead_vert        = GetPrivateProfileIntW(L"settings",L"dualhead_vert",m_dualhead_vert,m_szConfigIniFile);
 	m_save_cpu             = GetPrivateProfileIntW(L"settings",L"save_cpu",m_save_cpu,m_szConfigIniFile);
+#ifdef NON_SKIN_MODE
 	m_skin                 = GetPrivateProfileIntW(L"settings",L"skin",m_skin,m_szConfigIniFile);
+#endif
 	m_fix_slow_text        = GetPrivateProfileIntW(L"settings",L"fix_slow_text",m_fix_slow_text,m_szConfigIniFile);
 	m_vj_mode              = GetPrivateProfileBoolW(L"settings",L"vj_mode",m_vj_mode,m_szConfigIniFile);
 
@@ -1555,7 +1594,10 @@ void CPluginShell::WriteConfig()
 							   (str[0] ? str : NULL), m_szConfigIniFileA);
 
 	str[0] = 0;
-	GuidToText(&m_adapter_guid_desktop, str, ARRAYSIZE(str));
+	if (m_adapter_guid_desktop != GUID_NULL)
+	{
+		GuidToText(&m_adapter_guid_desktop, str, ARRAYSIZE(str));
+	}
 	WritePrivateProfileStringA("settings","adapter_guid_desktop",
 							   (str[0] ? str : NULL), m_szConfigIniFileA);
 
@@ -1648,14 +1690,18 @@ void CPluginShell::WriteConfig()
 	WritePrivateProfileIntW(m_allow_page_tearing_fs,0,L"allow_page_tearing_fs",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_allow_page_tearing_dm,0,L"allow_page_tearing_dm",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_minimize_winamp,1,L"minimize_winamp",m_szConfigIniFile,L"settings");
+#ifdef LEGACY_DESKTOP_MODE
 	WritePrivateProfileIntW(m_desktop_show_icons,0,L"desktop_show_icons",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_desktop_textlabel_boxes,1,L"desktop_textlabel_boxes",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_desktop_manual_icon_scoot,0,L"desktop_manual_icon_scoot",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_desktop_555_fix,2,L"desktop_555_fix",m_szConfigIniFile,L"settings");
+#endif
 	WritePrivateProfileIntW(m_dualhead_horz,2,L"dualhead_horz",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_dualhead_vert,1,L"dualhead_vert",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_save_cpu,1,L"save_cpu",m_szConfigIniFile,L"settings");
+#ifdef NON_SKIN_MODE
 	WritePrivateProfileIntW(m_skin,1,L"skin",m_szConfigIniFile,L"settings");
+#endif
 	WritePrivateProfileIntW(m_fix_slow_text,0,L"fix_slow_text",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_vj_mode,0,L"vj_mode",m_szConfigIniFile,L"settings");
 
@@ -1698,7 +1744,7 @@ int CPluginShell::PluginRender(unsigned char *pWaveL, unsigned char *pWaveR)//, 
 	    (m_screenmode==WINDOWED   && m_resizing)
 	   )
 	{
-		Sleep(30);
+		Sleep(10);
 		return true;
 	}
 
@@ -1724,7 +1770,7 @@ int CPluginShell::PluginRender(unsigned char *pWaveL, unsigned char *pWaveR)//, 
 	else if (hr != D3D_OK)
 	{
 		// device is lost, and not yet ready to come back; sleep.
-		Sleep(30);
+		Sleep(10);
 		return true;
 	}
 
@@ -1753,10 +1799,12 @@ int CPluginShell::PluginRender(unsigned char *pWaveL, unsigned char *pWaveR)//, 
 		}
 	}
 
+#ifdef LEGACY_DESKTOP_MODE
 	if (m_screenmode==DESKTOP)
 	{
 		PushWindowToJustBeforeDesktop(GetPluginWindow());
 	}
+#endif
 
 	DoTime();
 	AnalyzeNewSound(pWaveL, pWaveR);
@@ -1771,6 +1819,7 @@ int CPluginShell::PluginRender(unsigned char *pWaveL, unsigned char *pWaveR)//, 
 	return true;
 }
 
+#ifdef LEGACY_DESKTOP_MODE
 void CPluginShell::PushWindowToJustBeforeDesktop(HWND h)
 {
 	// if our window isn't already at the bottom of the Z order,
@@ -1804,6 +1853,7 @@ void CPluginShell::PushWindowToJustBeforeDesktop(HWND h)
 	}
 	*/
 }
+#endif
 
 void CPluginShell::DrawAndDisplay(int redraw)
 {
@@ -1868,11 +1918,13 @@ void CPluginShell::DrawAndDisplay(int redraw)
 		MyRenderFn(redraw);
 
 		PrepareFor2DDrawing_B(GetDevice(), GetWidth(), GetHeight());
-
+#ifdef LEGACY_DESKTOP_MODE
 		RenderDesktop();
+#endif
 		if (!m_vjd3d9_device)   // in VJ mode, this renders to different context, so do it after BeginScene() on 2nd device.
 			RenderBuiltInTextMsgs();    // to m_lpDDSText?
-		MyRenderUI(&m_upper_left_corner_y, &m_upper_right_corner_y, &m_lower_left_corner_y, &m_lower_right_corner_y, m_left_edge, m_right_edge);
+		MyRenderUI(&m_upper_left_corner_y, &m_upper_right_corner_y, &m_lower_left_corner_y,
+				   &m_lower_right_corner_y, m_left_edge, m_right_edge);
 		RenderPlaylist();
 
 		if (!m_vjd3d9_device)
@@ -1898,6 +1950,7 @@ void CPluginShell::DrawAndDisplay(int redraw)
 		m_vjd3d9_device->EndScene();
 	}
 
+#ifdef LEGACY_DESKTOP_MODE
 	if (m_screenmode == DESKTOP)
 	{
 		// window is hidden after creation, until 1st frame is ready to go;
@@ -1906,6 +1959,7 @@ void CPluginShell::DrawAndDisplay(int redraw)
 		if (!IsWindowVisible(GetPluginWindow()))
 			ShowWindow(GetPluginWindow(), SW_SHOWNORMAL);
 	}
+#endif
 
 	if (m_screenmode == WINDOWED && (m_lpDX->m_client_width != m_lpDX->m_REAL_client_width || m_lpDX->m_client_height != m_lpDX->m_REAL_client_height))
 	{
@@ -1987,7 +2041,7 @@ void CPluginShell::EnforceMaxFPS()
 
 	if (m_high_perf_timer_freq.QuadPart > 0)
 	{
-		LARGE_INTEGER t = {0};
+		LARGE_INTEGER t;
 		QueryPerformanceCounter(&t);
 
 		if (m_prev_end_of_frame.QuadPart != 0)
@@ -2007,7 +2061,7 @@ void CPluginShell::EnforceMaxFPS()
 
 				// this is sloppy - if your freq. is high, this can overflow (to a (-) int) in just a few minutes
 				// but it's ok, we have protection for that above.
-				int ticks_passed = (int)(t.QuadPart - m_prev_end_of_frame.QuadPart);
+				const int ticks_passed = (int)(t.QuadPart - m_prev_end_of_frame.QuadPart);
 				if (ticks_passed >= ticks_to_wait_lo)
 					done = 1;
 
@@ -2059,11 +2113,15 @@ void CPluginShell::DoTime()
 		// precision: usually from 1..6 us (MICROseconds), depending on the cpu speed.
 		// (higher cpu speeds tend to have better precision here)
 		LARGE_INTEGER t;
+#ifdef OLD_WINDOWS_SUPPORT
 		if (!QueryPerformanceCounter(&t))
 		{
 			m_high_perf_timer_freq.QuadPart = 0;   // something went wrong (exception thrown) -> revert to crappy timer
 		}
 		else
+#else
+		QueryPerformanceCounter(&t);
+#endif
 		{
 			new_raw_time = (double)t.QuadPart;
 			elapsed = (float)((new_raw_time - m_last_raw_time)/(double)m_high_perf_timer_freq.QuadPart);
@@ -2269,6 +2327,7 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 		m_sound.imm[ch][2] /= 0.199888934f;//0.295f;
 	}
 
+#ifdef UNUSED_PROCESSING
 	// do temporal blending to create attenuated and super-attenuated versions
 	for (int ch=0; ch<2; ch++)
 	{
@@ -2296,6 +2355,7 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 			}
 		}
 	}
+#endif
 }
 
 void CPluginShell::PrepareFor2DDrawing_B(IDirect3DDevice9 *pDevice, int w, int h)
@@ -2401,15 +2461,32 @@ void CPluginShell::DrawDarkTranslucentBox(RECT* pr)
 
 void CPluginShell::RenderBuiltInTextMsgs()
 {
-	int _show_press_f1_NOW = (m_show_press_f1_msg && m_time < PRESS_F1_DUR);
-
+	// note: not now for desktop mode since there's no ability
+	//		 to interact with it as of the now altered handling
+	if (m_screenmode != DESKTOP)
 	{
-		RECT r;
+		const int _show_press_f1_NOW = (m_show_press_f1_msg && m_time < PRESS_F1_DUR);
 
 		if (m_show_help)
 		{
-			SetRect(&r, 0, 0, GetWidth(), GetHeight());
-			m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_CALCRECT, 0xFFFFFFFF);
+			if (!g_szHelp)
+			{
+				DWORD data_size = 0;
+				unsigned char *data = (unsigned char *)WASABI_API_LOADRESFROMFILEW(L"GZ",
+										MAKEINTRESOURCEW(IDR_TEXT_GZ), &data_size),
+								*output = NULL;
+
+				DecompressResource(data, data_size, &output, 0);
+				g_szHelp = AutoWideDup((LPCSTR)output, CP_UTF8);
+				DecompressResourceFree(output);
+			}
+
+			RECT r = { 0 };
+			if (g_szHelp && *g_szHelp && m_d3dx_font[HELPSCREEN_FONT])
+			{
+				SetRect(&r, 0, 0, GetWidth(), GetHeight());
+				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_CALCRECT, 0xFFFFFFFF);
+			}
 
 			r.top += m_upper_left_corner_y;
 			r.left += m_left_edge;
@@ -2422,7 +2499,8 @@ void CPluginShell::RenderBuiltInTextMsgs()
 			r.right -= PLAYLIST_INNER_MARGIN;
 			r.bottom -= PLAYLIST_INNER_MARGIN;
 
-			m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, 0, 0xFFFFFFFF);
+			if (m_d3dx_font[HELPSCREEN_FONT])
+				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, 0, 0xFFFFFFFF);
 
 			m_upper_left_corner_y += r.bottom-r.top + PLAYLIST_INNER_MARGIN*3;
 		}
@@ -2430,9 +2508,12 @@ void CPluginShell::RenderBuiltInTextMsgs()
 		// render 'Press F1 for Help' message in lower-right corner:
 		if (_show_press_f1_NOW)
 		{
-			int dx = (int)(160.0f * powf(m_time/(float)(PRESS_F1_DUR), (float)(PRESS_F1_EXP)));
-			SetRect(&r, m_left_edge, m_lower_right_corner_y - GetFontHeight(DECORATIVE_FONT), m_right_edge + dx, m_lower_right_corner_y);
-			m_lower_right_corner_y -= m_d3dx_font[DECORATIVE_FONT]->DrawTextW(NULL, WASABI_API_LNGSTRINGW(IDS_PRESS_F1_MSG), -1, &r, DT_RIGHT, 0xFFFFFFFF);
+			RECT r = { 0 };
+			SetRect(&r, m_left_edge, m_lower_right_corner_y - GetFontHeight(DECORATIVE_FONT), m_right_edge +
+					(int)(160.0f * powf(m_time / (float)(PRESS_F1_DUR), (float)(PRESS_F1_EXP))), m_lower_right_corner_y);
+			static wchar_t *f1_msg = WASABI_API_LNGSTRINGW_DUP(IDS_PRESS_F1_MSG);
+			if (m_d3dx_font[DECORATIVE_FONT])
+				m_lower_right_corner_y -= m_d3dx_font[DECORATIVE_FONT]->DrawTextW(NULL, f1_msg, -1, &r, DT_RIGHT, 0xFFFFFFFF);
 		}
 	}
 }
@@ -2443,8 +2524,8 @@ void CPluginShell::RenderPlaylist()
 	if (m_show_playlist)
 	{
 		RECT r = {0};
-		const int nSongs = SendMessage(m_hWndWinamp,WM_USER, 0, 124),
-				  now_playing = SendMessage(m_hWndWinamp,WM_USER, 0, 125);
+		const int nSongs = GetPlaylistLength(),
+				  now_playing = GetPlaylistPosition();
 
 		if (nSongs <= 0)
 		{
@@ -2488,7 +2569,7 @@ void CPluginShell::RenderPlaylist()
 					{
 						// clip max len. of song name to 240 chars, to prevent overflows
 						wchar_t buf[1024] = {0};
-						wcsncpy(buf, (wchar_t*)SendMessage(m_hWndWinamp, WM_USER, j, IPC_GETPLAYLISTTITLEW), 240);
+						wcsncpy(buf, GetPlaylistItemTitle(j), 240);
 						// leave an extra space @ end, so italicized fonts don't get clipped
 						_snwprintf(m_playlist[i], ARRAYSIZE(m_playlist[i]), L"%d. %s ", j+1, buf);
 					}
@@ -2511,12 +2592,14 @@ void CPluginShell::RenderPlaylist()
 					if (j < nSongs)
 					{
 						// clip max len. of song name to 240 chars, to prevent overflows
-						//strcpy(buf, (char*)SendMessage(m_hWndWinamp, WM_USER, j, 212));
+						//strcpy(buf, (char*)SendMessage(m_hWndWinamp, WM_WA_IPC, j, IPC_GETPLAYLISTTITLE));
 						//buf[240] = 0;
 						//_snprintf(m_playlist[i], ARRAYSIZE(m_playlist[i]), "%d. %s ", j+1, buf);  // leave an extra space @ end, so italicized fonts don't get clipped
 
 						SetRect(&r, 0, 0, max_w, 1024);
-						m_d3dx_font[PLAYLIST_FONT]->DrawTextW(NULL, m_playlist[i], -1, &r, dwFlags | DT_CALCRECT, 0xFFFFFFFF);
+						if (m_d3dx_font[PLAYLIST_FONT])
+							m_d3dx_font[PLAYLIST_FONT]->DrawTextW(NULL, m_playlist[i], -1, &r, dwFlags | DT_CALCRECT, 0xFFFFFFFF);
+
 						int w = r.right-r.left;
 						if (w>0)
 							m_playlist_width_pixels = max(m_playlist_width_pixels, w);
@@ -2561,7 +2644,8 @@ void CPluginShell::RenderPlaylist()
 					        (i==now_playing ? PLAYLIST_COLOR_BOTH : PLAYLIST_COLOR_HILITE_TRACK) :
 							        (i==now_playing ? PLAYLIST_COLOR_PLAYING_TRACK : PLAYLIST_COLOR_NORMAL);
 
-				y += m_d3dx_font[PLAYLIST_FONT]->DrawTextW(NULL, m_playlist[i-start], -1, &r, dwFlags, color);
+				if (m_d3dx_font[PLAYLIST_FONT])
+					y += m_d3dx_font[PLAYLIST_FONT]->DrawTextW(NULL, m_playlist[i-start], -1, &r, dwFlags, color);
 			}
 
 			//m_d3dx_font[PLAYLIST_FONT]->End();
@@ -2580,18 +2664,25 @@ void CPluginShell::SuggestHowToFreeSomeMem()
 
 	if (m_lpDX->m_current_mode.multisamp != D3DMULTISAMPLE_NONE)
 	{
+		WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG, str, ARRAYSIZE(str));
+
+		int err_id;
 		if (m_lpDX->m_current_mode.screenmode == WINDOWED)
-			WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG, str, 2048);
+		{
+			err_id = IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_1;
+		}
 		else if (m_lpDX->m_current_mode.screenmode == FAKE_FULLSCREEN)
-			WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_2, str, 2048);
+		{
+			err_id = IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_2;
+		}
 		else
-			WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3, str, 2048);
+		{
+			err_id = IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3;
+		}
+		wcsncat(str, WASABI_API_LNGSTRINGW(err_id), ARRAYSIZE(str));
 	}
 	else
-		if (m_lpDX->m_current_mode.screenmode == FULLSCREEN)  // true fullscreen
-			WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_VIDEO_MEMORY, str, 2048);
-		else    // windowed, desktop mode, or fake fullscreen
-			WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_VIDEO_MEMORY, str, 2048);
+		WASABI_API_LNGSTRINGW_BUF(IDS_TO_FREE_UP_VIDEO_MEMORY, str, 2048);
 
 	MessageBoxW(m_lpDX->GetHwnd(), str, WASABI_API_LNGSTRINGW(IDS_MILKDROP_SUGGESTION), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
 }
@@ -2646,6 +2737,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 	switch (uMsg)
 	{
+#ifdef LEGACY_DESKTOP_MODE
 	case WM_USER:
 		if (m_screenmode == DESKTOP)
 		{
@@ -2706,17 +2798,24 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			return 0;
 		}
 		break;
-
+#endif
 	case WM_ERASEBKGND:
+	{
 		// Repaint window when song is paused and image needs to be repainted:
-		if (SendMessage(m_hWndWinamp,WM_USER,0,104)!=1 && m_lpDX && m_lpDX->m_lpDevice && GetFrame() > 0)    // WM_USER/104 return codes: 1=playing, 3=paused, other=stopped
+		DWORD_PTR ret = 0;
+		// IPC_ISPLAYING return codes: 1=playing, 3=paused, other=stopped
+		if (SendMessageTimeout(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING,
+			SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret) &&
+			(ret == 3) && m_lpDX && m_lpDX->m_lpDevice && (GetFrame() > 0))
 		{
-			m_lpDX->m_lpDevice->Present(NULL,NULL,NULL,NULL);
+			DrawAndDisplay(0);
 			return 0;
 		}
 		break;
-
+	}
+#if 0
 	case WM_WINDOWPOSCHANGING:
+#ifdef LEGACY_DESKTOP_MODE
 		if (
 		  m_screenmode == DESKTOP
 		  && (!m_force_accept_WM_WINDOWPOSCHANGING)
@@ -2738,9 +2837,12 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			if (pwp)
 				pwp->flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
 		}
-		if (m_screenmode==WINDOWED && m_lpDX && m_lpDX->m_ready && m_lpDX->m_current_mode.m_skin)
+#endif
+		if ((m_screenmode == WINDOWED) && m_lpDX &&
+			m_lpDX->m_ready && m_lpDX->m_current_mode.m_skin)
 			m_lpDX->SaveWindow();
 		break;
+#endif
 	case WM_NCACTIVATE:
 		// *Very Important Handler!*
 		//    -Without this code, the app would not work properly when running in true
@@ -2763,7 +2865,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 	case WM_DESTROY:
 		// note: don't post quit message here if the window is being destroyed
 		// and re-created on a switch between windowed & FAKE fullscreen modes.
-		if (!m_lpDX->TempIgnoreDestroyMessages())
+		if (m_lpDX && !m_lpDX->TempIgnoreDestroyMessages())
 		{
 			// this is a final exit, and not just destroy-then-recreate-the-window.
 			// so, flag DXContext so it knows that someone else
@@ -2772,7 +2874,11 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 			// ensure that the windowed position is saved if using the 'stop' vis
 			// plug-in option instead of our quit / window frame close option
-			if (m_screenmode==WINDOWED && m_lpDX->m_current_mode.m_skin)
+#ifdef NON_SKIN_MODE
+			if ((m_screenmode == WINDOWED) && m_lpDX->m_current_mode.m_skin)
+#else
+			if (m_screenmode==WINDOWED)
+#endif
 				m_lpDX->SaveWindow();
 
 			PostQuitMessage(0);
@@ -2783,8 +2889,8 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 	case WM_USER+555:
 		if (m_lpDX && m_lpDX->m_ready && m_screenmode==WINDOWED && !m_resizing)
 		{
-			OnUserResizeWindow();
-			m_lpDX->SaveWindow();
+			OnUserResizeWindow(TRUE);
+			//m_lpDX->SaveWindow();
 		}
 		break;
 	case WM_SIZE:
@@ -2794,7 +2900,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			m_hidden = (SIZE_MAXHIDE==wParam || SIZE_MINIMIZED==wParam) ? TRUE : FALSE;
 
 			if (SIZE_MAXIMIZED==wParam || SIZE_RESTORED==wParam) // the window has been maximized or restored
-				OnUserResizeWindow();
+				OnUserResizeWindow(FALSE);
 		}
 		break;
 
@@ -2804,7 +2910,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 	case WM_EXITSIZEMOVE:
 		if (m_lpDX && m_lpDX->m_ready && m_screenmode==WINDOWED)
-			OnUserResizeWindow();
+			OnUserResizeWindow(FALSE);
 		m_resizing = 0;
 		break;
 
@@ -2817,7 +2923,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		p->ptMinTrackSize.y = p->ptMinTrackSize.x*3/4;
 	}
 	return 0;
-
+#ifdef LEGACY_DESKTOP_MODE
 	case WM_MOUSEMOVE:
 		if (m_screenmode==DESKTOP && (m_desktop_dragging==1 || m_desktop_box==1))
 		{
@@ -2845,7 +2951,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			}
 
 			// repaint window manually, if winamp is paused
-			if (SendMessage(m_hWndWinamp,WM_USER,0,104) != 1)
+			if (SendMessage(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING) != 1)
 			{
 				PushWindowToJustBeforeDesktop(GetPluginWindow());
 				DrawAndDisplay(1);
@@ -2883,7 +2989,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				}
 
 				// repaint window manually, if winamp is paused
-				if (SendMessage(m_hWndWinamp,WM_USER,0,104) != 1)
+				if (SendMessage(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING) != 1)
 				{
 					PushWindowToJustBeforeDesktop(GetPluginWindow());
 					DrawAndDisplay(1);
@@ -2895,7 +3001,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				m_desktop_box = 0;
 
 				// repaint window manually, if winamp is paused
-				if (SendMessage(m_hWndWinamp,WM_USER,0,104) != 1)
+				if (SendMessage(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING) != 1)
 				{
 					PushWindowToJustBeforeDesktop(GetPluginWindow());
 					DrawAndDisplay(1);
@@ -2905,7 +3011,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			//return 0;
 		}
 		break;
-
+#endif
 	case WM_USER + 1666:
 		if (wParam == 1 && lParam == 15)
 		{
@@ -2928,6 +3034,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				return 0;
 			}
 		}
+#ifdef LEGACY_DESKTOP_MODE
 		else
 		{
 			POINT pt;
@@ -3025,7 +3132,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			}
 
 			// repaint window manually, if winamp is paused
-			if (SendMessage(m_hWndWinamp,WM_USER,0,104) != 1)
+			if (SendMessage(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING) != 1)
 			{
 				PushWindowToJustBeforeDesktop(GetPluginWindow());
 				DrawAndDisplay(1);
@@ -3033,6 +3140,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 			//return 0;
 		}
+#endif
 		break;
 
 	case WM_SETFOCUS:
@@ -3084,6 +3192,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		break;
 
 	case WM_CONTEXTMENU:
+#ifdef LEGACY_DESKTOP_MODE
 		// launch popup context menu.  see handler for WM_COMMAND also.
 		if (m_screenmode == DESKTOP)
 		{
@@ -3092,11 +3201,17 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			// when in desktop mode!
 			return 0;
 		}
-		else if (m_screenmode == WINDOWED)    // context menus only allowed in ~windowed modes
+		else
+#endif
+			if (m_screenmode == WINDOWED)    // context menus only allowed in ~windowed modes
 		{
 			// TODO would be nice to have this show the skinned menu but
 			//		it refuses to work at the moment (gen_ml box maybe?)
-			TrackPopup(m_context_menu, TPM_VERTICAL, LOWORD(lParam), HIWORD(lParam), hWnd, FALSE);
+			EnableMenuItem(m_context_menu, ID_DESKTOP_MODE, MF_BYCOMMAND |
+						   (m_desktop_supported ? MF_ENABLED : MF_GRAYED));
+
+			TrackPopup(m_context_menu, TPM_VERTICAL | TPM_NONOTIFY,
+					   LOWORD(lParam), HIWORD(lParam), hWnd, FALSE);
 			return 0;
 		}
 		break;
@@ -3159,12 +3274,20 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		}
 		// if in embedded mode (using winamp skin), pass ALT+ keys on to winamp
 		// ex: ALT+E, ALT+F, ALT+3...
-		if (m_screenmode==WINDOWED && m_lpDX->m_current_mode.m_skin)
+#ifdef NON_SKIN_MODE
+		if ((m_screenmode == WINDOWED) && m_lpDX && m_lpDX->m_current_mode.m_skin)
+#else
+		if (m_screenmode == WINDOWED)
+#endif
 			return PostMessage(m_hWndWinamp, uMsg, wParam, lParam); // force-pass to winamp; required for embedwnd
 		break;
 
 	case WM_SYSKEYUP:
-		if (m_screenmode==WINDOWED && m_lpDX->m_current_mode.m_skin)
+#ifdef NON_SKIN_MODE
+		if ((m_screenmode == WINDOWED) && m_lpDX && m_lpDX->m_current_mode.m_skin)
+#else
+		if (m_screenmode == WINDOWED)
+#endif
 			return PostMessage(m_hWndWinamp, uMsg, wParam, lParam); // force-pass to winamp; required for embedwnd
 		break;
 
@@ -3174,7 +3297,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			OnAltK();
 			return 0;
 		}
-		if ((wParam=='d' || wParam=='D') && m_frame > 0)
+		if ((wParam=='d' || wParam=='D') && (m_frame > 0))
 		{
 			ToggleDesktop();
 			return 0;
@@ -3189,11 +3312,11 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			{
 			case 'j':
 			case 'J':
-				m_playlist_pos = SendMessage(m_hWndWinamp,WM_USER, 0, 125);
+				m_playlist_pos = GetPlaylistPosition();
 				return 0;
 			default:
 			{
-				int nSongs = SendMessage(m_hWndWinamp,WM_USER, 0, 124);
+				int nSongs = GetPlaylistLength();
 				int found = 0;
 				int orig_pos = m_playlist_pos;
 				int inc = (wParam>='A' && wParam<='Z') ? -1 : 1;
@@ -3207,7 +3330,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 					m_playlist_pos += inc;
 
 					char buf[32] = {0};
-					strncpy(buf, (char*)SendMessage(m_hWndWinamp, WM_USER, m_playlist_pos, 212), 31);
+					strncpy(buf, (char*)SendMessage(m_hWndWinamp, WM_WA_IPC, m_playlist_pos, IPC_GETPLAYLISTTITLE), 31);
 					buf[31] = 0;
 
 					// remove song # and period from beginning
@@ -3273,7 +3396,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				return 0;
 			case 's':
 			case 'S':
-				//if (SendMessage(m_hWndWinamp,WM_USER,0,250))
+				//if (SendMessage(m_hWndWinamp, WM_WA_IPC, 0, IPC_GET_SHUFFLE))
 				//    _snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "shuffle is now OFF");    // shuffle was on
 				//else
 				//    _snprintf(m_szUserMessage, ARRAYSIZE(m_szUserMessage), "shuffle is now ON");    // shuffle was off
@@ -3364,7 +3487,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				return 0;
 
 			case VK_END:
-				m_playlist_pos = SendMessage(m_hWndWinamp,WM_USER, 0, 124) - 1;
+				m_playlist_pos = (GetPlaylistLength() - 1);
 				return 0;
 
 			case VK_PRIOR:
@@ -3382,8 +3505,8 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 				return 0;
 
 			case VK_RETURN:
-				SendMessage(m_hWndWinamp,WM_USER, m_playlist_pos, 121);	// set sel
-				SendMessage(m_hWndWinamp,WM_COMMAND, 40045, 0);	// play it
+				SendMessage(m_hWndWinamp, WM_WA_IPC, m_playlist_pos,
+							IPC_SETANDPLAYLISTPOS);	// set sel & play it
 				return 0;
 			}
 		}
@@ -3450,7 +3573,11 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			// pass CTRL+A thru CTRL+Z, and also CTRL+TAB, to winamp, *if we're in windowed mode* and using an embedded window.
 			// be careful though; uppercase chars come both here AND to WM_CHAR handler,
 			//   so we have to eat some of them here, to avoid them from acting twice.
-			if (m_screenmode==WINDOWED && m_lpDX && m_lpDX->m_current_mode.m_skin)
+			if ((m_screenmode == WINDOWED) && m_lpDX
+#ifdef NON_SKIN_MODE
+				&& m_lpDX->m_current_mode.m_skin
+#endif
+			)
 			{
 				if (bCtrlHeldDown && ((wParam >= 'A' && wParam <= 'Z') || wParam==VK_TAB))
 				{
@@ -3469,6 +3596,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 	//return 0L;
 }
 
+#ifdef LEGACY_DESKTOP_MODE
 LRESULT CALLBACK CPluginShell::DesktopWndProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
 {
     CPluginShell* p = reinterpret_cast<CPluginShell*>(GetWindowLongPtr(hWnd,GWLP_USERDATA));
@@ -3500,6 +3628,7 @@ LRESULT CPluginShell::PluginShellDesktopWndProc(HWND hWnd, unsigned uMsg, WPARAM
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
+#endif
 
 void CPluginShell::AlignWaves()
 {
@@ -3697,14 +3826,19 @@ LRESULT CPluginShell::PluginShellVJModeWndProc(HWND hWnd, UINT uMsg, WPARAM wPar
 		return PluginShellWindowProc(GetPluginWindow(),uMsg,wParam,lParam);
 
 	case WM_ERASEBKGND:
+	{
 		// Repaint window when song is paused and image needs to be repainted:
-		if (SendMessage(m_hWndWinamp,WM_USER,0,104)!=1 && m_vjd3d9_device && GetFrame() > 0)    // WM_USER/104 return codes: 1=playing, 3=paused, other=stopped
+		DWORD_PTR ret = 0;
+		// IPC_ISPLAYING return codes: 1=playing, 3=paused, other=stopped
+		if (SendMessageTimeout(m_hWndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING,
+			SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret) &&
+			(ret == 3) && m_vjd3d9_device && GetFrame() > 0)
 		{
-			m_vjd3d9_device->Present(NULL,NULL,NULL,NULL);
+			m_vjd3d9_device->Present(NULL, NULL, NULL, NULL);
 			return 0;
 		}
 		break;
-
+	}
 		/*
 		case WM_WINDOWPOSCHANGING:
 		if (m_screenmode == DESKTOP)

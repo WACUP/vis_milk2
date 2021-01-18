@@ -100,7 +100,7 @@ EEL_F * NSEEL_CGEN_CALL __NSEEL_RAMAllocGMEM(EEL_F ***blocks, int w)
   if (!gmembuf)
   {
     NSEEL_HOSTSTUB_EnterMutex(); 
-    if (!gmembuf) gmembuf=(EEL_F*)calloc(sizeof(EEL_F),NSEEL_SHARED_GRAM_SIZE);
+    /*if (!gmembuf)*/ gmembuf=(EEL_F*)calloc(sizeof(EEL_F),NSEEL_SHARED_GRAM_SIZE);
     NSEEL_HOSTSTUB_LeaveMutex();
 
     if (!gmembuf) return 0;
@@ -118,13 +118,13 @@ EEL_F * NSEEL_CGEN_CALL  __NSEEL_RAMAlloc(EEL_F ***blocks, int w)
 
   if (!pblocks)
   {
-    if (!is_locked) { is_locked=1; NSEEL_HOSTSTUB_EnterMutex(); }
+    /*if (!is_locked)*/ { is_locked=1; NSEEL_HOSTSTUB_EnterMutex(); }
 
     if (!(pblocks=*blocks))
     {
       pblocks = *blocks = (EEL_F **)calloc(sizeof(EEL_F *),NSEEL_RAM_BLOCKS);
       if (!pblocks) {
-        if (is_locked) NSEEL_HOSTSTUB_LeaveMutex();
+        /*if (is_locked)*/ NSEEL_HOSTSTUB_LeaveMutex();
         return 0;
       }
     }

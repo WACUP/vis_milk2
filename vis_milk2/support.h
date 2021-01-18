@@ -89,9 +89,9 @@ typedef struct _SPRITEVERTEX
 #define WFVERTEX_FORMAT     (D3DFVF_XYZ | D3DFVF_DIFFUSE              )
 #define SPRITEVERTEX_FORMAT (D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE2(0) )
 
-void    GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, const int nSize);
+/*void    GetWinampSongTitle(HWND hWndWinamp, wchar_t *szSongTitle, const int nSize);
 void    GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, const int nSongPos);
-void    GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSongLen);
+void    GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSongLen);*/
 
 //#define PROFILING
 #ifdef PROFILING

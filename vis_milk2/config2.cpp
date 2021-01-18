@@ -246,6 +246,7 @@ BOOL CPluginShell::PluginShellFontDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LP
     return 0;
 }
 
+#ifdef LEGACY_DESKTOP_MODE
 void EnableStuff(HWND hwnd, int bEnable)
 {
 	EnableControl(hwnd, IDC_CB_BOX, bEnable);
@@ -361,6 +362,7 @@ BOOL CPluginShell::PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM
     } 
     return 0;
 }
+#endif
 
 BOOL CALLBACK CPluginShell::DualheadDialogProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {

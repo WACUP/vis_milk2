@@ -208,7 +208,7 @@ static int GLUE_RESET_ESI(unsigned char *out, void *ptr)
 	  *out++ = 0x48;
     *out++ = 0xBE; // mov rsi, constant64
   	*(void **)out = ptr;
-    out+=sizeof(void *);
+    //out+=sizeof(void *);
   }
   return 2+sizeof(void *);
 #else
@@ -216,7 +216,7 @@ static int GLUE_RESET_ESI(unsigned char *out, void *ptr)
   {
     *out++ = 0xBE; // mov esi, constant
     memcpy(out,&ptr,sizeof(void *));
-    out+=sizeof(void *);
+    //out+=sizeof(void *);
   }
   return 1+sizeof(void *);
 #endif
@@ -789,7 +789,7 @@ INT_PTR nseel_createCompiledFunction3(compileContext *ctx, int fntype, INT_PTR f
     memcpy(p,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); p+=GLUE_FUNC_ENTER_SIZE;
     memcpy(p,(char*)code2+4,sizes2); p+=sizes2;
     memcpy(p,&GLUE_FUNC_LEAVE,GLUE_FUNC_LEAVE_SIZE); p+=GLUE_FUNC_LEAVE_SIZE;
-    memcpy(p,&GLUE_RET,sizeof(GLUE_RET)); p+=sizeof(GLUE_RET);
+    memcpy(p,&GLUE_RET,sizeof(GLUE_RET)); /*p+=sizeof(GLUE_RET);*/
 
     p=newblock3=newBlock(sizes3+sizeof(GLUE_RET)+GLUE_FUNC_ENTER_SIZE+GLUE_FUNC_LEAVE_SIZE,32);
     memcpy(p,&GLUE_FUNC_ENTER,GLUE_FUNC_ENTER_SIZE); p+=GLUE_FUNC_ENTER_SIZE;
@@ -995,7 +995,7 @@ INT_PTR nseel_createCompiledFunction1(compileContext *ctx, int fntype, INT_PTR f
       if (repl[0]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[0]);
       if (repl[1]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[1]);
       if (repl[2]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[2]);
-      if (repl[3]) outp=(unsigned char *)EEL_GLUE_set_immediate(outp,repl[3]);
+      if (repl[3]) /*outp=(unsigned char *)*/EEL_GLUE_set_immediate(outp,repl[3]);
     }
 
 	  ++ctx->computTableTop;
@@ -1717,11 +1717,14 @@ void NSEEL_VM_resetvars(NSEEL_VMCTX _ctx)
   if (_ctx)
   {
     compileContext *ctx=(compileContext *)_ctx;
-    int x;
-    if (ctx->varTable_Names || ctx->varTable_Values) for (x = 0; x < ctx->varTable_numBlocks; x ++)
+    if (ctx->varTable_Names || ctx->varTable_Values)
     {
-      if (ctx->varTable_Names) free(ctx->varTable_Names[x]);
-      if (ctx->varTable_Values) free(ctx->varTable_Values[x]);
+      int x;
+      for (x = 0; x < ctx->varTable_numBlocks; x ++)
+      {
+        if (ctx->varTable_Names) free(ctx->varTable_Names[x]);
+        if (ctx->varTable_Values) free(ctx->varTable_Values[x]);
+      }
     }
 
     free(ctx->varTable_Values);

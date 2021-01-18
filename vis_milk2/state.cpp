@@ -194,7 +194,7 @@ float GetFastFloat (const char* szVarName, float def, FILE* f)
     if (!_GetLineByName(f, szVarName, buf, 255))
         return def;
     float ret;
-    if (SafeAtoF(buf, &ret))
+    if (WASABI_API_LNG->SafeAtoF(buf, &ret))
 	{
         return ret;
 	}

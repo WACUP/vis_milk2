@@ -68,7 +68,7 @@ BEGIN
     CONTROL         "Tab1",IDC_TABS,"SysTabControl32",TCS_HOTTRACK | WS_TABSTOP,6,7,380,268
     CONTROL         "",IDC_RECT,"Static",SS_BLACKRECT | NOT WS_VISIBLE,8,20,376,253
     CTEXT           "For help on any setting, click the '?' in the upper-right\rcorner, and then click the item you need help with.",IDC_STATIC,6,281,186,19,SS_SUNKEN
-    CTEXT           "(...'about' text will be placed in this box automatically, at runtime)",IDC_SZ_ABOUT,198,281,187,19,SS_SUNKEN
+    CTEXT           "",IDC_SZ_ABOUT,198,281,187,19,SS_SUNKEN
     PUSHBUTTON      "Defaults",ID_DEFAULTS,6,305,50,13
     PUSHBUTTON      "View Docs",ID_DOCS,138,305,50,13
     PUSHBUTTON      "View Website",ID_WEB,191,305,60,13
@@ -119,6 +119,8 @@ BEGIN
     RTEXT           "Texture Format:",IDC_TEXFORMAT_CAPTION,223,147,55,10,NOT WS_VISIBLE | WS_DISABLED
 END
 
+#if defined(APSTUDIO_INVOKED) || \
+    !(defined(LEGACY_DESKTOP_MODE) || defined(NON_SKIN_MODE))
 IDD_PROPPAGE_1 DIALOGEX 0, 0, 376, 253
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
@@ -130,7 +132,6 @@ BEGIN
     COMBOBOX        IDC_ADAPTER_DMS,129,9,237,191,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Max Framerate:",IDC_DMS_MAXFPS_CAPTION,59,28,65,9
     COMBOBOX        IDC_DMS_MAXFPS,129,25,90,106,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "More &Options",ID_DM_MORE,254,24,60,15
     CONTROL         "Allow Page Tearing",IDC_CB_DMSPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,42,90,10
     RTEXT           "Multisampling:",IDC_DMS_MULTISAMPLING_CAPTION,225,43,50,9
     COMBOBOX        IDC_DMSMS,283,41,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -152,7 +153,6 @@ BEGIN
     COMBOBOX        IDC_ADAPTER_W,129,132,237,208,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Max Framerate:",IDC_W_MAXFPS_CAPTION,59,151,65,9
     COMBOBOX        IDC_W_MAXFPS,129,148,90,107,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Integrate with WACUP skin",IDC_CB_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,226,149,140,10
     CONTROL         "Allow Page Tearing",IDC_CB_WPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,164,90,10
     RTEXT           "Multisampling:",IDC_W_MULTISAMPLING_CAPTION,226,165,50,9
     COMBOBOX        IDC_WMS,283,163,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -173,6 +173,7 @@ BEGIN
     PUSHBUTTON      "Dual&Head",ID_DUALHEAD,308,185,60,15
     PUSHBUTTON      "&Select Fonts",ID_FONTS,308,203,60,15
 END
+#endif
 
 IDD_PROPPAGE_3 DIALOGEX 0, 0, 376, 240
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
@@ -355,7 +356,12 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,300,158,50,13
 END
 
+#if defined(APSTUDIO_INVOKED) || defined(LEGACY_DESKTOP_MODE)
+#if defined(APSTUDIO_INVOKED)
+IDD_DESKTOPMODE$(LEGACY_DESKTOP_MODE) DIALOGEX 0, 0, 201, 105
+#else
 IDD_DESKTOPMODE DIALOGEX 0, 0, 201, 105
+#endif
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_NOPARENTNOTIFY | WS_EX_CONTEXTHELP
 CAPTION "More Options for Desktop Mode"
@@ -371,6 +377,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,91,88,50,13
     PUSHBUTTON      "Cancel",IDCANCEL,147,88,50,13
 END
+#endif
 
 IDD_DUALHEAD DIALOGEX 0, 0, 304, 164
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -390,6 +397,127 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,196,147,50,13
     PUSHBUTTON      "Cancel",IDCANCEL,250,147,50,13
 END
+
+#if defined(APSTUDIO_INVOKED) || defined(LEGACY_DESKTOP_MODE)
+#if defined(APSTUDIO_INVOKED)
+IDD_PROPPAGE_1$(LEGACY_DESKTOP_MODE) DIALOGEX 0, 0, 376, 253
+#else
+IDD_PROPPAGE_1 DIALOGEX 0, 0, 376, 253
+#endif
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC,3,0,369,250
+    CTEXT           "\nDESKTOP\nMODE\nsettings",IDC_DMS_LABEL,6,11,60,38
+    RTEXT           "Display Adapter:",IDC_DMS_ADAPTER_CAPTION,59,12,65,9
+    COMBOBOX        IDC_ADAPTER_DMS,129,9,237,191,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_DMS_MAXFPS_CAPTION,59,28,65,9
+    COMBOBOX        IDC_DMS_MAXFPS,129,25,90,106,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "More &Options",ID_DM_MORE,254,24,60,15,NOT WS_VISIBLE
+    CONTROL         "Allow Page Tearing",IDC_CB_DMSPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,42,90,10
+    RTEXT           "Multisampling:",IDC_DMS_MULTISAMPLING_CAPTION,225,43,50,9
+    COMBOBOX        IDC_DMSMS,283,41,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,58,369,1
+    CTEXT           "FULLSCREEN\nsettings",IDC_FS_LABEL,10,85,50,18
+    RTEXT           "Display Adapter:",IDC_FS_ADAPTER_CAPTION,59,66,65,9
+    COMBOBOX        IDC_ADAPTER_FS,129,63,237,208,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Display Mode:",IDC_DISP_MODE_CAPTION,59,81,65,9
+    COMBOBOX        IDC_DISP_MODE,129,78,237,208,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_FS_MAXFPS_CAPTION,59,96,65,9
+    COMBOBOX        IDC_FS_MAXFPS,129,94,90,107,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Use Fa&ke fullscreen mode",IDC_CB_FAKE,"Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,226,95,140,10
+    CONTROL         "Allow Page Tearing",IDC_CB_FSPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,111,90,10
+    RTEXT           "Multisampling:",IDC_FS_MULTISAMPLING_CAPTION,226,112,50,8
+    COMBOBOX        IDC_FSMS,283,110,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,127,369,1
+    CTEXT           "\nWINDOWED /\nEMBEDDED\nsettings",IDC_W_LABEL,6,135,60,38
+    RTEXT           "Display Adapter:",IDC_W_ADAPTER_CAPTION,59,135,65,8
+    COMBOBOX        IDC_ADAPTER_W,129,132,237,208,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_W_MAXFPS_CAPTION,59,151,65,9
+    COMBOBOX        IDC_W_MAXFPS,129,148,90,107,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Integrate with WACUP skin",IDC_CB_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,226,149,140,10
+    CONTROL         "Allow Page Tearing",IDC_CB_WPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,164,90,10
+    RTEXT           "Multisampling:",IDC_W_MULTISAMPLING_CAPTION,226,165,50,9
+    COMBOBOX        IDC_WMS,283,163,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,180,369,1
+    LTEXT           "Start Milkdrop in...",IDC_STATIC,12,192,70,8
+    CONTROL         "&Fullscreen",IDC_CB_FS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,203,70,10
+    CONTROL         "&Desktop Mode",IDC_CB_DMS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,215,70,10
+    CONTROL         "Sa&ve CPU by loosely enforcing Max Framerate",IDC_CB_SAVE_CPU,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,185,169,10
+    CONTROL         "Show '&Press F1 for Help' message at startup",IDC_CB_PRESS_F1_MSG,
+                    "Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,97,196,163,10
+    CONTROL         "&Minimize WACUP when going fullscreen",IDC_CB_MIN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,207,148,10
+    CONTROL         "Try to fix slow menus/text (uses more video memory)",IDC_CB_FIXSLOWTEXT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,218,194,10
+    CONTROL         "V&J MODE - show text, menus in a second window",IDC_CB_VJMODE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,229,182,10
+    PUSHBUTTON      "Dual&Head",ID_DUALHEAD,308,185,60,15
+    PUSHBUTTON      "&Select Fonts",ID_FONTS,308,203,60,15
+END
+#endif
+
+#if defined(APSTUDIO_INVOKED) || defined(NON_SKIN_MODE)
+#if defined(APSTUDIO_INVOKED)
+IDD_PROPPAGE_1$(NON_SKIN_MODE) DIALOGEX 0, 0, 376, 253
+#else
+IDD_PROPPAGE_1 DIALOGEX 0, 0, 376, 253
+#endif
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC,3,0,369,250
+    CTEXT           "\nDESKTOP\nMODE\nsettings",IDC_DMS_LABEL,6,11,60,38
+    RTEXT           "Display Adapter:",IDC_DMS_ADAPTER_CAPTION,59,12,65,9
+    COMBOBOX        IDC_ADAPTER_DMS,129,9,237,191,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_DMS_MAXFPS_CAPTION,59,28,65,9
+    COMBOBOX        IDC_DMS_MAXFPS,129,25,90,106,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Allow Page Tearing",IDC_CB_DMSPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,42,90,10
+    RTEXT           "Multisampling:",IDC_DMS_MULTISAMPLING_CAPTION,225,43,50,9
+    COMBOBOX        IDC_DMSMS,283,41,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,58,369,1
+    CTEXT           "FULLSCREEN\nsettings",IDC_FS_LABEL,10,85,50,18
+    RTEXT           "Display Adapter:",IDC_FS_ADAPTER_CAPTION,59,66,65,9
+    COMBOBOX        IDC_ADAPTER_FS,129,63,237,208,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Display Mode:",IDC_DISP_MODE_CAPTION,59,81,65,9
+    COMBOBOX        IDC_DISP_MODE,129,78,237,208,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_FS_MAXFPS_CAPTION,59,96,65,9
+    COMBOBOX        IDC_FS_MAXFPS,129,94,90,107,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Use Fa&ke fullscreen mode",IDC_CB_FAKE,"Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,226,95,140,10
+    CONTROL         "Allow Page Tearing",IDC_CB_FSPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,111,90,10
+    RTEXT           "Multisampling:",IDC_FS_MULTISAMPLING_CAPTION,226,112,50,8
+    COMBOBOX        IDC_FSMS,283,110,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,127,369,1
+    CTEXT           "\nWINDOWED /\nEMBEDDED\nsettings",IDC_W_LABEL,6,135,60,38
+    RTEXT           "Display Adapter:",IDC_W_ADAPTER_CAPTION,59,135,65,8
+    COMBOBOX        IDC_ADAPTER_W,129,132,237,208,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Max Framerate:",IDC_W_MAXFPS_CAPTION,59,151,65,9
+    COMBOBOX        IDC_W_MAXFPS,129,148,90,107,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Integrate with WACUP skin",IDC_CB_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,226,149,140,10
+    CONTROL         "Allow Page Tearing",IDC_CB_WPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,164,90,10
+    RTEXT           "Multisampling:",IDC_W_MULTISAMPLING_CAPTION,226,165,50,9
+    COMBOBOX        IDC_WMS,283,163,83,123,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYRECT,3,180,369,1
+    LTEXT           "Start Milkdrop in...",IDC_STATIC,12,192,70,8
+    CONTROL         "&Fullscreen",IDC_CB_FS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,203,70,10
+    CONTROL         "&Desktop Mode",IDC_CB_DMS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,215,70,10
+    CONTROL         "Sa&ve CPU by loosely enforcing Max Framerate",IDC_CB_SAVE_CPU,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,185,169,10
+    CONTROL         "Show '&Press F1 for Help' message at startup",IDC_CB_PRESS_F1_MSG,
+                    "Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,97,196,163,10
+    CONTROL         "&Minimize WACUP when going fullscreen",IDC_CB_MIN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,207,148,10
+    CONTROL         "Try to fix slow menus/text (uses more video memory)",IDC_CB_FIXSLOWTEXT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,218,194,10
+    CONTROL         "V&J MODE - show text, menus in a second window",IDC_CB_VJMODE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,229,182,10
+    PUSHBUTTON      "Dual&Head",ID_DUALHEAD,308,185,60,15
+    PUSHBUTTON      "&Select Fonts",ID_FONTS,308,203,60,15
+END
+#endif
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -453,7 +581,7 @@ BEGIN
         BOTTOMMARGIN, 171
     END
 
-    IDD_DESKTOPMODE, DIALOG
+    "IDD_DESKTOPMODE$(LEGACY_DESKTOP_MODE)", DIALOG
     BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 197
@@ -467,6 +595,18 @@ BEGIN
         RIGHTMARGIN, 300
         TOPMARGIN, 4
         BOTTOMMARGIN, 160
+    END
+
+    "IDD_PROPPAGE_1$(LEGACY_DESKTOP_MODE)", DIALOG
+    BEGIN
+        RIGHTMARGIN, 320
+        BOTTOMMARGIN, 228
+    END
+
+    "IDD_PROPPAGE_1$(NON_SKIN_MODE)", DIALOG
+    BEGIN
+        RIGHTMARGIN, 320
+        BOTTOMMARGIN, 228
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -499,8 +639,15 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+#if defined(APSTUDIO_INVOKED) || defined(DISABLED)
+#if defined(APSTUDIO_INVOKED)
+IDI_PLUGIN_ICON$(DISABLED) ICON                    "plugin_icon.ico"
+
+#else
 IDI_PLUGIN_ICON         ICON                    "plugin_icon.ico"
 
+#endif
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -523,8 +670,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,28,3,0
- PRODUCTVERSION 2,28,3,0
+ FILEVERSION 2,30,4,0
+ PRODUCTVERSION 2,30,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -541,12 +688,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualisation Plug-in"
-            VALUE "FileVersion", "2.28.3.0"
+            VALUE "FileVersion", "2.30.4.0"
             VALUE "InternalName", "Nullsoft Milkdrop v2"
-            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2020"
+            VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2021"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Nullsoft Milkdrop v2"
-            VALUE "ProductVersion", "2.28.3.0"
+            VALUE "ProductVersion", "2.30.4.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -591,6 +738,7 @@ BEGIN
                             "Enter the new string; hit CTRL+ENTER to apply or ESC to cancel."
     IDS_MILKDROP_ERROR      "MILKDROP ERROR"
     IDS_MILKDROP_WARNING    "MILKDROP WARNING"
+    IDS_DESKTOP_NOT_SUPPORTED "\nDESKTOP\nMODE NOT\nAVAILABLE"
     IDS_RATING              "Rating"
 END
 
@@ -1061,14 +1209,13 @@ BEGIN
                             "Enable this to force the plug-in to start in desktop mode."
     IDS_HELP_ON_F1          "Help on 'Press F1...' checkbox"
     IDS_HELP_ON_F1_HELP     "Disable this to prevent the 'Press F1 for Help' message\nfrom appearing when the plug-in starts."
-    IDS_CB_SKIN_HELP        "Check this box to 'skin' the plug-in's window frame when it runs\nin a window, so that it looks like the rest of the windows that\nmake up WACUP's interface."
     IDS_SAVE_CPU_CHECKBOX   "Help on 'Save CPU' checkbox"
+    IDS_SAVE_CPU_CHECKBOX_HELP 
+                            "Check this box to lower the amount of CPU (processor) that the plug-in uses\nto monitor and limit the framerate.\n\nWhen this box is unchecked, the plug-in will extremely accurately limit the\nframerate, resulting in ultra-smooth animation.  However, there is some cost\nin terms of CPU time - usually in the range of 0-20%%.\n\nWhen this box is checked, though, the plug-in uses a more lenient algorithm to\nlimit the framerate, which uses virtually no CPU time.  However, the framerate\nwill not be as accurately limited (it might vary over time), and animation is\nnot guaranteed to be perfectly smooth.\n\nNote that you can further decrease CPU usage by:\n  1) decreasing the maximum framerate (via the 'Max Framerate' options)\n  2) allowing page tearing (via the 'Allow Page Tearing' checkboxes)"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_SAVE_CPU_CHECKBOX_HELP 
-                            "Check this box to lower the amount of CPU (processor) that the plug-in uses\nto monitor and limit the framerate.\n\nWhen this box is unchecked, the plug-in will extremely accurately limit the\nframerate, resulting in ultra-smooth animation.  However, there is some cost\nin terms of CPU time - usually in the range of 0-20%%.\n\nWhen this box is checked, though, the plug-in uses a more lenient algorithm to\nlimit the framerate, which uses virtually no CPU time.  However, the framerate\nwill not be as accurately limited (it might vary over time), and animation is\nnot guaranteed to be perfectly smooth.\n\nNote that you can further decrease CPU usage by:\n  1) decreasing the maximum framerate (via the 'Max Framerate' options)\n  2) allowing page tearing (via the 'Allow Page Tearing' checkboxes)"
     IDS_FS_DISPLAY_MODE     "Help on fullscreen display mode selection"
     IDS_FS_DISPLAY_MODE_HELP 
                             "This lets you select which display mode you'd like to use when you\nrun the plug-in fullscreen.\n\nThe first parameter is the pixel color format, which decides\nthe total number of possible colors in the rendered image.\nRGB-555 and RGB-565 are 16-bit color formats, which have poor\ncolor resolution but are often fast.  RGB-888 is a 32-bit color\nformat; it often has superior image quality, but is often slower\nand takes up twice the video memory.\n\nThe next two parameters are the width and height of the display mode,\nin pixels, also known as the 'resolution'.  Higher resolutions are\nusually slower and require more video memory, but look better.\n\nThe last parameter is the refresh rate: the rate at which the\n""monitor refreshes the image you see, in Hertz (cycles per second).\nHigher refresh rates tend to be easier on the eyes."
@@ -1088,22 +1235,15 @@ BEGIN
                             "the documentation file:\n\n\t%s\n\ncould not be found."
     IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED 
                             "access to the documentation file:\n\n\t%s\n\nwas denied."
+    IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC 
+                            "the documentation file:\n\n\t%s\n\ncould not be accessed because there is no application\nassociated with documents of this type."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC 
-                            "the documentation file:\n\n\t%s\n\ncould not be accessed because there is no application\nassociated with documents of this type."
     IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X 
                             "the documentation file:\n\n\t%s\n\ncould not be accessed (error code: %d)"
     IDS_ERROR_OPENING_DOCUMENTATION "Error Opening Documentation"
-    IDS_URL_COULD_NOT_OPEN  "the URL\n\n\t%s\n\ncould not be opened."
-    IDS_ACCESS_TO_URL_WAS_DENIED "access to the URL\n\n\t%s\n\nwas denied."
-    IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC 
-                            "the URL\n\n\t%s\n\ncould not be accessed because there is no application\nassociated with documents of this type."
-    IDS_ACCESS_TO_URL_FAILED_CODE_X 
-                            "the URL\n\n\t%s\n\ncould not be accessed (error code: %d)"
-    IDS_ERROR_OPENING_URL   "Error Opening URL"
     IDS_RESTORE_ALL_DEFAULTS 
                             "Are you sure you want to restore the default settings?\n\nIf you click YES, the config panel will close and the defaults will be restored."
     IDS_RESTORE_ALL_DEFAULTS_TITLE "Restore Default Settings?"
@@ -1116,67 +1256,17 @@ BEGIN
     IDS_VIEW_ONLINE_DOCS_HELP 
                             "Click this button to view the website (homepage) for this plug-in\nusing your default browser."
     IDS_5_6_5_TEXTURE       "a 5-6-5 texture (no transparency)"
-END
-
-STRINGTABLE
-BEGIN
     IDS_5_5_5_TEXTURE       "a 5-5-5 texture (w/1 bit of transparency)"
     IDS_8_8_8_TEXTURE       "an 8-8-8 texture (w/8 bits of transparency)"
-    IDS_NO_ALPHA_FALLBACK   "Help on ""no alpha"" fallback options"
-    IDS_NO_ALPHA_FALLBACK_HELP 
-                            "If you run the plug-in in desktop mode and find that your\ndesktop icons are surrounded by black boxes, then you'll\nwant to experiment with this setting.  The black box means\nthat 'alpha' (transparency) is not working, probably because\nyour current video mode (that Windows is running in) does\nnot have an alpha channel.  To make a long story short,\njust try different options here if you get the 'black box'\neffect, and cross your fingers that one of these works.\n\nNote that the 5-6-5 option uses half as much video memory\nas the 8-8-8 option, so if they both work, use the 5-6-5."
-    IDS_CB_SHOW_ICONS_HELP  "When you're running in desktop mode, this option lets you\nchoose to show or hide the icons that normally sit on your\ndesktop."
-    IDS_CB_BOX              "Help on 'Draw colored boxes...' checkbox"
-    IDS_CB_BOX_HELP         "This option lets you choose whether or not you want to\nsee a solid-colored box around each of the text labels\nfor the icons on your desktop, while the plug-in is running.\n\nIf you turn it off, the icon text labels might be harder\nto read (depending on the current image that the plug-in is\ngenerating), but the icons will also tend to dominate the\nscreen less."
-    IDS_CB_MANUAL_SCOOT     "Help on icon occlusion checkbox"
-    IDS_CB_MANUAL_SCOOT_HELP 
-                            "Normally, when you put your Windows taskbar on the Top or Left\nedge of the screen, Windows nicely scoots your desktop icons out\nfrom underneath it, so that they remain visible.\n\nThis plug-in tries to do the same thing, but on a few video cards,\nthe desktop icons might still be occluded (covered) by the taskbar\nwhen you run the plug-in in Desktop Mode (and the taskbar sits along\nthe Top or Left edge of the screen.)\n\nIf this happens to you, try checking this box - it will try a\ndifferent algorithm for placing the icons, and should manage to\nscoot them out (down or to the right) from underneath the taskbar."
     IDS_SPAN_BOTH_SCREENS   "span both screens"
     IDS_USE_LEFT_SCREEN_ONLY "use left screen only"
     IDS_USE_RIGHT_SCREEN_ONLY "use right screen only"
     IDS_USE_TOP_SCREEN_ONLY "use top screen only"
+END
+
+STRINGTABLE
+BEGIN
     IDS_USE_BOTTOM_SCREEN_ONLY "use bottom screen only"
-    IDS_COULD_NOT_FIND_FILE_FOR_DESKTOP_MODE_X 
-                            "Could not find the following file:\n\n     %s\n\n...which is required for this plug-in to work properly in Desktop Mode.\nPlease reinstall the plug-in."
-    IDS_MILKDROP_ERROR_FILE_MISSING "MILKDROP ERROR - FILE MISSING"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_ERROR_CREATING_GDI_DESKTOP_FONT "Error creating GDI desktop font"
-    IDS_ERROR_CREATING_DESKTOP_FONT "Error creating desktop font"
-    IDS_ERROR_CREATING_TEXTURE_FOR_ICON_BITMAPS 
-                            "Error creating texture for icon bitmaps"
-    IDS_OUTDATED_VMS_DESKTOP_DLL_NEED_TO_REINSTALL 
-                            "It appears that you have an outdated copy of the file 'vms_desktop.dll'\nin your WACUP PLUGINS directory.  Please reinstall the plug-in\nto bring this file up to date."
-    IDS_ERROR_CREATING_HOOK_PROC_DESKTOP_ICONS_NOT_AVAILABLE 
-                            "Error creating hook procedure;\ndesktop icons will not be available."
-    IDS_ERROR_UPDATING_ICON_BITMAPS 
-                            "Error updating icon bitmaps; the number of unique\nicon bitmaps on your desktop exceeded the maximum.\n\nAs a result, not all icons will look correct."
-    IDS_ERROR_UPDATING_ICON_BITMAPS_TOO_MANY_UNIQUE_ICON_BITMAPS 
-                            "Error updating icon bitmaps: there were a lot of unique icon bitmaps,\nbut the plug-in couldn't allocate enough extra texture(s) to hold them all,\nprobably because video memory is low.\n\nAs a result, not all icons will look correct."
-    IDS_ERROR_UPDATING_ICON_BITMAPS_COULD_NOT_GET_LEVEL_DESCRIPTION 
-                            "Error updating icon bitmaps:\ncouldn't get level description"
-    IDS_ERROR_UPDATING_ICON_BITMAPS_LOCKRECT_FAILED 
-                            "Error updating icon bitmaps:\nLockRect failed"
-    IDS_ERROR_UPDATING_ICON_BITMAPS_LR_PBITS_IS_NULL 
-                            "Error updating icon bitmaps:\nlr.pBits == NULL"
-    IDS_ERROR_UPDATING_ICON_BITMAPS_UNKNOWN_PIXEL_FORMAT 
-                            "Error updating icon bitmaps:\nunknown pixel format"
-    IDS_ERROR_UPDATING_ICON_BITMAPS_COULDNT_GET_HDC 
-                            "Error updating icon bitmaps:\ncouldn't get HDC"
-    IDS_ERROR_UPDATING_ICON_BITMAPS_CALL_TO_GETDIBITS_FAILED 
-                            "Error updating icon bitmaps:\ncall #1 to GetDIBits failed."
-    IDS_ERROR_UPDATING_ICON_BITMAPS_CALL_2_TO_GETDIBITS_FAILED 
-                            "Error updating icon bitmaps:\ncall #2 to GetDIBits failed."
-    IDS_ERROR_UPDATING_ICON_BITMAPS_GETICONINFO_FAILED 
-                            "Error updating icon bitmaps:\nGetIconInfo failed."
-    IDS_ERROR_UPDATING_ICON_BITMAPS_SHGETFILEINFO_FAILED 
-                            "Error updating icon bitmaps:\nSHGetFileInfo failed."
-END
-
-STRINGTABLE
-BEGIN
     IDS_UNABLE_TO_REGISTER_WINDOW_CLASS 
                             "Unable to register the window class;\nPLEASE RESTART WACUP."
     IDS_DIRECTX_INIT_FAILED "DirectX initialisation failed; unknown color format"
@@ -1200,12 +1290,12 @@ BEGIN
     IDS_WINDOW_RESIZE_FAILED 
                             "Window resize failed.\n\nOften this means the application ran out of video memory;\n    perhaps you tried to make the window too large."
     IDS_OUT_OF_VIDEO_MEMORY "OUT OF VIDEO MEMORY"
-    IDS_ERROR_LOADING_MAIN_MENU "Error loading main menu"
-    IDS_ERROR_LOADING_CONTEXT_MENU "Error loading context menu"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_ERROR_LOADING_MAIN_MENU "Error loading main menu"
+    IDS_ERROR_LOADING_CONTEXT_MENU "Error loading context menu"
     IDS_ERROR_CREATING_DIRECT3D_DEVICE_FOR_VJ_MODE 
                             "Error invoking Direct3D 9 for VJ mode;\nDirectX 9 could be missing or corrupt."
     IDS_VJ_MODE_INIT_ERROR  "VJ mode init error: error determining color format\nfor currently-selected Windowed Mode display adapter."
@@ -1217,28 +1307,25 @@ BEGIN
     IDS_ERROR_CREATING_D3DX_FONTS "Error creating D3DX fonts"
     IDS_UNABLE_TO_INIT_DXCONTEXT 
                             "Unable to initialize DXContext;\nprobably out of memory."
-    IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG 
-                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   WINDOWED MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+    IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_1 
+                            "WINDOWED MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_2 
-                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   FAKE FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+                            "FAKE FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3 
-                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+                            "FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+    IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG 
+                            "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   "
     IDS_TO_FREE_UP_VIDEO_MEMORY 
                             "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try returning to the config panel (ALT+K) and selecting a display mode\n    that uses less video memory.  16-bit display modes use half as much memory\n    as 32-bit display modes, and lower-resolution display modes (such as 640 x 480)\n    use proportionally less video memory.\n\nAfter making these changes, please RESTART WACUP before trying to run\nthe plug-in again."
-    IDS_TO_FREE_UP_VIDEO_MEMORY_2 
-                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try changing your Windows display mode to a lesser bit depth\n    (i.e. 16-bit color), or a smaller resolution.\n\nAfter making these changes, please RESTART WACUP before trying to run\nthe plug-in again."
     IDS_MILKDROP_SUGGESTION "MILKDROP SUGGESTION"
     IDS_DIRECTX_MISSING_OR_CORRUPT 
                             "Required DirectX Version Missing or Corrupt"
-    IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING 
-                            "Error: the plug-in is already running."
-    IDS_THIS_PLUGIN_NEEDS_MUSIC_TO_RUN 
-                            "This plug-in cannot run without music.\n\nPlease play some music, through WACUP, and then try running the plug-in again."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_NO_MUSIC_PLAYING    "No Music Playing"
+    IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING 
+                            "Milkdrop is already running but may also be in the process of closing. Please wait for it to close before trying again :)"
     IDS_UNABLE_TO_READ_DATA_FILE_X "Unable to read the data file:\n   %s"
     IDS_COULD_NOT_CREATE_MY_VERTEX_DECLARATION 
                             "Could not create my vertex declaration"
@@ -1246,9 +1333,7 @@ BEGIN
                             "Could not create WF vertex declaration"
     IDS_COULD_NOT_CREATE_SPRITE_VERTEX_DECLARATION 
                             "Could not create sprite vertex declaration"
-    IDS_SHADER_MODEL_2      "shader model 2.0"
-    IDS_SHADER_MODEL_3      "shader model 3.0"
-    IDS_SHADER_MODEL_4      "shader model 4.0"
+    IDS_SHADER_MODEL_X      "shader model %s"
     IDS_UKNOWN_CASE_X       "(unknown case: %d)"
     IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_USING_X 
                             "Failed to compile pixel shaders using %s [PSVersion=0x%X].\n\nAfter hitting OK here, please return to the config panel (ALT+K),\ngo to the second tab, and for the Pixel Shaders option, select Auto."
@@ -1264,20 +1349,20 @@ BEGIN
                             "Could not compile blur1 vertex shader"
     IDS_COULD_NOT_COMPILE_BLUR1_PIXEL_SHADER 
                             "Could not compile blur1 pixel shader"
+    IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER 
+                            "Could not compile blur2 vertex shader"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER 
-                            "Could not compile blur2 vertex shader"
     IDS_COULD_NOT_COMPILE_BLUR2_PIXEL_SHADER 
                             "Could not compile blur2 pixel shader"
     IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_SMALLER_DISPLAY 
-                            "Could not create internal canvas texture! (probably not enough video memory left)\ntry selecting a smaller display mode, or decreasing the color bit depth."
+                            "\ntry selecting a smaller display mode, or decreasing the color bit depth."
     IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM_RECOMMENDATION 
-                            "Could not create internal canvas texture! (probably not enough video memory left)\n\n\nRECOMMENDATION: SET THE INTERNAL CANVAS SIZE BACK TO 'AUTO' AND TRY AGAIN"
+                            "\n\nRECOMMENDATION: SET THE INTERNAL CANVAS SIZE BACK TO 'AUTO' AND TRY AGAIN"
     IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_NOT_ENOUGH_VID_MEM 
-                            "Could not create internal canvas texture! (probably not enough video memory left)\n"
+                            "Could not create internal canvas texture! (probably not enough video memory left)"
     IDS_SUCCESSFULLY_CREATED_VS0_VS1 
                             "Successfully created VS0/VS1 at %d x %d (ideal: %d x %d)"
     IDS_ERROR_CREATING_BLUR_TEXTURES 
@@ -1294,11 +1379,11 @@ BEGIN
     IDS_PLEASE_EXIT_VIS_BEFORE_RUNNING_CONFIG_PANEL 
                             "Please exit the visualizer before running the config panel."
     IDS_FPS                 "fps"
+    IDS_PF_MONITOR          "pf monitor"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_PF_MONITOR          "pf monitor"
     IDS_PRESS_F9_TO_HIDE_SHADER_QREF 
                             "-- press F9 to hide shader Quick Reference --\n"
     IDS_PRESS_F9_TO_SHOW_SHADER_QREF 
@@ -1312,37 +1397,28 @@ BEGIN
                             "This preset already uses the highest pixel shader version (%d) supported by your graphics chip."
     IDS_PRESET_HAS_MIXED_VERSIONS_OF_SHADERS 
                             "This preset has mixed versions of shaders in it."
-    IDS_UPGRADE_SHADERS_TO_USE_PS2 
-                            "Do you want to upgrade all shaders to use (at least) pixel shader 2?  [y/N]"
-    IDS_UPGRADE_SHADERS_TO_USE_PS3 
-                            "Do you want to upgrade all shaders to use (at least) pixel shader 3?  [y/N]"
     IDS_PRESET_DOES_NOT_USE_PIXEL_SHADERS 
                             "This preset does not currently use pixel shaders."
-    IDS_UPGRADE_TO_USE_PS2  "Do you want to upgrade it to use pixel shader 2?  [y/N]"
     IDS_WARNING_OLD_GPU_MIGHT_NOT_WORK_WITH_PRESET 
                             "  (WARNING: if you save it, other users with older graphics chips might not be able to use the preset."
-    IDS_PRESET_CURRENTLY_USES_PS2 "This preset currently uses pixel shader 2."
-    IDS_UPGRADE_TO_USE_PS3  "Do you want to upgrade it to use pixel shader 3?  [y/N]"
-    IDS_PRESET_CURRENTLY_USES_PS3 "This preset currently uses pixel shader 3."
-END
-
-STRINGTABLE
-BEGIN
-    IDS_UPGRADE_TO_USE_PS4  "Do you want to upgrade it to use pixel shader 4?  [y/N]"
+    IDS_PRESET_CURRENTLY_USES_PS_X 
+                            "This preset currently uses pixel shader %s."
     IDS_WARNING_DO_NOT_FORGET_WARP_SHADER_WAS_LOCKED 
                             " WARNING: do not forget WARP shader was LOCKED! "
     IDS_WARNING_DO_NOT_FORGET_COMPOSITE_SHADER_WAS_LOCKED 
                             " WARNING: do not forget COMPOSITE shader was LOCKED! "
     IDS_PRESET_MASH_UP_TEXT1 
                             "Preset Mash-Up:          use keys 1-5 to change bin;"
-    IDS_PRESET_CURRENTLY_USES_PS2X 
-                            "This preset currently uses pixel shader 2.X."
-    IDS_UPGRADE_TO_USE_PS2X "Do you want to upgrade it to use pixel shader 2.X?  [y/N]"
     IDS_PRESET_MASH_UP_TEXT2 
                             "                         up/down/a-z to browse presets for current bin;"
     IDS_PRESET_MASH_UP_TEXT3 
                             "                         h to randomize preset (or H = all bins); "
     IDS_PRESET_MASH_UP_TEXT4 "                         esc exits."
+END
+
+STRINGTABLE
+BEGIN
+    IDS_UPGRADE_TO_USE_PS_X "Do you want to upgrade it to use pixel shader %s?  [y/N]"
     IDS_DIRECTORY_OF_X      "Directory of: %s"
     IDS_SHUFFLE_IS_NOW_OFF  "shuffle is now OFF"
     IDS_SHUFFLE_IS_NOW_ON   "shuffle is now ON"
@@ -1350,10 +1426,6 @@ BEGIN
     IDS_WARPSHADER_LOCKED   "WARP SHADER LOCKED."
     IDS_ALLSHADERS_LOCKED   "ALL SHADERS LOCKED."
     IDS_ALLSHADERS_UNLOCKED "ALL SHADERS UNLOCKED."
-END
-
-STRINGTABLE
-BEGIN
     IDS_PS_AUTO_RECOMMENDED " Auto (Recommended)"
     IDS_PS_DISABLED         " Disabled"
     IDS_PS_SHADER_MODEL_2   " Shader Model 2"
@@ -1362,6 +1434,10 @@ BEGIN
     IDS_TX_16_BITS_PER_CHANNEL " 16 bits - CAREFUL"
     IDS_TX_32_BITS_PER_CHANNEL " 32 bits - CAREFUL"
     IDS_160X120_SLOW        "160 x 120 SLOW "
+END
+
+STRINGTABLE
+BEGIN
     IDS_192X144_SLOW        "192 x 144 SLOW "
     IDS_NONE_BEST_IMAGE_QUALITY " None (best image quality) "
     IDS_1_25_X              " 1.25 X "
@@ -1370,10 +1446,6 @@ BEGIN
     IDS_1_67_X              " 1.67 X (...3x faster)"
     IDS_2_X                 " 2 X      (...4x faster)"
     IDS_3_X                 " 3 X      (...9x faster)"
-END
-
-STRINGTABLE
-BEGIN
     IDS_4_X                 " 4 X      (...16x faster) "
     IDS_NEAREST_POWER_OF_2  " Nearest power of 2 "
     IDS_EXACT_RECOMMENDED   " Exact (Recommended) "
@@ -1382,6 +1454,10 @@ BEGIN
     IDS_TEXFORMAT           "Texture Format"
     IDS_TEXFORMAT_TEXT      "This determines the precision of the colors that you see.\nHigher bit depths are better.  A bit depth of 8, for example,\nmeans that in the graphics hardware, the image can have 2^8, or 256,\npossible shades (each) of red, green, and blue.\n\nA bit depth of 8 looks decent, but 16 is much better.\nHOWEVER, only high-end video cards (as of 2007) usually support\nit properly.  Older cards can't do 'bilinear interpolation'\nwith 16-bit render targets, meaning that the image will get\nvery grainy and 'digital' looking, so PLEASE WATCH OUT FOR THIS.\n\n32 bits is excessive and slow, don't ever use it.\n\nNote that your monitor can only show 256 shades of each color;\nhowever, if the internal image (that is repeatedly warped and modified\nfrom frame to frame) has better color precision (~16 bits), then \nthe colors in the image will maintain their fidelity as they slowly\nerode and warp, over time."
     IDS_CANVAS_SIZE         "Canvas Size"
+END
+
+STRINGTABLE
+BEGIN
     IDS_CANVAS_SIZE_TEXT    "This sets the size of the image that milkdrop uses, internally,\nto drive the visuals.  The bigger the value here, the crisper\nthe image you see.  It's highly recommended that you set this\nto 'auto', which will determine the ideal image (texture) size\nautomatically.  However, if you experience visual problems (such\nas black streaks or missing chunks in the image) due to low\nvideo memory, you might want to set this to a low value (like\n256x256 or 512x512).\n\n'Auto (exact)' means the internal texture size will exactly match\nthe number of pixels on the screen - this is the ideal case.\nIf that doesn't work, try 'Auto (nearest power of 2)' - some older\nvideo cards will have better luck with this option."
     IDS_CANVAS_STRETCH      "Canvas Stretch"
     IDS_CANVAS_STRETCH_TEXT "MilkDrop works with an internal texture, or canvas, to do all of\nits graphics rendering.  The speed (framerate) that MilkDrop runs\nat is inversely proportional to the number of pixels that are in\nthis canvas.  So, to render things internally at a smaller resolution,\nbut stretch them up for display, you can use this option.  It will\nmake the image look a bit softer and less crisp or detailed,\nbut - especially for older graphics hardware - things will run\nmuch faster.\n\nKeep in mind, a stretch factor of 2X, for example, means that there\nwill be half as manypixels to simulate on both the X and Y axes, \nso MilkDrop will actually run FOUR TIMES as fast.  With a stretch\nfactor of 3X, it will run 9X as fast (hypothetically).  And so on."
@@ -1392,28 +1468,22 @@ BEGIN
     IDS_MENU_BLUR1_EDGE_DARKEN_AMOUNT "blur1: edge darken amount"
     IDS_MENU_BLUR1_EDGE_DARKEN_AMOUNT_TT 
                             "keep this >0.25 to avoid edge artifacts, and <1.0 to avoid black borders."
+    IDS_MENU_BLUR1_MIN_COLOR_VALUE "blur1: min color value"
+    IDS_MENU_BLUR1_MIN_MAX_COLOR_VALUE_TT 
+                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images."
+    IDS_MENU_BLUR1_MAX_COLOR_VALUE "blur1: max color value"
+    IDS_MENU_BLUR2_MIN_COLOR_VALUE "blur2: min color value"
+    IDS_MENU_BLUR2_MIN_MAX_COLOR_VALUE_TT 
+                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1 RANGE."
+    IDS_MENU_BLUR2_MAX_COLOR_VALUE "blur2: max color value"
+    IDS_MENU_BLUR3_MIN_COLOR_VALUE "blur3: min color value"
+    IDS_MENU_BLUR3_MIN_MAX_COLOR_VALUE_TT 
+                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1, BLUR2 RANGES."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_BLUR1_MIN_COLOR_VALUE "blur1: min color value"
-    IDS_MENU_BLUR1_MIN_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images."
-    IDS_MENU_BLUR1_MAX_COLOR_VALUE "blur1: max color value"
-    IDS_MENU_BLUR1_MAX_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images."
-    IDS_MENU_BLUR2_MIN_COLOR_VALUE "blur2: min color value"
-    IDS_MENU_BLUR2_MIN_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1 RANGE."
-    IDS_MENU_BLUR2_MAX_COLOR_VALUE "blur2: max color value"
-    IDS_MENU_BLUR2_MAX_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1 RANGE."
-    IDS_MENU_BLUR3_MIN_COLOR_VALUE "blur3: min color value"
-    IDS_MENU_BLUR3_MIN_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1, BLUR2 RANGES."
     IDS_MENU_BLUR3_MAX_COLOR_VALUE "blur3: max color value"
-    IDS_MENU_BLUR3_MAX_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1, BLUR2 RANGES."
     IDS_MENU_EDIT_PER_VERTEX_EQUATIONS "[ edit per_vertex equations ]"
     IDS_MENU_EDIT_PER_VERTEX_EQUATIONS_TT 
                             "read-only:  x, y, rad, ang; time, fps, frame, progress; {bass|mid|treb}[_att]\nread/write: dx, dy, zoom, rot, warp, cx, cy, sx, sy, q1-q8"
@@ -1421,10 +1491,6 @@ BEGIN
                             "This pixel shader drives the warping, color, etc. of the internal image each frame.\n"
     IDS_MENU_EDIT_COMPOSITE_SHADER_TT 
                             "This pixel shader drives the final presentation of the internal image to the screen each frame.\n"
-END
-
-STRINGTABLE
-BEGIN
     IDS_MENU_EDIT_UPGRADE_PRESET_PS_VERSION 
                             "upgrade preset's pixel shader version"
     IDS_MENU_EDIT_UPGRADE_PRESET_PS_VERSION_TT 
@@ -1444,6 +1510,10 @@ BEGIN
     IDS_ERROR_PRESET_NOT_FOUND_X "ERROR: preset not found: %s"
     IDS_ERROR_NO_PRESET_FILES_OR_DIRS_FOUND_IN_X 
                             "ERROR: No preset files OR directories found in %s*.milk"
+END
+
+STRINGTABLE
+BEGIN
     IDS_SCANNING_PRESETS    " scanning presets... "
     IDS_SPRITE_X_ERROR_COULD_NOT_FIND_IMG_OR_NOT_DEFINED 
                             "sprite #%d error: could not find 'img=' setting, or sprite is not defined"
@@ -1453,12 +1523,8 @@ BEGIN
                             "warning: preset ""%s"": error in 'per-frame' code"
     IDS_WARNING_PRESET_X_ERROR_IN_PER_VERTEX_CODE 
                             "warning: preset ""%s"": error in 'per-vertex' code"
-END
-
-STRINGTABLE
-BEGIN
     IDS_HZ                  "Hz"
-    IDS_HELP_MINIMIZE_WINAMP "Help on 'Minimize WACUP...' checkbox"
+    IDS_HELP_MINIMIZE_WINAMP "Help on 'Minimise WACUP...' checkbox"
     IDS_HELP_MINIMIZE_WINAMP_HELP 
                             "Enable this if you can sometimes see the WACUP window flickering\nthrough, when you run the plug-in fullscreen.  Enabling this option\nwill force the WACUP window to minimize whenever the plug-in goes\nfullscreen on the same monitor that the WACUP window is on.\nThe WACUP window will be restored as soon as the plug-in returns\nfrom fullscreen mode.\n\nNote that this also applies for 'fake' fullscreen mode (as well as 'real'\nfullscreen mode).\n\nKeep in mind that when running graphically demanding applications\n(such as this plug-in), it's always good to minimize (or close) as many\nother applications as possible, even if they appear to be idle."
     IDS_DIRECTX_MISSING_OR_CORRUPT_TEXT 
@@ -1470,15 +1536,15 @@ BEGIN
     IDS_PAGE_X              " Page %d "
     IDS_MB                  "MB"
     IDS_GB                  "GB"
+END
+
+STRINGTABLE
+BEGIN
     IDS_MASHUP_GENERAL_POSTPROC " 1. general, postproc: "
     IDS_MASHUP_MOTION_EQUATIONS " 2. motion, equations: "
     IDS_MASHUP_WAVEFORMS_SHAPES " 3. waveforms, shapes: "
     IDS_MASHUP_WARP_SHADER  " 4. warp shader:       "
     IDS_MASHUP_COMP_SHADER  " 5. comp shader:       "
-END
-
-STRINGTABLE
-BEGIN
     IDS_STRING615           "           tex2D(sampler_billy, uv)    sample pixel from billy.jpg (must be loaded)\n"
     IDS_STRING616           " pre-body: sampler sampler_billy;    //loads billy.jpg"
     IDS_STRING617           "           float4  texsize_billy;    //.xy = width and height, .zw = 1/w, 1/h"
@@ -1490,28 +1556,32 @@ BEGIN
     IDS_STRING623           "           float2 uv_orig;   //original UV coordinates [0..1]"
     IDS_STRING624           "           float  rad;       //radius [0..1]"
     IDS_STRING625           "           float  ang;       //angle [0..PI*2]"
+END
+
+STRINGTABLE
+BEGIN
     IDS_STRING626           "           // + texsize, aspect, time, fps, rand_frame, rand_preset,"
     IDS_STRING627           "           //   q1-q32/_qa-_qh, bass, treb_att, vol... - see docs"
     IDS_STRING628           " output:   float3 ret;       //the new pixel color (r,g,b)"
     IDS_STRING629           " inputs:   float2 uv;          //UV coordinates [0..1]"
     IDS_STRING630           "           float  rad;         //radius [0..1]"
-END
-
-STRINGTABLE
-BEGIN
     IDS_STRING631           "           float  ang;         //angle [0..PI*2]"
     IDS_STRING632           "           float3 hue_shader   //for MilkDrop 1 compatibility"
     IDS_STRING633           "           // + texsize, aspect, time, fps, rand_frame, rand_preset,"
     IDS_STRING634           "           //   q1-q32/_qa-_qh, bass, treb_att, vol... - see docs"
     IDS_STRING635           " output:   float3 ret;         //display pixel color (r,g,b)"
-    IDS_UPGRADE_SHADERS_TO_USE_PS2X 
-                            "Do you want to upgrade all shaders to use (at least) pixel shader 2.X?  [y/N]"
+    IDS_UPGRADE_SHADERS_TO_USE_PS_X 
+                            "Do you want to upgrade all shaders to use (at least) pixel shader %s?  [y/N]"
     IDS_PRESS_ESC_TO_RETURN "Press ESC to return."
     IDS_COULD_NOT_LOAD_TEXTURE_X "Could not load texture: %s.%s"
     IDS_ERROR_COMPILING_X_X_SHADER "Error compiling %hs %hs shader:\n"
     IDS_ERROR_PARSING_X_X_SHADER "Error parsing %hs %hs shader.\n"
     IDS_UNABLE_TO_RESOLVE_TEXSIZE_FOR_A_TEXTURE_NOT_IN_USE 
                             "Unable to resolve texsize for a texture that is not in use!  (%hs)"
+END
+
+STRINGTABLE
+BEGIN
     IDS_KEY_MAPPINGS        "yYYyYzZ"
     IDS_DIRECTX_INSTALL_ISSUE "DirectX 9.0c Installation Issue"
     IDS_DIRECTX_INSTALL_FAILED 

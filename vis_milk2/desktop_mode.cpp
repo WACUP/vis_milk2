@@ -41,7 +41,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VMS_DESKTOP_DLLNAME (SUBDIR L"data\\vms_desktop.dll")
 
 //----------------------------------------------------------------------
-
+#ifdef LEGACY_DESKTOP_MODE
 typedef struct _SIMPLEVERTEX 
 {
     float x, y;      // screen position    
@@ -65,6 +65,7 @@ typedef struct _HELPVERTEX
 // resides in vms_desktop.dll/lib:
 int setHook(HWND hlv,HWND w,int version);
 void removeHook();
+#endif
 
 //----------------------------------------------------------------------
 
@@ -98,11 +99,12 @@ bool IsVistaOrLater()
     return false;
 }*/
 
-int CPluginShell::InitDesktopMode()
+int CPluginShell::InitDesktopMode() const
 {
     if (m_screenmode != DESKTOP)
         return false;
 
+#ifdef LEGACY_DESKTOP_MODE
 	// make sure that this has been initialised even if the mode
 	// is then not going to be used to prevent a crash on render
 	InitializeCriticalSection(&m_desktop_cs);
@@ -202,16 +204,25 @@ int CPluginShell::InitDesktopMode()
 					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
 					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
     }
-
+#endif
     return true;
 }
 
 //----------------------------------------------------------------------
 
-void CPluginShell::CleanUpDesktopMode()
+void CPluginShell::CleanUpDesktopMode() const
 {
     if (m_screenmode != DESKTOP)
         return;
+
+#ifndef LEGACY_DESKTOP_MODE
+	HWND m_hWndProgMan = NULL, m_hwnd = NULL;
+	FindDesktopWindows(&m_hWndProgMan, &m_hwnd);
+	if (IsWindow(m_hwnd))
+	{
+		ShowWindow(m_hwnd, SW_HIDE);
+	}
+#else
     if (!m_desktop_show_icons)
         return;
 
@@ -248,10 +259,12 @@ void CPluginShell::CleanUpDesktopMode()
         FreeLibrary(GetModuleHandle(szVmsDesktopDll));
         m_vms_desktop_loaded = 0;
     }
+#endif
 }
 
 //----------------------------------------------------------------------
 
+#ifdef LEGACY_DESKTOP_MODE
 int CPluginShell::CreateDesktopIconTexture(IDirect3DTexture9** ppTex)
 {
     // release old texture (shouldn't really be necessary)
@@ -705,6 +718,7 @@ void CPluginShell::RenderDesktop()
 {
     if (m_screenmode != DESKTOP)
         return;
+
     if (!m_desktop_show_icons)
         return;
     if (m_desktop_icons_disabled)
@@ -1077,6 +1091,7 @@ void CPluginShell::RenderDesktop()
 
     LeaveCriticalSection(&m_desktop_cs);
 }
+#endif
 
 //----------------------------------------------------------------------
 
