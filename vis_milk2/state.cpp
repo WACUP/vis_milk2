@@ -832,9 +832,7 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 		s_from->m_fMvR = s_to->m_fMvR.eval(fAnimTime);
 		s_from->m_fMvG = s_to->m_fMvG.eval(fAnimTime);
 		s_from->m_fMvB = s_to->m_fMvB.eval(fAnimTime);
-	/*}
-	if (!bOldStateTransparent && bNewStateTransparent)
-	{*/
+
 		s_to->m_fMvX = s_from->m_fMvX.eval(fAnimTime);
 		s_to->m_fMvY = s_from->m_fMvY.eval(fAnimTime);
 		s_to->m_fMvDX = s_from->m_fMvDX.eval(fAnimTime);
@@ -844,7 +842,6 @@ void CState::StartBlendFrom(CState *s_from, float fAnimTime, float fTimespan)
 		s_to->m_fMvG = s_from->m_fMvG.eval(fAnimTime);
 		s_to->m_fMvB = s_from->m_fMvB.eval(fAnimTime);
 	}
-
 }
 
 void WriteCode(FILE* fOut, int i, char* pStr, char* prefix, bool bPrependApostrophe = false)
@@ -1465,6 +1462,7 @@ void CState::GenDefaultWarpShader()
         g_plugin.GenWarpPShaderText(m_szWarpShadersText, ARRAYSIZE(m_szWarpShadersText),
 									m_fDecay.eval(-1), m_bTexWrap);
 }
+
 void CState::GenDefaultCompShader()
 {
     if (m_nCompPSVersion>0)

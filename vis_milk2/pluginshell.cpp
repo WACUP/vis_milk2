@@ -1221,13 +1221,12 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_d3dx_desktop_font = NULL;
 	m_lpDDSText = NULL;
 	memset(&m_sound, 0, sizeof(td_soundinfo));
-#ifdef UNUSED_PROCESSING
+
 	for (int ch=0; ch<2; ch++)
 		for (int i=0; i<3; i++)
 		{
-			m_sound.infinite_avg[ch][i] = m_sound.avg[ch][i] = m_sound.med_avg[ch][i] = m_sound.long_avg[ch][i] = 1.0f;
+			m_sound.avg[ch][i] = m_sound.med_avg[ch][i] = m_sound.long_avg[ch][i] = 1.0f;
 		}
-#endif
 
 	// GENERAL PRIVATE STUFF
 	//m_screenmode: set at end (derived setting)
@@ -2219,6 +2218,7 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 
 	int i;
 
+    float imm[2][3] = {0};    // bass, mids, treble, no damping, for each channel (long-term average is 1)
 	float temp_wave[2][576] = {0};
 
 	int old_i = 0;
@@ -2266,10 +2266,9 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 			if (start < 0) start = 0;
 			if (end > NUM_FREQUENCIES) end = NUM_FREQUENCIES;
 
-			m_sound.imm[ch][i] = 0;
 			for (int j=start; j<end; j++)
-				m_sound.imm[ch][i] += m_sound.fSpectrum[ch][j];
-			m_sound.imm[ch][i] /= (float)(end-start);
+				imm[ch][i] += m_sound.fSpectrum[ch][j];
+			imm[ch][i] /= (float)(end-start);
 		}
 	}
 
@@ -2309,9 +2308,9 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 	        }
 	        else if (m_frame%FRAMES_PER_SONG >= 10)
 	        {
-	            sum[0] += m_sound.imm[0];
-	            sum[1] += m_sound.imm[1];
-	            sum[2] += m_sound.imm[2];
+	            sum[0] += imm[0];
+	            sum[1] += imm[1];
+	            sum[2] += imm[2];
 	            ++count;
 	        }
 	    }
@@ -2322,12 +2321,11 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 	//  the average levels were: 0.326781557	0.38087377	0.199888934
 	for (int ch=0; ch<2; ch++)
 	{
-		m_sound.imm[ch][0] /= 0.326781557f;//0.270f;
-		m_sound.imm[ch][1] /= 0.380873770f;//0.343f;
-		m_sound.imm[ch][2] /= 0.199888934f;//0.295f;
+		imm[ch][0] /= 0.326781557f;//0.270f;
+		imm[ch][1] /= 0.380873770f;//0.343f;
+		imm[ch][2] /= 0.199888934f;//0.295f;
 	}
 
-#ifdef UNUSED_PROCESSING
 	// do temporal blending to create attenuated and super-attenuated versions
 	for (int ch=0; ch<2; ch++)
 	{
@@ -2336,26 +2334,25 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 			// m_sound.avg[i]
 			{
 				float avg_mix;
-				if (m_sound.imm[ch][i] > m_sound.avg[ch][i])
+				if (imm[ch][i] > m_sound.avg[ch][i])
 					avg_mix = AdjustRateToFPS(0.2f, 14.0f, m_fps);
 				else
 					avg_mix = AdjustRateToFPS(0.5f, 14.0f, m_fps);
-				m_sound.avg[ch][i] = m_sound.avg[ch][i]*avg_mix + m_sound.imm[ch][i]*(1-avg_mix);
+				m_sound.avg[ch][i] = m_sound.avg[ch][i]*avg_mix + imm[ch][i]*(1-avg_mix);
 			}
 
 			// m_sound.med_avg[i]
 			// m_sound.long_avg[i]
 			{
-				float med_mix  = 0.91f;//0.800f + 0.11f*powf(t, 0.4f);    // primarily used for velocity_damping
-				float long_mix = 0.96f;//0.800f + 0.16f*powf(t, 0.2f);    // primarily used for smoke plumes
-				med_mix  = AdjustRateToFPS(med_mix, 14.0f, m_fps);
-				long_mix = AdjustRateToFPS(long_mix, 14.0f, m_fps);
-				m_sound.med_avg[ch][i]  =  m_sound.med_avg[ch][i]*(med_mix) + m_sound.imm[ch][i]*(1-med_mix);
-				m_sound.long_avg[ch][i] = m_sound.long_avg[ch][i]*(long_mix) + m_sound.imm[ch][i]*(1-long_mix);
+				//float med_mix  = 0.91f;//0.800f + 0.11f*powf(t, 0.4f);    // primarily used for velocity_damping
+				//float long_mix = 0.96f;//0.800f + 0.16f*powf(t, 0.2f);    // primarily used for smoke plumes
+				const float med_mix  = AdjustRateToFPS(0.91f, 14.0f, m_fps),
+							long_mix = AdjustRateToFPS(0.96f, 14.0f, m_fps);
+				m_sound.med_avg[ch][i]  =  m_sound.med_avg[ch][i]*(med_mix) + imm[ch][i]*(1-med_mix);
+				m_sound.long_avg[ch][i] = m_sound.long_avg[ch][i]*(long_mix) + imm[ch][i]*(1-long_mix);
 			}
 		}
 	}
-#endif
 }
 
 void CPluginShell::PrepareFor2DDrawing_B(IDirect3DDevice9 *pDevice, int w, int h)

@@ -1069,7 +1069,7 @@ void CPlugin::MyPreInitialize()
     m_nPresetListCurPos = 0;
 	m_nCurrentPreset = -1;
 	memset(&m_szCurrentPresetFile, 0, sizeof(m_szCurrentPresetFile));
-	memset(&m_szLoadingPreset, 0, sizeof(m_szLoadingPreset));
+	m_szLoadingPreset = 0;
 	//m_szPresetDir[0] = 0; // will be set @ end of this function
     m_bPresetListReady = false;
 	memset(&m_szSearch, 0, sizeof(m_szSearch));
@@ -1098,7 +1098,6 @@ void CPlugin::MyPreInitialize()
 	m_bShowSongLen		= false;
 	m_fShowRatingUntilThisTime = -1.0f;
 	ClearErrors();
-	memset(&m_szDebugMessage, 0, sizeof(m_szDebugMessage));
 	memset(&m_szSongTitle, 0, sizeof(m_szSongTitle));
 	memset(&m_szSongTitlePrev, 0, sizeof(m_szSongTitlePrev));
 
@@ -8330,7 +8329,11 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         m_nLoadingPreset = 1;   // this will cause LoadPresetTick() to get called over the next few frames...
 
         m_fLoadingPresetBlendTime = fBlendTime;
-        wcsncpy(m_szLoadingPreset, szPresetFilename, ARRAYSIZE(m_szLoadingPreset));
+		if (m_szLoadingPreset)
+		{
+			free(m_szLoadingPreset);
+		}
+		m_szLoadingPreset = _wcsdup(szPresetFilename);
     }
 }
 
@@ -8355,9 +8358,10 @@ void CPlugin::LoadPresetTick()
     else if (m_nLoadingPreset == 8)
     {
         // finished loading the shaders - apply the preset!
-        wcsncpy(m_szCurrentPresetFile, m_szLoadingPreset, ARRAYSIZE(m_szCurrentPresetFile));
-        m_szLoadingPreset[0] = 0;
-	    
+	    wcsncpy(m_szCurrentPresetFile, (m_szLoadingPreset ? m_szLoadingPreset : L""), ARRAYSIZE(m_szCurrentPresetFile));
+	    free(m_szLoadingPreset);
+	    m_szLoadingPreset = 0;
+
 	    CState *temp = m_pState;
 	    m_pState = m_pOldState;
 	    m_pOldState = temp;
@@ -9811,15 +9815,14 @@ void CPlugin::KillSprite(int iSlot)
 
 void CPlugin::DoCustomSoundAnalysis()
 {
-    memcpy(mysound.fWave[0], m_sound.fWaveform[0], sizeof(float)*576);
-    memcpy(mysound.fWave[1], m_sound.fWaveform[1], sizeof(float)*576);
+    /*memcpy(mysound.fWaveform[0], m_sound.fWaveform[0], sizeof(float)*576);
+    memcpy(mysound.fWaveform[1], m_sound.fWaveform[1], sizeof(float)*576);*/
+	memcpy(mysound.fWaveform, m_sound.fWaveform, sizeof(mysound.fWaveform));
 
     // do our own [UN-NORMALIZED] fft
 	float fWaveLeft[576] = {0};
 	for (int i=0; i<576; i++) 
         fWaveLeft[i] = m_sound.fWaveform[0][i];
-
-	memset(mysound.fSpecLeft, 0, sizeof(float)*MY_FFT_SAMPLES);
 
 	myfft.time_to_frequency_domain(fWaveLeft, mysound.fSpecLeft);
 	//for (i=0; i<MY_FFT_SAMPLES; i++) fSpecLeft[i] = sqrtf(fSpecLeft[i]*fSpecLeft[i] + fSpecTemp[i]*fSpecTemp[i]);
@@ -9857,17 +9860,16 @@ void CPlugin::DoCustomSoundAnalysis()
         rate = AdjustRateToFPS(rate, 30.0f, GetFps());
         mysound.long_avg[i] = mysound.long_avg[i]*rate + mysound.imm[i]*(1-rate);
 
-
 		// also get bass/mid/treble levels *relative to the past*
 		if (fabsf(mysound.long_avg[i]) < 0.001f)
-			mysound.imm_rel[i] = 1.0f;
+		{
+			mysound.imm_rel[i] = mysound.avg_rel[i] = 1.0f;
+		}
 		else
-			mysound.imm_rel[i]  = mysound.imm[i] / mysound.long_avg[i];
-
-		if (fabsf(mysound.long_avg[i]) < 0.001f)
-			mysound.avg_rel[i]  = 1.0f;
-		else
-			mysound.avg_rel[i]  = mysound.avg[i] / mysound.long_avg[i];
+		{
+			mysound.imm_rel[i] = mysound.imm[i] / mysound.long_avg[i];
+			mysound.avg_rel[i] = mysound.avg[i] / mysound.long_avg[i];
+		}
 	}
 }
 

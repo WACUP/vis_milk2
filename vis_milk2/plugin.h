@@ -56,7 +56,7 @@ typedef struct
 	float	avg[3];			// bass, mids, treble (absolute)
 	float	avg_rel[3];		// bass, mids, treble (relative to song; 1=avg, 0.9~below, 1.1~above)
 	float	long_avg[3];	// bass, mids, treble (absolute)
-    float   fWave[2][576];
+    float   fWaveform[2][576];
     float   fSpecLeft[MY_FFT_SAMPLES];
 } td_mysounddata;
 
@@ -132,7 +132,6 @@ typedef struct
 	int     bBold;
 	int     bItal;
 	wchar_t szFace[128];
-
 	wchar_t	szText[256];
 } 
 td_custom_msg;
@@ -413,7 +412,7 @@ public:
         CState		*m_pOldState;			// points to previous CState
         CState		*m_pNewState;			// points to the coming CState - we're not yet blending to it b/c we're still compiling the shaders for it!
         int         m_nLoadingPreset;
-        wchar_t     m_szLoadingPreset[MAX_PATH];
+        wchar_t     *m_szLoadingPreset;
         float       m_fLoadingPresetBlendTime;
         int         m_nPresetsLoadedTotal; //important for texture eviction age-tracking...
         CState		m_state_DO_NOT_USE[3];	// do not use; use pState and pOldState instead.
@@ -506,7 +505,6 @@ public:
         void        AddError(wchar_t* szMsg, float fDuration, int category=ERR_ALL, bool bBold=true);
         void        ClearErrors(int category=ERR_ALL);  // 0=all categories
         
-        char		m_szDebugMessage[512];
         wchar_t		m_szSongTitle    [512];
         wchar_t		m_szSongTitlePrev[512];
         //HFONT		m_hfont[3];	// 0=fancy font (for song titles, preset name)
@@ -637,7 +635,7 @@ public:
 
 	    bool		RenderStringToTitleTexture();
 	    void		ShowSongTitleAnim(/*IDirect3DTexture9* lpRenderTarget,*/ int w, int h, float fProgress);
-	    void		DrawWave(float *fL, float *fR);
+	    void		DrawWave();
         void        DrawCustomWaves() const;
         void        DrawCustomShapes() const;
 	    void		DrawSprites() const;

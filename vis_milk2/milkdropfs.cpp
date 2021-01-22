@@ -914,14 +914,14 @@ void CPlugin::RenderFrame(const int bRedraw)
 
 	    // smooth & scale the audio data, according to m_state, for display purposes
 	    float scale = m_pState->m_fWaveScale.eval(GetTime()) / 128.0f;
-	    mysound.fWave[0][0] *= scale;
-	    mysound.fWave[1][0] *= scale;
+	    mysound.fWaveform[0][0] *= scale;
+	    mysound.fWaveform[1][0] *= scale;
 	    float mix2 = m_pState->m_fWaveSmoothing.eval(GetTime());
 	    float mix1 = scale*(1.0f - mix2);
 	    for (int i=1; i<576; i++)
 	    {
-		    mysound.fWave[0][i] = mysound.fWave[0][i]*mix1 + mysound.fWave[0][i-1]*mix2;
-		    mysound.fWave[1][i] = mysound.fWave[1][i]*mix1 + mysound.fWave[1][i-1]*mix2;
+		    mysound.fWaveform[0][i] = mysound.fWaveform[0][i]*mix1 + mysound.fWaveform[0][i-1]*mix2;
+		    mysound.fWaveform[1][i] = mysound.fWaveform[1][i]*mix1 + mysound.fWaveform[1][i-1]*mix2;
 	    }
     }
 
@@ -1123,7 +1123,7 @@ void CPlugin::RenderFrame(const int bRedraw)
 	// draw audio data
     DrawCustomShapes(); // draw these first; better for feedback if the waves draw *over* them.
 	DrawCustomWaves();
-	DrawWave(mysound.fWave[0], mysound.fWave[1]);
+	DrawWave();
 	DrawSprites();
 
 	const float fProgress = (GetTime() - m_supertext.fStartTime) / m_supertext.fDuration;
@@ -2740,7 +2740,7 @@ void CPlugin::DrawCustomWaves() const
 	lpDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 }
 
-void CPlugin::DrawWave(float *fL, float *fR)
+void CPlugin::DrawWave()
 {
     LPDIRECT3DDEVICE9 lpDevice = GetDevice();
     if (!lpDevice)
@@ -2833,6 +2833,8 @@ void CPlugin::DrawWave(float *fL, float *fR)
 	int nBreak1 = -1;
 	int nBreak2 = -1;
 	float alpha1 = 0, alpha2 = 0;
+    float *fL = mysound.fWaveform[0],
+          *fR = mysound.fWaveform[1];
 
 	for (int it=0; it<its; it++)
 	{
