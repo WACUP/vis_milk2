@@ -111,11 +111,11 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_classAtom = RegisterClassW(&wc);
 	if (!m_classAtom)
 	{
-		wchar_t title[64] = {0};
+		wchar_t title[64] = { 0 };
 		m_lastErr = DXC_ERR_REGWIN;
-		MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_REGISTER_WINDOW_CLASS),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_REGISTER_WINDOW_CLASS),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		Internal_CleanUp();
 		return;
 	}
@@ -593,11 +593,11 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 			if (m_current_mode.display_mode.Format==D3DFMT_UNKNOWN)
 			{
-				wchar_t title[64] = {0};
+				wchar_t title[64] = { 0 };
 				m_lastErr = DXC_ERR_FORMAT;
-				MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED),
-						    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-						    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+				TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED),
+								WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+								MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 3000);
 				return FALSE;
 			}
 
@@ -632,11 +632,11 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 				}
 				else
 				{
-					wchar_t title[64] = {0};
+					wchar_t title[64] = { 0 };
 					m_lastErr = DXC_ERR_CAPSFAIL;
-					MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DXC_ERR_CAPSFAIL),
-							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-							    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+					TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_DXC_ERR_CAPSFAIL),
+									WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+									MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 					return FALSE;
 				}
 			}
@@ -649,10 +649,10 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (changed_fs_disp_mode)
 		{
-			wchar_t title[64] = {0};
-			MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_FS_DISPLAY_MODE_SELECTED_IS_INVALID),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_FS_DISPLAY_MODE_SELECTED_IS_INVALID),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		}
 
 		switch (m_current_mode.display_mode.Format)
@@ -812,9 +812,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 		{
 			wchar_t title[64] = {0};
 			m_lastErr = DXC_ERR_CREATEWIN;
-			MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_CREATEWINDOW_FAILED),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_CREATEWINDOW_FAILED),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return FALSE;
 		}
 
@@ -998,9 +998,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			if (x >= y*2 || y > x*4/3)     // tackle problem of vert/horz spans
 			{
 				wchar_t title[64] = {0};
-				int ret = MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS),
-									  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
-									  MB_OKCANCEL|MB_SETFOREGROUND|MB_TOPMOST);
+				int ret = TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS),
+										  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
+										  MB_OKCANCEL | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 				if (ret==IDCANCEL)
 				{
 					m_lastErr = DXC_ERR_USER_CANCELED;
@@ -1012,9 +1012,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 			if ((cx >= cy*2 && x < y*2) || (cy > cx*4/3 && y <= x*4/3))
 			{
 				wchar_t title[64] = {0};
-				int ret = MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS_2),
-									  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
-									  MB_OKCANCEL|MB_SETFOREGROUND|MB_TOPMOST);
+				int ret = TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS_2),
+										  WASABI_API_LNGSTRINGW_BUF(IDS_TIP, title, 64),
+										  MB_OKCANCEL | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 				if (ret==IDCANCEL)
 				{
 					m_lastErr = DXC_ERR_USER_CANCELED;
@@ -1220,9 +1220,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 							IDS_OLDER_DISPLAY_ADAPTER_CATENATION :
 							IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2)), ARRAYSIZE(str));
 
-					MessageBoxW(m_hwnd,str,
-							   WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
-							   MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+					TimedMessageBox(m_hwnd, str,
+									WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
+									MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 					return FALSE;
 				}
 				else if ((m_current_mode.screenmode == WINDOWED) && (m_client_width > 64))
@@ -1237,9 +1237,9 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 					StringCchPrintfW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
 
 					// NOTE: *A 'SUGGESTION' SCREEN SHOULD APPEAR NEXT, PROVIDED BY THE CALLER*
-					MessageBoxW(m_hwnd, str,
-							    WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
-							    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+					TimedMessageBox(m_hwnd, str,
+									WASABI_API_LNGSTRINGW(IDS_MILKDROP_ERROR),
+									MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 					return FALSE;
 				}
 			}
@@ -1383,10 +1383,10 @@ BOOL DXContext::OnUserResizeWindow(RECT *new_window_rect, RECT *new_client_rect)
 	{
 		WriteSafeWindowPos();
 
-		wchar_t title[64] = {0};
-		MessageBoxW(m_hwnd, WASABI_API_LNGSTRINGW(IDS_WINDOW_RESIZE_FAILED),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_OUT_OF_VIDEO_MEMORY, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		wchar_t title[64] = { 0 };
+		TimedMessageBox(m_hwnd, WASABI_API_LNGSTRINGW(IDS_WINDOW_RESIZE_FAILED),
+						WASABI_API_LNGSTRINGW_BUF(IDS_OUT_OF_VIDEO_MEMORY, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 
 		m_lastErr = DXC_ERR_RESIZEFAILED;
 		return FALSE;

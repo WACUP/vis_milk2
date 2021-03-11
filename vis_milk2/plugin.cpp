@@ -770,10 +770,11 @@ bool ReadFileToString(const wchar_t* szBaseFilename, char* szDestText, int nMaxB
     FILE* f = _wfopen(szFile, L"rb");
     if (!f)
     {
-		wchar_t buf[1024] = {0}, title[64] = {0};
+		wchar_t buf[1024] = { 0 }, title[64] = { 0 };
 		_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_READ_DATA_FILE_X), szFile);
 		//g_plugin.dumpmsg(buf); 
-		MessageBoxW(NULL, buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(NULL, buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
     }
     int len = 0;
@@ -1755,21 +1756,24 @@ int CPlugin::AllocateMyDX9Stuff()
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_MY_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,
+							title, ARRAYSIZE(title)), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (D3D_OK != GetDevice()->CreateVertexDeclaration( g_WfVertDecl, &m_pWfVertDecl ))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_WF_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,
+							title, ARRAYSIZE(title)), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (D3D_OK != GetDevice()->CreateVertexDeclaration( g_SpriteVertDecl, &m_pSpriteVertDecl ))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_SPRITE_VERTEX_DECLARATION,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,
+							title, ARRAYSIZE(title)), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
 		}
 
@@ -1799,28 +1803,28 @@ int CPlugin::AllocateMyDX9Stuff()
 			else
 				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_FAILED_TO_COMPILE_PIXEL_SHADERS_HARDWARE_MIS_REPORT),szSM,PSVersion);
 			//dumpmsg(buf); 
-			MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 		if (!RecompileVShader(m_szDefaultWarpVShaderText, &m_fallbackShaders_vs.warp, SHADER_WARP, true))
 		{
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_WV_SHADER,buf,ARRAYSIZE(buf));
 			//dumpmsg(buf); 
-			MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
         if (!RecompileVShader(m_szDefaultCompVShaderText, &m_fallbackShaders_vs.comp, SHADER_COMP, true))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CV_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf);
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (!RecompilePShader(m_szDefaultCompPShaderText, &m_fallbackShaders_ps.comp, SHADER_COMP, true, 2))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_FALLBACK_CP_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
 
@@ -1829,28 +1833,28 @@ int CPlugin::AllocateMyDX9Stuff()
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_VERTEX_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (!RecompilePShader(m_szBlurPSX, &m_BlurShaders[0].ps, SHADER_BLUR, true, 2))
         {
 		    WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR1_PIXEL_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (!RecompileVShader(m_szBlurVS, &m_BlurShaders[1].vs, SHADER_BLUR, true))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
         if (!RecompilePShader(m_szBlurPSY, &m_BlurShaders[1].ps, SHADER_BLUR, true, 2))
         {
 			WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_COMPILE_BLUR2_PIXEL_SHADER,buf,ARRAYSIZE(buf));
 		    //dumpmsg(buf); 
-		    MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
         }
     }
@@ -1985,7 +1989,7 @@ int CPlugin::AllocateMyDX9Stuff()
 				wcsncat(buffer, buffer2, ARRAYSIZE(buffer));
 			}
 		    //dumpmsg(buffer); 
-		    MessageBoxW(GetPluginWindow(), buffer, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			TimedMessageBox(GetPluginWindow(), buffer, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		    return false;
 	    }
         else 
@@ -2031,8 +2035,8 @@ int CPlugin::AllocateMyDX9Stuff()
                 {
                     m_nBlurTexW[i] = 1;
                     m_nBlurTexH[i] = 1;
-			        MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_BLUR_TEXTURES,buf,ARRAYSIZE(buf)),
-							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+					TimedMessageBox(GetPluginWindow(), WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_BLUR_TEXTURES, buf, ARRAYSIZE(buf)),
+									WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, ARRAYSIZE(title)), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
                     break;
                 }
 
@@ -2261,8 +2265,8 @@ int CPlugin::AllocateMyDX9Stuff()
 						&m_d3dx_title_font_doublesize
 					) != D3D_OK)
     {
-        MessageBoxW(GetPluginWindow(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DOUBLE_SIZED_D3DX_TITLE_FONT),
-				   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,ARRAYSIZE(title)), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		TimedMessageBox(GetPluginWindow(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DOUBLE_SIZED_D3DX_TITLE_FONT),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, ARRAYSIZE(title)), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
         return false;
     }
 
@@ -2280,7 +2284,7 @@ int CPlugin::AllocateMyDX9Stuff()
 	{
 		_snwprintf(buf, ARRAYSIZE(buf), L"couldn't allocate mesh - out of memory");
 		//dumpmsg(buf); 
-		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
 	}
 
@@ -2456,7 +2460,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
             {
 				WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		        //dumpmsg(buf); 
-		        MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+				TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		        return false;
             }
         }
@@ -2469,7 +2473,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
     {
 		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		//dumpmsg(buf); 
-		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
     }
 
@@ -2477,7 +2481,7 @@ bool CPlugin::AddNoiseTex(const wchar_t* szTexName, int size, int zoom_factor)
     {
 		WASABI_API_LNGSTRINGW_BUF(IDS_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,ARRAYSIZE(buf));
 		//dumpmsg(buf); 
-		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
     }
 
@@ -2591,7 +2595,7 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
             {
 		        WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_CREATE_3D_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		        //dumpmsg(buf); 
-		        MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+				TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		        return false;
             }
         }
@@ -2603,14 +2607,14 @@ bool CPlugin::AddNoiseVol(const wchar_t* szTexName, int size, int zoom_factor)
     {
 		WASABI_API_LNGSTRINGW_BUF(IDS_COULD_NOT_LOCK_3D_NOISE_TEXTURE,buf,ARRAYSIZE(buf));
 		//dumpmsg(buf); 
-		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
     }
     if (r.RowPitch < size*4 || r.SlicePitch < size*size*4)
     {
 		WASABI_API_LNGSTRINGW_BUF(IDS_3D_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED,buf,ARRAYSIZE(buf));
 		//dumpmsg(buf); 
-		MessageBoxW(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+		TimedMessageBox(GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
     }
     // write to the bits...
@@ -3229,8 +3233,8 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
 		                //g_plugin.dumpmsg(buf); 
                         if (bHardErrors)
 						{
-							wchar_t title[64] = {0};
-		                    MessageBoxW(g_plugin.GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+							wchar_t title[64] = { 0 };
+							TimedMessageBox(g_plugin.GetPluginWindow(), buf, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 						}
                         else {
                             g_plugin.AddError(buf, 6.0f, ERR_PRESET, true);
@@ -3746,8 +3750,8 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
 		SafeRelease(m_pShaderCompileErrors);
 		//dumpmsg(temp);
 		if (bHardErrors) {
-			wchar_t title[64] = {0};
-			MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		}
 		else {
 			AddError(temp, 8.0f, ERR_PRESET, true);
@@ -3780,8 +3784,8 @@ bool CPlugin::LoadShaderFromMemory( const char* szOrigShaderText, char* szFn, ch
         WASABI_API_LNGSTRINGW_BUF(IDS_ERROR_CREATING_SHADER, temp, ARRAYSIZE(temp));
 		//dumpmsg(temp); 
 		if (bHardErrors) {
-			wchar_t title[64] = {0};
-		    MessageBoxW(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR,title,64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(GetPluginWindow(), temp, WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		}
         else {
             AddError(temp, 6.0f, ERR_PRESET, true);
@@ -6502,7 +6506,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 	
 	case WM_KEYUP:
     	return 1;
-		break;
 
 	case WM_MOUSEWHEEL:	// most other plug-ins forward this on
 						// so the volume can be easily changed
@@ -6511,7 +6514,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
     default:
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-        break;
     }
 
     return 0;
@@ -7396,7 +7398,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 						    if (ret <= 32)
 						    {
 								wchar_t* str = WASABI_API_LNGSTRINGW(IDS_ERROR_IN_SHELLEXECUTE);
-								MessageBoxW(hwnd, str, str, MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+								TimedMessageBox(hwnd, str, str, MB_OK | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL, 2000);
 						    }
 					    }
 				    }
@@ -7416,7 +7418,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 						    if (ret <= 32)
 						    {
 								wchar_t* str = WASABI_API_LNGSTRINGW(IDS_ERROR_IN_SHELLEXECUTE);
-								MessageBoxW(hwnd, str, str, MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+								TimedMessageBox(hwnd, str, str, MB_OK | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL, 2000);
 						    }
 					    }
 				    }

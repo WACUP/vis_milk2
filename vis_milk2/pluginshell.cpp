@@ -322,18 +322,18 @@ int CPluginShell::InitGDIStuff()
 	if (!(m_main_menu = WASABI_API_LOADMENUW(IDR_WINDOWED_CONTEXT_MENU)))
 	{
 		wchar_t title[64] = { 0 };
-		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_MAIN_MENU),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_MAIN_MENU),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
 	}
 
 	if (!(m_context_menu = GetSubMenu(m_main_menu, 0)))
 	{
 		wchar_t title[64] = { 0 };
-		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_CONTEXT_MENU),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_LOADING_CONTEXT_MENU),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return false;
 	}
 
@@ -368,9 +368,9 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		// Create direct 3d & get some infos
 		if (!(m_vjd3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
 		{
-			wchar_t title[64] = {0};
-			MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DIRECT3D_DEVICE_FOR_VJ_MODE),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_DIRECT3D_DEVICE_FOR_VJ_MODE),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 
@@ -393,9 +393,9 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		if (D3D_OK != m_vjd3d9->GetAdapterDisplayMode(ordinal_adapter, &dm))
 		{
 			wchar_t title[64] = {0};
-			MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_VJ_MODE_INIT_ERROR),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_VJ_MODE_INIT_ERROR),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 
@@ -448,10 +448,10 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 
 		if (!RegisterClass(&wc))
 		{
-			wchar_t title[64] = {0};
-			MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_REGISTERING_WINDOW_CLASS_FOR_TEXT_WINDOW),
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_REGISTERING_WINDOW_CLASS_FOR_TEXT_WINDOW),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 		m_bTextWindowClassRegistered = true;
@@ -472,10 +472,10 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 
 		if (!m_hTextWnd)
 		{
-			wchar_t title[64] = {0};
-			MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_VJ_WINDOW),
-					   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					   MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_VJ_WINDOW),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 
@@ -512,9 +512,9 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		{
 			wchar_t title[64] = {0};
 			m_vjd3d9_device = NULL;
-			MessageBoxW(m_lpDX->GetHwnd(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_D3D_DEVICE_FOR_VJ_MODE),
-					   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					   MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			TimedMessageBox(m_lpDX->GetHwnd(), WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_D3D_DEVICE_FOR_VJ_MODE),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 
@@ -602,10 +602,10 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 		                 &m_d3dx_font[i]
 		                 ) != D3D_OK)
 		{
-			wchar_t title[64] = {0};
-			MessageBoxW(m_lpDX ? m_lpDX->GetHwnd() : NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_D3DX_FONTS), 
-					    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+			wchar_t title[64] = { 0 };
+			TimedMessageBox(m_lpDX ? m_lpDX->GetHwnd() : NULL, WASABI_API_LNGSTRINGW(IDS_ERROR_CREATING_D3DX_FONTS),
+							WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+							MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 			return false;
 		}
 	}
@@ -1055,10 +1055,10 @@ int CPluginShell::InitDirectX()
 
 	if (!m_lpDX)
 	{
-		wchar_t title[64] = {0};
-		MessageBoxW(NULL, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_INIT_DXCONTEXT),
-				    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-				    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+		wchar_t title[64] = { 0 };
+		TimedMessageBox(NULL, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_INIT_DXCONTEXT),
+						WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
+						MB_OK | MB_SETFOREGROUND | MB_TOPMOST, 2000);
 		return FALSE;
 	}
 
