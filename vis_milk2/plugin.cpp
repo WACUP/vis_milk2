@@ -553,28 +553,8 @@ volatile bool g_bThreadAlive; // set true by MAIN thread, and set false upon exi
 volatile int  g_bThreadShouldQuit;  // set by MAIN thread to flag 2nd thread that it wants it to exit.
 static CRITICAL_SECTION g_cs;
 
-#define IsAlphabetChar(x) ((x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z'))
 #define IsAlphanumericChar(x) ((x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9') || x == '.')
 #define IsNumericChar(x) (x >= '0' && x <= '9')
-
-const unsigned char LC2UC[256] = {
-	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
-	17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,255,
-	33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,
-	49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,
-	97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,
-	113,114,115,116,117,118,119,120,121,122,91,92,93,94,95,96,
-	97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,
-	113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,
-	129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,
-	145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,
-	161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,
-	177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,
-	193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,
-	209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,
-	225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,
-	241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,
-};
 
 /*
  * Copies the given string TO the clipboard.
@@ -733,31 +713,6 @@ void ConvertLFCToCRsW(const wchar_t* src, wchar_t* dst)
         }
     }
     *dst = 0;
-}
-
-int mystrcmpiW(const wchar_t *s1, const wchar_t *s2)
-{
-	// returns  1 if s1 comes before s2
-	// returns  0 if equal
-	// returns -1 if s1 comes after s2
-	// treats all characters/symbols by their ASCII values, 
-	//    except that it DOES ignore case.
-
-	int i=0;
-
-	while (LC2UC[s1[i]] == LC2UC[s2[i]] && s1[i] != 0)
-		++i;
-
-	//FIX THIS!
-
-	if (s1[i]==0 && s2[i]==0)
-		return 0;
-	else if (s1[i]==0)
-		return -1;
-	else if (s2[i]==0)
-		return 1;
-	else 
-		return (LC2UC[s1[i]] < LC2UC[s2[i]]) ? -1 : 1;
 }
 
 bool ReadFileToString(const wchar_t* szBaseFilename, char* szDestText, int nMaxBytes, bool bConvertLFsToSpecialChar)
@@ -5088,7 +5043,8 @@ void CPlugin::MyRenderUI(
 					    {
 						    // directory
 						    if (wcscmp(m_presets[i].szFilename.c_str()+1, L"..")==0)
-							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] (%s) ", m_presets[i].szFilename.c_str()+1, WASABI_API_LNGSTRINGW(IDS_PARENT_DIRECTORY));
+							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] (%s) ", m_presets[i].szFilename.c_str()+1,
+										   WASABI_API_LNGSTRINGW(IDS_PARENT_DIRECTORY));
 						    else
 							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] ", m_presets[i].szFilename.c_str()+1);
 					    }
@@ -5245,7 +5201,8 @@ void CPlugin::MyRenderUI(
 					    {
 						    // directory
 						    if (wcscmp(m_presets[i].szFilename.c_str()+1, L"..")==0)
-							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] (%s) ", m_presets[i].szFilename.c_str()+1, WASABI_API_LNGSTRINGW(IDS_PARENT_DIRECTORY));
+							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] (%s) ", m_presets[i].szFilename.c_str()+1,
+										   WASABI_API_LNGSTRINGW(IDS_PARENT_DIRECTORY));
 						    else
 							    _snwprintf(str2, ARRAYSIZE(str2), L" [ %s ] ", m_presets[i].szFilename.c_str()+1);
 					    }
@@ -5270,7 +5227,8 @@ void CPlugin::MyRenderUI(
                             color = PLAYLIST_COLOR_HILITE_TRACK;
 
                         RECT r2 = rect;
-                        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT),  str2, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), color, false);
+                        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT), str2, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS |
+													 DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), color, false);
 
                         if (pass==0)  // calculating dark box 
                         {
@@ -8740,7 +8698,6 @@ retry:
 
 	EnterCriticalSection(&g_cs);
 
-    //g_plugin.m_presets  = temp_presets;
     for (int i=g_plugin.m_nPresets; i<temp_nPresets; i++)
         g_plugin.m_presets.push_back(temp_presets[i]);
     g_plugin.m_nPresets = temp_nPresets;
@@ -8877,7 +8834,7 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
             const int nPresets = g_plugin.m_nPresets;
 	        LeaveCriticalSection(&g_cs);
 
-            if (nPresets >= 30)
+            if (nPresets >= 31)
                 break;
         }
 
@@ -8891,7 +8848,7 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
     }
 }
 
-void CPlugin::MergeSortPresets(int left, int right)
+void CPlugin::MergeSortPresets(const int left, const int right)
 {
 	// note: left..right range is inclusive
 	int nItems = right-left+1;
@@ -8910,7 +8867,8 @@ void CPlugin::MergeSortPresets(int left, int right)
 		{
 			bool bSwap;
 
-			// merge the sorted arrays; give preference to strings that start with a '*' character
+			// merge the sorted arrays - gives preference
+			// to strings that start with a '*' character
 			int nSpecial = 0;
 			if (m_presets[a].szFilename.c_str()[0] == '*') ++nSpecial;
 			if (m_presets[b].szFilename.c_str()[0] == '*') ++nSpecial;
@@ -8921,7 +8879,13 @@ void CPlugin::MergeSortPresets(int left, int right)
 			}
 			else
 			{
-				bSwap = (mystrcmpiW(m_presets[a].szFilename.c_str(), m_presets[b].szFilename.c_str()) > 0);
+				bSwap = ((CompareStringEx(LOCALE_NAME_USER_DEFAULT, NORM_IGNORECASE |
+										  NORM_IGNOREWIDTH | SORT_DIGITSASNUMBERS,
+										  m_presets[a].szFilename.c_str(),
+										  m_presets[a].szFilename.size(),
+										  m_presets[b].szFilename.c_str(),
+										  m_presets[b].szFilename.size(),
+										  NULL, NULL, 0) - 2) > 0);
 			}
 
 			if (bSwap)
@@ -8952,7 +8916,13 @@ void CPlugin::MergeSortPresets(int left, int right)
 				m_presets[right] = temp;
 			}
 		}
-		else if (mystrcmpiW(m_presets[left].szFilename.c_str(), m_presets[right].szFilename.c_str()) > 0)
+		else if ((CompareStringEx(LOCALE_NAME_USER_DEFAULT, NORM_IGNORECASE |
+								  NORM_IGNOREWIDTH | SORT_DIGITSASNUMBERS,
+								  m_presets[left].szFilename.c_str(),
+								  m_presets[left].szFilename.size(),
+								  m_presets[right].szFilename.c_str(),
+								  m_presets[right].szFilename.size(),
+								  NULL, NULL, 0) - 2) > 0)
 		{
             PresetInfo temp = m_presets[left];
 			m_presets[left] = m_presets[right];
@@ -9279,7 +9249,8 @@ void CPlugin::DeletePresetFile(wchar_t *szDelFile)
 	{
 		// pop up confirmation
 		wchar_t buf[1024] = {0};
-        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_PRESET_X_DELETED), m_presets[m_nPresetListCurPos].szFilename.c_str());
+        _snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_PRESET_X_DELETED),
+				   m_presets[m_nPresetListCurPos].szFilename.c_str());
         AddError(buf, 3.0f, ERR_NOTIFY, false);
 
 		// refresh file listing & re-select the next file after the one deleted
