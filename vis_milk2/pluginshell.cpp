@@ -1331,7 +1331,9 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_lower_right_corner_y = 0;
 	m_left_edge = 0;
 	m_right_edge = 0;
+#ifdef LEGACY_DESKTOP_MODE
 	m_force_accept_WM_WINDOWPOSCHANGING = 0;
+#endif
 
 	// PRIVATE - GDI STUFF
 	m_main_menu     = NULL;
@@ -3307,56 +3309,55 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		{
 			switch (wParam)
 			{
-			case 'j':
-			case 'J':
-				m_playlist_pos = GetPlaylistPosition();
-				return 0;
-			default:
-			{
-				int nSongs = GetPlaylistLength();
-				int found = 0;
-				int orig_pos = m_playlist_pos;
-				int inc = (wParam>='A' && wParam<='Z') ? -1 : 1;
-				while (1)
+				case 'j':
+				case 'J':
+					m_playlist_pos = GetPlaylistPosition();
+					return 0;
+				default:
 				{
-					if (inc==1 && m_playlist_pos >= nSongs-1)
-						break;
-					if (inc==-1 && m_playlist_pos <= 0)
-						break;
-
-					m_playlist_pos += inc;
-
-					char buf[32] = {0};
-					strncpy(buf, (char*)SendMessage(m_hWndWinamp, WM_WA_IPC, m_playlist_pos, IPC_GETPLAYLISTTITLE), 31);
-					buf[31] = 0;
-
-					// remove song # and period from beginning
-					char *p = buf;
-					while (*p >= '0' && *p <= '9') ++p;
-					if (*p == '.' && *(p+1) == ' ')
+					int nSongs = GetPlaylistLength();
+					int found = 0;
+					int orig_pos = m_playlist_pos;
+					int inc = (wParam>=L'A' && wParam<=L'Z') ? -1 : 1;
+					while (1)
 					{
-						p += 2;
-						int pos = 0;
-						while (*p != 0)
+						if (inc==1 && m_playlist_pos >= nSongs-1)
+							break;
+						if (inc==-1 && m_playlist_pos <= 0)
+							break;
+
+						m_playlist_pos += inc;
+
+						wchar_t buf[32] = {0};
+						wcsncpy(buf, GetPlaylistItemTitle(m_playlist_pos), ARRAYSIZE(buf) - 1);
+
+						// remove song # and period from beginning
+						wchar_t *p = buf;
+						while (*p >= L'0' && *p <= L'9') ++p;
+						if (*p == L'.' && *(p+1) == L' ')
 						{
-							buf[pos++] = *p;
-							++p;
+							p += 2;
+							int pos = 0;
+							while (*p != 0)
+							{
+								buf[pos++] = *p;
+								++p;
+							}
+							buf[pos++] = 0;
 						}
-						buf[pos++] = 0;
+
+						int wParam2 = (wParam>=L'A' && wParam<=L'Z') ? (wParam + L'a'-L'A') : (wParam + L'A'-L'a');
+						if (buf[0]==(wchar_t)wParam || buf[0]==(wchar_t)wParam2)
+						{
+							found = 1;
+							break;
+						}
 					}
 
-					int wParam2 = (wParam>='A' && wParam<='Z') ? (wParam + 'a'-'A') : (wParam + 'A'-'a');
-					if (buf[0]==(char)wParam || buf[0]==(char)wParam2)
-					{
-						found = 1;
-						break;
-					}
+					if (!found)
+						m_playlist_pos = orig_pos;
 				}
-
-				if (!found)
-					m_playlist_pos = orig_pos;
-			}
-			return 0;
+				return 0;
 			}
 		}
 

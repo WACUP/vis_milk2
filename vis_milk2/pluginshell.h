@@ -205,7 +205,9 @@ private:
     int m_lower_right_corner_y;
     int m_left_edge;
     int m_right_edge;
+#ifdef LEGACY_DESKTOP_MODE
     int m_force_accept_WM_WINDOWPOSCHANGING;
+#endif
 
     // PRIVATE - GDI STUFF
     HMENU               m_main_menu;
