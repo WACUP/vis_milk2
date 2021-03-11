@@ -4906,7 +4906,8 @@ void CPlugin::MyRenderUI(
                         }
 
                         wchar_t szFile[MAX_PATH] = {0};
-                        _snwprintf(szFile, ARRAYSIZE(szFile), L"%s%s", m_szPresetDir, m_presets[m_nMashPreset[mash]].szFilename.c_str());
+                        //_snwprintf(szFile, ARRAYSIZE(szFile), L"%s%s", m_szPresetDir, m_presets[m_nMashPreset[mash]].szFilename.c_str());
+                        PathCombine(szFile, m_presets[m_nMashPreset[mash]].szFolderpath.c_str(), m_presets[m_nMashPreset[mash]].szFilename.c_str());
 
                         m_pState->Import(szFile, GetTime(), m_pState, ApplyFlags);
 
@@ -4960,19 +4961,20 @@ void CPlugin::MyRenderUI(
 					m_bUserPagedUp = false;
 				}
 
-				int i;
 				int first_line = m_nMashPreset[m_nMashSlot] - (m_nMashPreset[m_nMashSlot] % lines_available);
 				int last_line  = first_line + lines_available;
-				wchar_t str[512] = {0}, str2[512] = {0};
 
-				if (last_line > m_nPresets) 
+				if (last_line > m_nPresets)
 					last_line = m_nPresets;
 
 				// tooltip:
 				if (m_bShowMenuToolTips)
 				{
 					wchar_t buffer[256] = {0};
-					_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nMashPreset[m_nMashSlot]/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
+					_snwprintf(buffer, ARRAYSIZE(buffer),
+							   WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X),
+							   m_nMashPreset[m_nMashSlot]/lines_available+1,
+							   (m_nPresets+lines_available-1)/lines_available);
                     DrawTooltip(buf, xR, *lower_right_corner_y);
 				}
 
@@ -5006,7 +5008,9 @@ void CPlugin::MyRenderUI(
 						_snwprintf(buffer, ARRAYSIZE(buffer), L"%s%s", WASABI_API_LNGSTRINGW(mashNames[mash]), m_presets[idx].szFilename.c_str());
                         RECT r2 = orig_rect;
                         r2.top += h;
-                        h += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), (mash==m_nMashSlot) ? PLAYLIST_COLOR_HILITE_TRACK : PLAYLIST_COLOR_NORMAL, false);
+                        h += m_text.DrawTextW(GetFont(SIMPLE_FONT), buffer, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS |
+											  DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), (mash==m_nMashSlot) ?
+											  PLAYLIST_COLOR_HILITE_TRACK : PLAYLIST_COLOR_NORMAL, false);
                         w = max(w, r2.right - r2.left);
                     }
                     if (pass==0) {
@@ -5031,14 +5035,15 @@ void CPlugin::MyRenderUI(
                     //    GetFont(SIMPLE_FONT)->Begin();
 
                     rect = orig_rect;
-				    for (i=first_line; i<last_line; i++)
+				    for (int i=first_line; i<last_line; i++)
 				    {
 					    // remove the extension before displaying the filename.  also pad w/spaces.
 					    //strcpy(str, m_pPresetAddr[i]);
 					    bool bIsDir = (m_presets[i].szFilename.c_str()[0] == '*');
 					    bool bIsRunning = false;
 					    bool bIsSelected = (i == m_nMashPreset[m_nMashSlot]);
-					    
+						wchar_t str[512] = {0}, str2[512] = {0};
+
 					    if (bIsDir)
 					    {
 						    // directory
@@ -5069,7 +5074,8 @@ void CPlugin::MyRenderUI(
                             color = PLAYLIST_COLOR_HILITE_TRACK;
 
                         RECT r2 = rect;
-                        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT),  str2, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), color, false);
+                        rect.top += m_text.DrawTextW(GetFont(SIMPLE_FONT),  str2, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS |
+													 DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), color, false);
 
                         if (pass==0)  // calculating dark box 
                         {
@@ -5140,8 +5146,22 @@ void CPlugin::MyRenderUI(
 				{
 					m_nPresetListCurPos += lines_available;
 					if (m_nPresetListCurPos >= m_nPresets)
-						m_nPresetListCurPos = m_nPresets - 1;
-					
+					{
+						m_nPresetListCurPos = (m_nPresets - 1);
+						// due to some of the presets being hidden due to the
+						// fun of how the preset cache works vs what we need
+						// to do for the ui, we need to find the last shown
+
+						while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+						{
+							--m_nPresetListCurPos;
+							if (!m_nPresetListCurPos)
+							{
+								break;
+							}
+						}
+					}
+
 					// remember this preset's name so the next time they hit 'L' it jumps straight to it
 					//strcpy(m_szLastPresetSelected, m_presets[m_nPresetListCurPos].szFilename.c_str());
 					
@@ -5160,19 +5180,13 @@ void CPlugin::MyRenderUI(
 					m_bUserPagedUp = false;
 				}
 
-				int i;
 				int first_line = m_nPresetListCurPos - (m_nPresetListCurPos % lines_available);
-				int last_line  = first_line + lines_available;
-				wchar_t str[512] = {0}, str2[512] = {0};
-
-				if (last_line > m_nPresets) 
-					last_line = m_nPresets;
-
-				// tooltip:
-				if (m_bShowMenuToolTips)
+				if (first_line > (m_nPresets - m_nHiddenPresets))
 				{
-					_snwprintf(buffer, ARRAYSIZE(buffer), WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X), m_nPresetListCurPos/lines_available+1, (m_nPresets+lines_available-1)/lines_available);
-                    DrawTooltip(buffer, xR, *lower_right_corner_y);
+					if ((m_nPresets - m_nHiddenPresets) < lines_available)
+					{
+						first_line = 0;
+					}
 				}
 
                 RECT orig_rect = rect;
@@ -5184,17 +5198,18 @@ void CPlugin::MyRenderUI(
                 box.bottom = rect.top;
 
                 for (int pass=0; pass<2; pass++)
-                {   
+                {
                     //if (pass==1)
                     //    GetFont(SIMPLE_FONT)->Begin();
 
                     rect = orig_rect;
-				    for (i=first_line; i<last_line; i++)
-				    {
+				    for (int i=first_line,drawn=0; (i<m_nPresets) && (drawn<MAX_PRESETS_PER_PAGE); i++)
+					{
+						wchar_t str2[512] = { 0 };
 					    // remove the extension before displaying the filename.  also pad w/spaces.
 					    //strcpy(str, m_pPresetAddr[i]);
 					    bool bIsDir = (m_presets[i].szFilename.c_str()[0] == '*');
-					    bool bIsRunning = (i == m_nCurrentPreset);//false;
+					    bool bIsRunning = (i == m_nCurrentPreset);
 					    bool bIsSelected = (i == m_nPresetListCurPos);
 					    
 					    if (bIsDir)
@@ -5208,15 +5223,26 @@ void CPlugin::MyRenderUI(
 					    }
 					    else
 					    {
-						    // preset file
-							wcsncpy(str, m_presets[i].szFilename.c_str(), ARRAYSIZE(str));
-						    RemoveExtension(str);
-						    _snwprintf(str2, ARRAYSIZE(str2), L" %s ", str);
+							if (wcscmp(m_presets[i].szFolderpath.c_str(), GetPresetDir()) == 0)
+							{
+								// preset file
+								wchar_t str[512] = { 0 };
+								wcsncpy(str, m_presets[i].szFilename.c_str(), ARRAYSIZE(str));
+								RemoveExtension(str);
+								_snwprintf(str2, ARRAYSIZE(str2), L" %s ", str);
+							}
+							else
+							{
+								// it's not for the current directory level
+								// so there's no point in the drawing of it
+								continue;
+							}
 
 						    //if (wcscmp(m_pState->m_szDesc, str)==0)
 							//    bIsRunning = true;
 					    }
 					    
+						++drawn;
 					    if (bIsRunning && m_bPresetLockedByUser)
 							wcsncat(str2, WASABI_API_LNGSTRINGW(IDS_LOCKED), ARRAYSIZE(str2));
 
@@ -5250,6 +5276,27 @@ void CPlugin::MyRenderUI(
                         *upper_left_corner_y = box.bottom + PLAYLIST_INNER_MARGIN;
                     }
                 }
+
+				// TODO this isn't being used for now as the hidden
+				//		presets skew the reported position so until
+				//		that is resolved it's not reliable using it
+				// tooltip:
+				/*if (m_bShowMenuToolTips)
+				{
+					int last_line = first_line + lines_available;
+					if (last_line > (m_nPresets - m_nHiddenPresets))
+						last_line = (m_nPresets - m_nHiddenPresets);
+
+					// ensure that the displayed page count is valid
+					// due to the items that may have been hidden...
+					int page = m_nPresetListCurPos / lines_available + 1,
+						pages = ((m_nPresets - m_nHiddenPresets) +
+								lines_available - 1) / lines_available;
+					_snwprintf(buffer, ARRAYSIZE(buffer),
+							   WASABI_API_LNGSTRINGW(IDS_PAGE_X_OF_X),
+							   (page < pages ? page : pages), pages);
+					DrawTooltip(buffer, xR, *lower_right_corner_y);
+				}*/
 			}
 		}
     }
@@ -5505,7 +5552,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			{
 				// first add pathname to filename
 				wchar_t szDelFile[512] = {0};
-				_snwprintf(szDelFile, ARRAYSIZE(szDelFile), L"%s%s", GetPresetDir(), m_presets[m_nPresetListCurPos].szFilename.c_str());
+				//_snwprintf(szDelFile, ARRAYSIZE(szDelFile), L"%s%s", GetPresetDir(), m_presets[m_nPresetListCurPos].szFilename.c_str());
+				PathCombine(szDelFile, m_presets[m_nPresetListCurPos].szFolderpath.c_str(), m_presets[m_nPresetListCurPos].szFilename.c_str());
 
 				DeletePresetFile(szDelFile);
                 //m_nCurrentPreset = -1;
@@ -5900,8 +5948,11 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 						// TODO consider PathCombine(..)
 						// first add pathnames to filenames
 						wchar_t szOldFile[512] = {0}, szNewFile[512] = {0};
-						PathCombine(szOldFile, GetPresetDir(), m_presets[m_nPresetListCurPos].szFilename.c_str());
-						PathCombine(szNewFile, GetPresetDir(), m_waitstring.szText);
+						/*PathCombine(szOldFile, GetPresetDir(), m_presets[m_nPresetListCurPos].szFilename.c_str());
+						PathCombine(szNewFile, GetPresetDir(), m_waitstring.szText);*/
+						PathCombine(szOldFile, m_presets[m_nPresetListCurPos].szFolderpath.c_str(),
+									m_presets[m_nPresetListCurPos].szFilename.c_str());
+						PathCombine(szNewFile, m_presets[m_nPresetListCurPos].szFolderpath.c_str(), m_waitstring.szText);
 						wcsncat(szNewFile, L".milk", ARRAYSIZE(szNewFile));
 
 						RenamePresetFile(szOldFile, szNewFile);
@@ -6166,9 +6217,29 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             }
             else if (m_UI_mode == UI_LOAD)
 			{
-                for (rep=0; rep<nRepeat; rep++)
-				    if (m_nPresetListCurPos > 0)
-					    --m_nPresetListCurPos;
+				for (rep = 0; rep < nRepeat; rep++)
+				{
+					if (m_nPresetListCurPos > 0)
+					{
+						--m_nPresetListCurPos;
+						if (!m_nPresetListCurPos)
+						{
+							break;
+						}
+
+						// to help the menu seem ok when we're skipping over the presets
+						// that aren't shown for the current level we need to find those
+						// that are meant to show next hence this looping for a match...
+						while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+						{
+							--m_nPresetListCurPos;
+							if (!m_nPresetListCurPos)
+							{
+								break;
+							}
+						}
+					}
+				}
 				return 0; // we processed (or absorbed) the key
 
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
@@ -6186,9 +6257,56 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             }
 			else if (m_UI_mode == UI_LOAD)
 			{
-                for (rep=0; rep<nRepeat; rep++)
-    				if (m_nPresetListCurPos < m_nPresets - 1) 
-	    				++m_nPresetListCurPos;
+				for (rep = 0; rep < nRepeat; rep++)
+				{
+					if (m_nPresetListCurPos < (m_nPresets - 1))
+					{
+						++m_nPresetListCurPos;
+
+						if (m_nPresetListCurPos >= m_nPresets)
+						{
+							m_nPresetListCurPos = (m_nPresets - 1);
+							// due to some of the presets being hidden due to the
+							// fun of how the preset cache works vs what we need
+							// to do for the ui, we need to find the last shown
+
+							while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+							{
+								--m_nPresetListCurPos;
+								if (!m_nPresetListCurPos)
+								{
+									break;
+								}
+							}
+							break;
+						}
+
+						// to help the menu seem ok when we're skipping over the presets
+						// that aren't shown for the current level we need to find those
+						// that are meant to show next hence this looping for a match...
+						while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+						{
+							++m_nPresetListCurPos;
+							if (m_nPresetListCurPos >= m_nPresets)
+							{
+								m_nPresetListCurPos = (m_nPresets - 1);
+								// due to some of the presets being hidden due to the
+								// fun of how the preset cache works vs what we need
+								// to do for the ui, we need to find the last shown
+
+								while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+								{
+									--m_nPresetListCurPos;
+									if (!m_nPresetListCurPos)
+									{
+										break;
+									}
+								}
+								break;
+							}
+						}
+					}
+				}
 				return 0; // we processed (or absorbed) the key
 
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
@@ -6255,7 +6373,20 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		case VK_END:	
 			if (m_UI_mode == UI_LOAD)
             {
-				m_nPresetListCurPos = m_nPresets - 1;
+				m_nPresetListCurPos = (m_nPresets - 1);
+				// due to some of the presets being hidden due to the
+				// fun of how the preset cache works vs what we need
+				// to do for the ui, we need to find the last shown
+
+				while (wcscmp(m_presets[m_nPresetListCurPos].szFolderpath.c_str(), GetPresetDir()))
+				{
+					--m_nPresetListCurPos;
+					if (!m_nPresetListCurPos)
+					{
+						break;
+					}
+				}
+
 				return 0; // we processed (or absorbed) the key
             }
             else if (m_UI_mode == UI_MASHUP)
@@ -6400,7 +6531,9 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
 					// first take the filename and prepend the path.  (already has extension)
 					wchar_t s[MAX_PATH] = {0};
-					PathCombine(s, GetPresetDir(), m_presets[m_nCurrentPreset].szFilename.c_str());	// note: m_szPresetDir always ends with '\'
+					//PathCombine(s, GetPresetDir(), m_presets[m_nCurrentPreset].szFilename.c_str());	// note: m_szPresetDir always ends with '\'
+					PathCombine(s, m_presets[m_nCurrentPreset].szFolderpath.c_str(),
+								m_presets[m_nCurrentPreset].szFilename.c_str());
 
 					// now load (and blend to) the new preset
                     m_presetHistoryPos = (m_presetHistoryPos+1) % PRESET_HIST_LEN;
@@ -7903,7 +8036,9 @@ void CPlugin::PrevPreset(float fBlendTime)
 
         wchar_t szFile[MAX_PATH] = {0};
         // note: m_szPresetDir always ends with '\'
-        PathCombine(szFile, m_szPresetDir, m_presets[m_nCurrentPreset].szFilename.c_str());
+        //PathCombine(szFile, m_szPresetDir, m_presets[m_nCurrentPreset].szFilename.c_str());
+		PathCombine(szFile, m_presets[m_nCurrentPreset].szFolderpath.c_str(),
+					m_presets[m_nCurrentPreset].szFilename.c_str());
 
     	LoadPreset(szFile, fBlendTime);
     }
@@ -7987,7 +8122,12 @@ void CPlugin::LoadRandomPreset(float fBlendTime)
 		// pick a random file
 		if (!m_bEnableRating || (m_presets[m_nPresets - 1].fRatingCum < 0.1f))// || (m_nRatingReadProgress < m_nPresets))
 		{
+#if 0
 			m_nCurrentPreset = m_nDirs + (warand() % (m_nPresets - m_nDirs));
+			if (m_nCurrentPreset < m_nDirs || m_nCurrentPreset >= m_nPresets)
+				m_nCurrentPreset = m_nDirs;
+#endif
+			m_nCurrentPreset = m_nDirs + RandomFromRange(m_nPresets - m_nDirs);
 		}
 		else
 		{
@@ -8030,7 +8170,9 @@ void CPlugin::LoadRandomPreset(float fBlendTime)
 	// first prepend the path, then load section [preset00] within that file
 	wchar_t szFile[MAX_PATH] = {0};
 	// note: m_szPresetDir always ends with '\'
-	PathCombine(szFile, m_szPresetDir, m_presets[m_nCurrentPreset].szFilename.c_str());
+	//PathCombine(szFile, m_szPresetDir, m_presets[m_nCurrentPreset].szFilename.c_str());
+	PathCombine(szFile, m_presets[m_nCurrentPreset].szFolderpath.c_str(),
+				m_presets[m_nCurrentPreset].szFilename.c_str());
 
     if (!bHistoryEmpty)
         m_presetHistoryPos = (m_presetHistoryPos+1) % PRESET_HIST_LEN;
@@ -8198,6 +8340,22 @@ void CPlugin::GenPlasma(int x0, int x1, int y0, int y1, float dt)
 
 void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 {
+	// just make sure that we're not trying to
+	// process an invalid provided preset file
+	if (!szPresetFilename || !*szPresetFilename)
+	{
+		return;
+	}
+
+	// we make sure we're only loading .milk files
+	// this way is a bit nicer than the older way
+	// when it comes to handling long filenames :)
+	LPCWSTR szExtension = PathFindExtension(szPresetFilename);
+	if (szExtension && *szExtension && wcsicmp(szExtension, L".milk"))
+	{
+		return;
+	}
+
     // clear old error msg...
     if (m_nFramesSinceResize > 4)
     	ClearErrors(ERR_PRESET);     
@@ -8426,6 +8584,211 @@ char* NextLine(char* p)
     return s;
 }
 
+void ProcessPresetFolder(WIN32_FIND_DATAW *fd, LPCWSTR szPresetDir, int *temp_nDirs,
+						 int *temp_nPresets, PresetList &temp_presets,
+						 int *temp_nHiddenPresets, const int level)
+{
+	bool bSkip = false;
+	bool bIsDir = (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	float fRating = 3.0f;
+	wchar_t szFilename[512] = {0};
+	wcsncpy(szFilename, fd->cFileName, ARRAYSIZE(szFilename));
+
+	if (bIsDir)
+	{
+		// skip "." directory
+		if (wcscmp(fd->cFileName, L".")==0)
+			bSkip = true;
+		else
+			_snwprintf(szFilename, ARRAYSIZE(szFilename), L"*%s", fd->cFileName);
+
+		if (!bSkip && wcscmp(fd->cFileName, L".."))
+		{
+			HANDLE _h = INVALID_HANDLE_VALUE;
+			WIN32_FIND_DATAW _fd = {0};
+
+			wchar_t szMask[MAX_PATH] = { 0 };
+			_snwprintf(szMask, ARRAYSIZE(szMask), L"%s%s\\*.*", szPresetDir, fd->cFileName);
+
+			if ((_h = FindFirstFileW(szMask, &_fd)) != INVALID_HANDLE_VALUE)
+			{
+				wchar_t _szPresetDir[512] = { 0 };
+				PathCombine(_szPresetDir, szPresetDir, fd->cFileName);
+				PathAddBackslash(_szPresetDir);
+
+				// check if there's a sub-directory and attempt to parse it
+				while (!g_bThreadShouldQuit && _h != INVALID_HANDLE_VALUE)
+				{
+					ProcessPresetFolder(&_fd, _szPresetDir, temp_nDirs, temp_nPresets,
+										temp_presets, temp_nHiddenPresets, level + 1);
+
+    				if (!FindNextFileW(_h, &_fd))
+					{
+        				FindClose(_h);
+						_h = INVALID_HANDLE_VALUE;
+						break;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		// we make sure we're only loading .milk files
+		// this way is a bit nicer than the older way
+		// when it comes to handling long filenames :)
+		LPCWSTR szExtension = PathFindExtension(fd->cFileName);
+		if (szExtension && *szExtension)
+		{
+			if (wcsicmp(szExtension, L".milk"))
+			{
+				bSkip = true;
+			}
+		}
+
+        // if it is .milk, make sure we know how to run its pixel shaders -
+        // otherwise we don't want to show it in the preset list!
+        if (!bSkip)
+        {
+            // If the first line of the file is not "MILKDROP_PRESET_VERSION XXX",
+            //   then it's a MilkDrop 1 era preset, so it is definitely runnable. (no shaders)
+            // Otherwise, check for the value "PSVERSION".  It will be 0, 2, or 3.
+            //   If missing, assume it is 2.
+			wchar_t szFullPath[512] = {0};
+            _snwprintf(szFullPath, ARRAYSIZE(szFullPath),
+					   L"%s%s", szPresetDir, fd->cFileName);
+            FILE* f = _wfopen(szFullPath, L"r");
+            if (!f) {
+                bSkip = true;
+			}
+            else {
+                #define PRESET_HEADER_SCAN_BYTES 4096*2 //160
+				char szLine[PRESET_HEADER_SCAN_BYTES] = {0};
+                char *p = szLine;
+                int bytes_to_read = sizeof(szLine)-1;
+
+				fseek(f, 0, SEEK_END);
+				const long fileSize = ftell(f);
+				fseek(f, 0, SEEK_SET);
+
+                int count = fread(szLine, bytes_to_read, 1, f);
+                if (count < 1) {
+                    fseek(f, SEEK_SET, 0);
+                    count = fread(szLine, 1, bytes_to_read, f);
+                    szLine[ count ] = 0;
+                }
+                else
+                    szLine[bytes_to_read-1] = 0;
+
+                bool bScanForPreset00AndRating = false;
+                bool bRatingKnown = false;
+
+                // try to read the PSVERSION and the fRating= value.
+                // most presets (unless hand-edited) will have these
+				// right at the top. if not, [at least for fRating]
+				// use GetPrivateProfileFloat to search whole file.
+                // read line 1
+                //p = NextLine(p);//fgets(p, sizeof(p)-1, f);
+                if (!strncmp(p, "MILKDROP_PRESET_VERSION", 23)) 
+                {
+                    p = NextLine(p);//fgets(p, sizeof(p)-1, f);
+                    int ps_version = 2;
+                    if (p && !strncmp(p, "PSVERSION", 9)) 
+                    {
+                        (void)sscanf(&p[10], "%d", &ps_version);
+                        if (ps_version > g_plugin.m_nMaxPSVersion)
+                            bSkip = true;
+                        else
+                        {
+                            p = NextLine(p);//fgets(p, sizeof(p)-1, f);
+                            bScanForPreset00AndRating = true;
+                        }
+                    }
+                }
+                else 
+                {
+                    // otherwise it's a MilkDrop 1 preset - we can run it.
+                    bScanForPreset00AndRating = true;
+                }
+
+                // scan the file looking for [preset00] and fRating=...
+                // (this is WAY faster than GetPrivateProfileFloat, when it works!)
+                if (bScanForPreset00AndRating)
+				{
+					//for (int z=0; z<100; z++)
+					while (p)
+					{
+						if (!strncmp(p, "[preset00]", 10)) 
+						{
+							p = NextLine(p);
+							if (p && !strncmp(p, "fRating=", 8)) 
+							{
+								WASABI_API_LNG->SafeAtoF(&p[8], &fRating);
+								bRatingKnown = true;
+								break;
+							}
+						}
+						p = NextLine(p);
+					}
+				}
+
+                fclose(f);
+
+                if (!bRatingKnown)
+				{
+					// if we've read in the whole file
+					// and not found then there's no
+					// reason to re-read the file and
+					// just go for a default rating
+					if (fileSize > PRESET_HEADER_SCAN_BYTES)
+					{
+						fRating = GetPrivateProfileFloatW(L"preset00", L"fRating", 3.0f, szFullPath);
+					}
+				}
+
+                fRating = max(0.0f, min(5.0f, fRating));
+            }
+        }
+	}
+
+	if (!bSkip && !((level && bIsDir)))
+	{
+		float fPrevPresetRatingCum = 0;
+		if (*temp_nPresets > 0)
+			fPrevPresetRatingCum += temp_presets[*temp_nPresets - 1].fRatingCum;
+
+		PresetInfo x;
+		x.szFilename = szFilename;
+		x.szFolderpath = szPresetDir;
+		x.fRatingThis = fRating;
+		x.fRatingCum = fPrevPresetRatingCum + fRating;
+		temp_presets.push_back(x);
+
+		++(*temp_nPresets);
+		if (bIsDir)
+			++(*temp_nDirs);
+
+		if (level)
+			++(*temp_nHiddenPresets);
+	}
+
+	// every so often, add some presets...
+	#define PRESET_UPDATE_INTERVAL 128
+	if (!bSkip && (*temp_nPresets == 32 || (((*temp_nPresets) % PRESET_UPDATE_INTERVAL)==0)))
+	{
+		EnterCriticalSection(&g_cs);
+
+		for (int i=g_plugin.m_nPresets; i<(*temp_nPresets); i++)
+			g_plugin.m_presets.push_back(temp_presets[i]);
+
+		g_plugin.m_nPresets = *temp_nPresets;
+		g_plugin.m_nDirs = *temp_nDirs;
+		g_plugin.m_nHiddenPresets = *temp_nHiddenPresets;
+
+		LeaveCriticalSection(&g_cs);
+	}
+}
+
 static unsigned int WINAPI __UpdatePresetList(void* lpVoid)
 {
     // NOTE - this is run in a separate thread!!!
@@ -8465,6 +8828,7 @@ retry:
 
         g_plugin.m_nPresets = 0;
 	    g_plugin.m_nDirs    = 0;
+		g_plugin.m_nHiddenPresets = 0;
         g_plugin.m_presets.clear();
 
 	    // find first .MILK file
@@ -8502,189 +8866,29 @@ retry:
         return 0;
     }
 
-    const int nMaxPSVersion = g_plugin.m_nMaxPSVersion;
     wchar_t szPresetDir[512] = {0};
     wcsncpy(szPresetDir, g_plugin.m_szPresetDir, ARRAYSIZE(szPresetDir));
+	PathAddBackslash(szPresetDir);
 
 	LeaveCriticalSection(&g_cs);
 
     PresetList temp_presets;
     int temp_nDirs = 0;
     int temp_nPresets = 0;
+	int temp_nHiddenPresets = 0;
 
     // scan for the desired # of presets, this call...
     while (!g_bThreadShouldQuit && h != INVALID_HANDLE_VALUE)
     {
-		bool bSkip = false;
-        bool bIsDir = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-        float fRating = 3.0f;
-
-		wchar_t szFilename[512] = {0};
-		wcsncpy(szFilename, fd.cFileName, ARRAYSIZE(szFilename));
-
-		if (bIsDir)
-		{
-			// skip "." directory
-			if (wcscmp(fd.cFileName, L".")==0)// || wcslen(ffd.cFileName) < 1)
-				bSkip = true;
-			else
-				_snwprintf(szFilename, ARRAYSIZE(szFilename), L"*%s", fd.cFileName);
-		}
-		else
-		{
-			// we make sure we're only loading .milk files
-			// this way is a bit nicer than the older way
-			// when it comes to handling long filenames :)
-			LPCWSTR szExtension = PathFindExtension(fd.cFileName);
-			if (szExtension && *szExtension)
-			{
-				if (wcsicmp(szExtension, L".milk"))
-				{
-					bSkip = true;
-				}
-			}
-
-            // if it is .milk, make sure we know how to run its pixel shaders -
-            // otherwise we don't want to show it in the preset list!
-            if (!bSkip)
-            {
-                // If the first line of the file is not "MILKDROP_PRESET_VERSION XXX",
-                //   then it's a MilkDrop 1 era preset, so it is definitely runnable. (no shaders)
-                // Otherwise, check for the value "PSVERSION".  It will be 0, 2, or 3.
-                //   If missing, assume it is 2.
-				wchar_t szFullPath[512] = {0};
-                _snwprintf(szFullPath, ARRAYSIZE(szFullPath), L"%s%s", szPresetDir, fd.cFileName);
-                FILE* f = _wfopen(szFullPath, L"r");
-                if (!f) {
-                    bSkip = true;
-				}
-                else {
-                    #define PRESET_HEADER_SCAN_BYTES 4096*2 //160
-					char szLine[PRESET_HEADER_SCAN_BYTES] = {0};
-                    char *p = szLine;
-                    int bytes_to_read = sizeof(szLine)-1;
-
-					fseek(f, 0, SEEK_END);
-					const long fileSize = ftell(f);
-					fseek(f, 0, SEEK_SET);
-
-                    int count = fread(szLine, bytes_to_read, 1, f);
-                    if (count < 1) {
-                        fseek(f, SEEK_SET, 0);
-                        count = fread(szLine, 1, bytes_to_read, f);
-                        szLine[ count ] = 0;
-                    }
-                    else
-                        szLine[bytes_to_read-1] = 0;
-
-                    bool bScanForPreset00AndRating = false;
-                    bool bRatingKnown = false;
-
-                    // try to read the PSVERSION and the fRating= value.
-                    // most presets (unless hand-edited) will have these
-					// right at the top. if not, [at least for fRating]
-					// use GetPrivateProfileFloat to search whole file.
-                    // read line 1
-                    //p = NextLine(p);//fgets(p, sizeof(p)-1, f);
-                    if (!strncmp(p, "MILKDROP_PRESET_VERSION", 23)) 
-                    {
-                        p = NextLine(p);//fgets(p, sizeof(p)-1, f);
-                        int ps_version = 2;
-                        if (p && !strncmp(p, "PSVERSION", 9)) 
-                        {
-                            (void)sscanf(&p[10], "%d", &ps_version);
-                            if (ps_version > nMaxPSVersion)
-                                bSkip = true;
-                            else
-                            {
-                                p = NextLine(p);//fgets(p, sizeof(p)-1, f);
-                                bScanForPreset00AndRating = true;
-                            }
-                        }
-                    }
-                    else 
-                    {
-                        // otherwise it's a MilkDrop 1 preset - we can run it.
-                        bScanForPreset00AndRating = true;
-                    }
-
-                    // scan the file looking for [preset00] and fRating=...
-                    // (this is WAY faster than GetPrivateProfileFloat, when it works!)
-                    if (bScanForPreset00AndRating)
-					{
-						//for (int z=0; z<100; z++)
-						while (p)
-						{
-							if (!strncmp(p, "[preset00]", 10)) 
-							{
-								p = NextLine(p);
-								if (p && !strncmp(p, "fRating=", 8)) 
-								{
-									WASABI_API_LNG->SafeAtoF(&p[8], &fRating);
-									bRatingKnown = true;
-									break;
-								}
-							}
-							p = NextLine(p);
-						}
-					}
-
-                    fclose(f);
-
-                    if (!bRatingKnown)
-					{
-						// if we've read in the whole file
-						// and not found then there's no
-						// reason to re-read the file and
-						// just go for a default rating
-						if (fileSize > PRESET_HEADER_SCAN_BYTES)
-						{
-							fRating = GetPrivateProfileFloatW(L"preset00", L"fRating", 3.0f, szFullPath);
-						}
-					}
-
-                    fRating = max(0.0f, min(5.0f, fRating));
-                }
-            }
-		}
-
-		if (!bSkip)
-		{
-            float fPrevPresetRatingCum = 0;
-            if (temp_nPresets > 0)
-                fPrevPresetRatingCum += temp_presets[temp_nPresets-1].fRatingCum;
-
-            PresetInfo x;
-            x.szFilename  = szFilename;
-            x.fRatingThis = fRating;
-            x.fRatingCum  = fPrevPresetRatingCum + fRating;
-            temp_presets.push_back(x);
-
-			++temp_nPresets;
-			if (bIsDir) 
-				++temp_nDirs;
-        }
+		ProcessPresetFolder(&fd, szPresetDir, &temp_nDirs,
+							&temp_nPresets, temp_presets,
+							&temp_nHiddenPresets, 0);
 
     	if (!FindNextFileW(h, &fd))
         {
         	FindClose(h);
             h = INVALID_HANDLE_VALUE;
             break;
-        }
-
-        // every so often, add some presets...
-        #define PRESET_UPDATE_INTERVAL 64
-        if (!bSkip && (temp_nPresets == 30 || ((temp_nPresets % PRESET_UPDATE_INTERVAL)==0)))
-        {
-	        EnterCriticalSection(&g_cs);
-        
-            //g_plugin.m_presets  = temp_presets;
-            for (int i=g_plugin.m_nPresets; i<temp_nPresets; i++)
-                g_plugin.m_presets.push_back(temp_presets[i]);
-            g_plugin.m_nPresets = temp_nPresets;
-            g_plugin.m_nDirs    = temp_nDirs;
-        	
-            LeaveCriticalSection(&g_cs);
         }
     }
 
@@ -8700,8 +8904,10 @@ retry:
 
     for (int i=g_plugin.m_nPresets; i<temp_nPresets; i++)
         g_plugin.m_presets.push_back(temp_presets[i]);
+
     g_plugin.m_nPresets = temp_nPresets;
-    g_plugin.m_nDirs    = temp_nDirs;
+    g_plugin.m_nHiddenPresets = temp_nHiddenPresets;
+    g_plugin.m_nDirs = temp_nDirs;
     g_plugin.m_bPresetListReady = true;
 
     if (g_plugin.m_nPresets == 0)

@@ -58,6 +58,7 @@ public:
 	CMilkMenuItem();
 	~CMilkMenuItem();
 
+	CMilkMenuItem	*m_pNext;
 	wchar_t			m_szName[64];
 	wchar_t			m_szToolTip[1024];
 	MENUITEMTYPE	m_type;
@@ -74,8 +75,6 @@ public:
 	// special data used for MENUITEMTYPE_OSCILLATOR:
 	//int				m_nSubSel;
 	//bool			m_bEditingSubSel;
-
-	CMilkMenuItem	*m_pNext;
 };
 //----------------------------------------
 

@@ -61,6 +61,7 @@ typedef struct
     float   fSpectrum[2][NUM_FREQUENCIES]; // NUM_FREQUENCIES samples for each channel (note: NUM_FREQUENCIES is declared in shell_defines.h)
 } td_soundinfo;                    // ...range is 0 Hz to 22050 Hz, evenly spaced.
 
+#pragma pack(push, 1)
 class CPluginShell
 {
 public:    
@@ -242,7 +243,6 @@ private:
     int                 m_vms_desktop_loaded;
     int                 m_desktop_hook_set;
 #endif
-    bool                m_bClearVJWindow;
 
     // PRIVATE - MORE TIMEKEEPING
    protected:
@@ -251,7 +251,6 @@ private:
    private:
     float  m_time_hist[TIME_HIST_SLOTS];		// cumulative
     int    m_time_hist_pos;
-    LARGE_INTEGER m_prev_end_of_frame;
 
     // PRIVATE AUDIO PROCESSING DATA
     FFT   m_fftobj;
@@ -341,14 +340,17 @@ protected:
 	int 	m_vj_mode;
     int     m_hidden_textwnd;
     int     m_resizing_textwnd;
+
+	LPDIRECT3D9 m_vjd3d9;
+	LPDIRECT3DDEVICE9 m_vjd3d9_device;
+	LARGE_INTEGER m_prev_end_of_frame;
 protected:
 	HWND	m_hTextWnd;
 private:
 	int		m_nTextWndWidth;
 	int		m_nTextWndHeight;
 	bool	m_bTextWindowClassRegistered;
-    LPDIRECT3D9 m_vjd3d9;
-    LPDIRECT3DDEVICE9 m_vjd3d9_device;
+	bool	m_bClearVJWindow;
 	//HDC		m_memDC;		// memory device context
 	//HBITMAP m_memBM, m_oldBM;
 	//HBRUSH  m_hBlackBrush;
@@ -386,5 +388,6 @@ private:
     // CHANGES:
     friend class CShaderParams;
 };
+#pragma pack(pop)
 
 #endif

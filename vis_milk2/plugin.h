@@ -282,6 +282,7 @@ typedef struct
 typedef struct 
 {
 	std::wstring szFilename;    // without path
+	std::wstring szFolderpath;  // folder path
     float    fRatingThis;
     float    fRatingCum;
 } PresetInfo;
@@ -295,12 +296,12 @@ public:
     //====[ 1. members added to create this specific example plugin: ]================================================
 
         /// CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
+        bool        m_bSequentialPresetOrder;
+        bool		m_bHardCutsDisabled;
         float		m_fBlendTimeAuto;		// blend time when preset auto-switches
         float		m_fBlendTimeUser;		// blend time when user loads a new preset
         float		m_fTimeBetweenPresets;		// <- this is in addition to m_fBlendTimeAuto
         float		m_fTimeBetweenPresetsRand;	// <- this is in addition to m_fTimeBetweenPresets
-        bool        m_bSequentialPresetOrder;
-        bool		m_bHardCutsDisabled;
         float		m_fHardCutLoudnessThresh;
         float		m_fHardCutHalflife;
         float		m_fHardCutThresh;
@@ -321,14 +322,13 @@ public:
         bool		m_bShowPressF1ForHelp;
         //char		m_szMonitorName[256];
         bool		m_bShowMenuToolTips;
-        int			m_n16BitGamma;
-        bool		m_bAutoGamma;
+		bool		m_bSongTitleAnims;
+		bool		m_bAutoGamma;
+		int			m_n16BitGamma;
         //int		m_nFpsLimit;
         //int			m_cLeftEye3DColor[3];
         //int			m_cRightEye3DColor[3];
-        bool		m_bEnableRating;
         //bool        m_bInstaScan;
-        bool		m_bSongTitleAnims;
         float		m_fSongTitleAnimDuration;
         float		m_fTimeBetweenRandomSongTitles;
         float		m_fTimeBetweenRandomCustomMsgs;
@@ -344,6 +344,7 @@ public:
         //bool        m_bAnisotropicFiltering;
         bool        m_bPresetLockOnAtStartup;
 		bool		m_bPreventScollLockHandling;
+		bool		m_bEnableRating;
         int         m_nMaxPSVersion_ConfigPanel;  // -1 = auto, 0 = disable shaders, 2 = ps_2_0, 3 = ps_3_0
         int         m_nMaxPSVersion_DX9;          // 0 = no shader support, 2 = ps_2_0, 3 = ps_3_0
         int         m_nMaxPSVersion;              // this one will be the ~min of the other two.  0/2/3.
@@ -376,6 +377,10 @@ public:
         ShaderPairInfo          m_BlurShaders[2];
         bool                    m_bWarpShaderLock;
         bool                    m_bCompShaderLock;
+
+        bool        m_bHasFocus;
+        bool        m_bHadFocus;
+
         //bool LoadShaderFromFile( char* szFile, char* szFn, char* szProfile, 
         //                         LPD3DXCONSTANTTABLE* ppConstTable, void** ppShader );
         #define SHADER_WARP  0
@@ -389,7 +394,10 @@ public:
         bool EvictSomeTexture();
         typedef Vector<TexInfo> TexInfoList;
         TexInfoList     m_textures;    
-        bool m_bNeedRescanTexturesDir;
+        bool        m_bNeedRescanTexturesDir;
+        bool		m_bUserPagedUp;
+        bool		m_bUserPagedDown;
+		bool        m_bInitialPresetSelected;
         // vertex declarations:
         IDirect3DVertexDeclaration9* m_pSpriteVertDecl;
         IDirect3DVertexDeclaration9* m_pWfVertDecl;
@@ -431,8 +439,6 @@ public:
         //int		m_nTrackPlaying;
         //int		m_nSongPosMS;
         //int		m_nSongLenMS;
-        bool		m_bUserPagedUp;
-        bool		m_bUserPagedDown;
         float		m_fMotionVectorsTempDx;
         float		m_fMotionVectorsTempDy;
 
@@ -451,6 +457,7 @@ public:
 		wchar_t		m_szSearch[MAX_PATH];	// used for refining the search in the preset list
         int			m_nPresets;			// the # of entries in the file listing.  Includes directories and then files, sorted alphabetically.
         int			m_nDirs;			// the # of presets that are actually directories.  Always between 0 and m_nPresets.
+        int			m_nHiddenPresets;	// the # of hidden presets that are from sub-directories of the main preset folder.  Always between 0 and m_nPresets.
         int			m_nPresetListCurPos;// Index of the currently-HIGHLIGHTED preset (the user must press Enter on it to select it).
         int			m_nCurrentPreset;	// Index of the currently-RUNNING preset.  
 								        //   Note that this is NOT the same as the currently-highlighted preset! (that's m_nPresetListCurPos)
@@ -459,10 +466,8 @@ public:
         PresetList  m_presets;
         void		UpdatePresetList(bool bBackground=false, bool bForce=false, bool bTryReselectCurrentPreset=true) const;
         wchar_t     m_szUpdatePresetMask[MAX_PATH];
-        bool        m_bPresetListReady;
 	    //void		UpdatePresetRatings();
         //int         m_nRatingReadProgress;  // equals 'm_nPresets' if all ratings are read in & ready to go; -1 if uninitialized; otherwise, it's still reading them in, and range is: [0 .. m_nPresets-1]
-        bool        m_bInitialPresetSelected;
 
         // PRESET HISTORY
         #define PRESET_HIST_LEN (64+2)     // make this 2 more than the # you REALLY want to be able to go back.
@@ -489,7 +494,12 @@ public:
         bool		m_bShowSongTitle;
         bool		m_bShowSongTime;
         bool		m_bShowSongLen;
-        float		m_fShowRatingUntilThisTime;
+
+		bool        m_bPresetListReady;
+		bool        m_bShowShaderHelp;
+
+		float		m_fShowRatingUntilThisTime;
+
         //float		m_fShowUserMessageUntilThisTime;
         //char		m_szUserMessage[512];
          //bool        m_bUserMessageIsError;
@@ -522,9 +532,6 @@ public:
         CMilkMenu	  m_menuPost;
         CMilkMenu    m_menuWavecode[MAX_CUSTOM_WAVES];
         CMilkMenu    m_menuShapecode[MAX_CUSTOM_SHAPES];
-        bool         m_bShowShaderHelp;
-
-
 
         //wchar_t		m_szMilkdrop2Path[MAX_PATH];		// ends in a backslash
         wchar_t		m_szMsgIniFile[MAX_PATH];
@@ -557,9 +564,6 @@ public:
         MYVERTEX    m_comp_verts[FCGSX*FCGSY];
         int         m_comp_indices[(FCGSX-2)*(FCGSY-2)*2*3];
 
-        bool        m_bHasFocus;
-        bool        m_bHadFocus;
-        bool		m_bOrigScrollLockState;
         //bool      m_bMilkdropScrollLockState;  // saved when focus is lost; restored when focus is regained
 
         int         m_nNumericInputMode;	// NUMERIC_INPUT_MODE_CUST_MSG, NUMERIC_INPUT_MODE_SPRITE
@@ -591,6 +595,8 @@ public:
         void        GenCompPShaderText(char *szShaderText, int szShaderTextLen, float brightness,
 									   float ve_alpha, float ve_zoom, int ve_orient, float hue_shader,
 									   bool bBrighten, bool bDarken, bool bSolarize, bool bInvert);
+
+		bool		m_bOrigScrollLockState;
 
    //====[ 2. methods added: ]=====================================================================================
         
@@ -650,7 +656,7 @@ public:
         static void        GetSafeBlurMinMax(CState* pState, float* blur_min, float* blur_max);
 	    void		RunPerFrameEquations(int code);
 	    void		DrawUserSprites();
-	    void		MergeSortPresets(int left, int right);
+	    void		MergeSortPresets(const int left, const int right);
 	    void		BuildMenus();
         void        SetMenusForPresetVersion(int WarpPSVersion, int CompPSVersion);
 	    //void  ResetWindowSizeOnDisk();
