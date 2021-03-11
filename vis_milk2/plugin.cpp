@@ -635,32 +635,34 @@ void copyStringToClipboardW(const wchar_t * source)
  */
 char * getStringFromClipboardA()
 {
-    int ok = OpenClipboard(NULL);
-    if (!ok)
+	if (OpenClipboard(NULL))
 	{
-        return NULL;
+		HANDLE hData = GetClipboardData(CF_TEXT);
+		char* buffer = (char*)GlobalLock(hData);
+		if (buffer)
+		{
+			GlobalUnlock(hData);
+			CloseClipboard();
+			return buffer;
+		}
 	}
-
-    HANDLE hData = GetClipboardData(CF_TEXT);
-    char* buffer = (char*)GlobalLock(hData);
-    GlobalUnlock(hData);
-    CloseClipboard();
-    return buffer;
+	return "";
 }
 
 wchar_t * getStringFromClipboardW()
 {
-    int ok = OpenClipboard(NULL);
-	if (!ok)
+	if (OpenClipboard(NULL))
 	{
-        return NULL;
+		HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+		wchar_t* buffer = (wchar_t*)GlobalLock(hData);
+		if (buffer)
+		{
+			GlobalUnlock(hData);
+			CloseClipboard();
+			return buffer;
+		}
 	}
-
-    HANDLE hData = GetClipboardData(CF_UNICODETEXT);
-    wchar_t* buffer = (wchar_t*)GlobalLock(hData);
-    GlobalUnlock(hData);
-    CloseClipboard();
-    return buffer;
+	return L"";
 }
 
 void ConvertCRsToLFCA(const char* src, char* dst)
