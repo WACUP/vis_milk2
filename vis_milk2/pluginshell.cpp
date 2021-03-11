@@ -303,7 +303,7 @@ char* CPluginShell::GetDriverDescription() const
 
 int CPluginShell::InitNondx9Stuff()
 {
-	timeBeginPeriod(1);
+	//timeBeginPeriod(1);
 	m_fftobj.Init(576, NUM_FREQUENCIES);
 	if (!InitGDIStuff()) return false;
 	return AllocateMyNonDx9Stuff();
@@ -311,7 +311,7 @@ int CPluginShell::InitNondx9Stuff()
 
 void CPluginShell::CleanUpNondx9Stuff()
 {
-	timeEndPeriod(1);
+	//timeEndPeriod(1);
 	CleanUpMyNonDx9Stuff();
 	CleanUpGDIStuff();
 	m_fftobj.CleanUp();
