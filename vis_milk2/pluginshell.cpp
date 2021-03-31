@@ -2484,7 +2484,7 @@ void CPluginShell::RenderBuiltInTextMsgs()
 			if (g_szHelp && *g_szHelp && m_d3dx_font[HELPSCREEN_FONT])
 			{
 				SetRect(&r, 0, 0, GetWidth(), GetHeight());
-				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_CALCRECT, 0xFFFFFFFF);
+				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_CALCRECT | DT_EXPANDTABS, 0xFFFFFFFF);
 			}
 
 			r.top += m_upper_left_corner_y;
@@ -2499,7 +2499,7 @@ void CPluginShell::RenderBuiltInTextMsgs()
 			r.bottom -= PLAYLIST_INNER_MARGIN;
 
 			if (m_d3dx_font[HELPSCREEN_FONT])
-				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, 0, 0xFFFFFFFF);
+				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_EXPANDTABS, 0xFFFFFFFF);
 
 			m_upper_left_corner_y += r.bottom-r.top + PLAYLIST_INNER_MARGIN*3;
 		}
