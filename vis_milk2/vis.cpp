@@ -272,37 +272,3 @@ void quit(struct winampVisModule *this_mod)
 	g_plugin.PluginQuit();
 	g_bFullyExited = true;
 }
-
-FARPROC WINAPI FailHook(unsigned dliNotify, PDelayLoadInfo pdli)
-{
-	if (dliNotify == dliFailLoadLib)
-	{
-		HMODULE module = NULL;
-		wchar_t *filename = AutoWideDup(pdli != NULL ? pdli->szDll : "", 0),
-			filepath[MAX_PATH] = { 0 };
-
-		PathCombineW(filepath, GetPaths()->winamp_plugin_dir, filename);
-		if (!PathFileExistsW(filepath))
-		{
-			PathCombineW(filepath, GetPaths()->winamp_dir, filename);
-		}
-
-		if (PathFileExistsW(filepath))
-		{
-			module = LoadLibraryW(filepath);
-			if (!module)
-			{
-				module = LoadLibraryExW(filepath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
-			}
-		}
-		free(filename);
-		return (FARPROC)module;
-	}
-	return 0;
-}
-
-ExternC
-#if _MSC_VER >= 1900
-const
-#endif
-PfnDliHook __pfnDliFailureHook2 = FailHook;

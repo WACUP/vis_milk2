@@ -73,7 +73,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_truly_exiting = 0;
 	m_bpp = 0;
 	m_frame_delay = 0;
-	StringCchCopyW(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
+	StringCchCopy(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
 	memset(&myWindowState,0,sizeof(myWindowState));
 	memset(&initialRect,0,sizeof(initialRect));
 	m_szDriver[0] = 0;
@@ -120,7 +120,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 		return;
 	}
 
-	StringCchCopyW(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
+	StringCchCopy(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
 	m_hInstance = hInstance;
 	m_uWindowLong = uWindowLong;
 }
@@ -1234,7 +1234,7 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 					wchar_t str[2048] = {0};
 					// usually, code==2154 here, which is D3DERR_OUTOFVIDEOMEMORY
 					m_lastErr = DXC_ERR_CREATEDEV_PROBABLY_OUTOFVIDEOMEMORY;
-					StringCchPrintfW(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
+					StringCchPrintf(str, ARRAYSIZE(str), WASABI_API_LNGSTRINGW(IDS_DIRECTX_INIT_FAILED_X), LOWORD(hRes));
 
 					// NOTE: *A 'SUGGESTION' SCREEN SHOULD APPEAR NEXT, PROVIDED BY THE CALLER*
 					TimedMessageBox(m_hwnd, str,

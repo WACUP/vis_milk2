@@ -65,7 +65,7 @@ HWND        g_subwnd;
 int         g_num_disp_modes;
 int         g_nTab;
 int         g_ignore_clicks;
-int         g_zero_display_modes_warning_given;
+//int         g_zero_display_modes_warning_given;
 int         g_proppage_id[MAX_PROPERTY_PAGES];
 
 void GetCurrentDisplayMode(D3DDISPLAYMODE *pMode)
@@ -99,7 +99,7 @@ bool CPluginShell::InitConfig(HWND hDialogWnd)
     g_ignore_clicks = 1;
     g_subwnd = NULL;
     g_nTab   = 0;
-    g_zero_display_modes_warning_given = 0;
+    //g_zero_display_modes_warning_given = 0;
 
     g_proppage_id[0] = IDD_PROPPAGE_1;
     g_proppage_id[1] = IDD_PROPPAGE_2;
@@ -147,7 +147,7 @@ static bool AddButton(int pos, HWND tabctrl, LPWSTR szButtonText)
         tie.iImage = -1;
         tie.pszText = szButtonText;
 
-        if (SendMessageW(tabctrl, TCM_INSERTITEMW, pos, (LPARAM)&tie) == -1)
+        if (SendMessage(tabctrl, TCM_INSERTITEMW, pos, (LPARAM)&tie) == -1)
             return false;
     }
     return true;
@@ -269,7 +269,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		int nDispAdapters = 0;
 #ifdef _DEBUG
 		wchar_t szDebugFile[MAX_PATH] = {0};
-		StringCchCopyW(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
+		StringCchCopy(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
 		wchar_t* p = wcsrchr(szDebugFile, L'\\');
 		if (p)
 		{
@@ -323,7 +323,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 							_snwprintf(szDesc, ARRAYSIZE(szDesc), L"%d. %hs"/*"   [%hs]"*/, nDispAdapters+1,
 									   global_adapter_list[nDispAdapters].Description/*,
 									   global_adapter_list[nDispAdapters].Driver*/);
-							SendMessageW( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
+							SendMessage( ctrl, CB_ADDSTRING, nDispAdapters, (LPARAM)szDesc);
 							++nDispAdapters;
 						//}
 					}
@@ -350,8 +350,8 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 			}
 		}
 
-		SendMessageW(ctrl, CB_INSERTSTRING, 0, (LPARAM)
-					 WASABI_API_LNGSTRINGW(IDS_AUTO));
+		SendMessage(ctrl, CB_INSERTSTRING, 0, (LPARAM)
+					WASABI_API_LNGSTRINGW(IDS_AUTO));
 
 		if (!found)
 		{
@@ -380,14 +380,14 @@ void CPluginShell::UpdateFSAdapterDispModes() const   // (fullscreen only)
 	}
     nVideoModesTotal = g_lpDX->GetAdapterModeCount(nAdapterOrdinal, PREFERRED_FORMAT);
 
-    if (nVideoModesTotal <= 0 && !g_zero_display_modes_warning_given)
+    /*if (nVideoModesTotal <= 0 && !g_zero_display_modes_warning_given)
     {
         g_zero_display_modes_warning_given = 1;
 		wchar_t title[64] = {0};
         MessageBoxW(g_config_hwnd, WASABI_API_LNGSTRINGW(IDS_GRAPHICS_SUBSYSTEM_IS_TEMPORARILY_UNSTABLE),
 				   WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_WARNING, title, 64),
 				   MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
-    }
+    }*/
 
     // clear the combo box
     SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
@@ -432,7 +432,7 @@ void CPluginShell::UpdateFSAdapterDispModes() const   // (fullscreen only)
         #endif
         */
 
-        int nPos = SendMessageW( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)str);
+        int nPos = SendMessage( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)str);
 
         // keep a record of the original index, because the combo box SORTS the data:
         SendMessage( hwnd_listbox, CB_SETITEMDATA, nPos, i);
@@ -636,7 +636,7 @@ void CPluginShell::UpdateDispModeMultiSampling(const int screenmode) const
 		{
 			// page tearing not allowed -> disable multisampling!
 			SendMessage( hwnd_listbox, CB_RESETCONTENT, 0, 0);
-			SendMessageW( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_DISABLED_PAGE_TEARING));
+			SendMessage( hwnd_listbox, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_DISABLED_PAGE_TEARING));
 			SendMessage( hwnd_listbox, CB_SETITEMDATA, 0, 0 );
 			SendMessage( hwnd_listbox, CB_SETCURSEL, 0, 0);
 			EnableWindow( hwnd_listbox, 0 );
@@ -710,9 +710,9 @@ void CPluginShell::UpdateDispModeMultiSampling(const int screenmode) const
 					if (i==0)
 						WASABI_API_LNGSTRINGW_BUF(IDS_NONE, str, ARRAYSIZE(str));
 					else
-						StringCchPrintfW(str, ARRAYSIZE(str), L"%2dX", i+1);
+						StringCchPrintf(str, ARRAYSIZE(str), L"%2dX", i+1);
 
-					SendMessageW( hwnd_listbox, CB_ADDSTRING, nSampleTypes, (LPARAM)str);
+					SendMessage( hwnd_listbox, CB_ADDSTRING, nSampleTypes, (LPARAM)str);
 
 					// set the item data to the D3DMULTISAMPLE_TYPE value:
 					SendMessage( hwnd_listbox, CB_SETITEMDATA, nSampleTypes, check[i] );
@@ -770,7 +770,7 @@ void CPluginShell::UpdateMaxFps(const int screenmode) const
 				_snwprintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_X_FRAME_SEC),
 						   (j < MAX_MAX_FPS) ? (MAX_MAX_FPS+1-j) : (MAX_MAX_FPS+1-j));
 
-			SendMessageW( ctrl, CB_ADDSTRING, j, (LPARAM)buf);
+			SendMessage( ctrl, CB_ADDSTRING, j, (LPARAM)buf);
 		}
 
 		// set prev. selection
@@ -1297,12 +1297,12 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             switch(ph->iCtrlId)
             {
             case ID_FONTS:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FONTS_HELP, buf, 2048);
                 break;
 
             case ID_DUALHEAD:
-				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+				StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_DUAL_HEAD_HELP, buf, 2048);
                 break;
 
@@ -1363,17 +1363,17 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             case IDC_CB_FSPT:
             case IDC_CB_DMSPT:
             //case IDC_CB_FFSPT:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_HELP_ON_X_CHECKBOX_HELP, buf, 2048);
                 break;
 
             case IDC_CB_FS:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FORCE_INTO_FS_MODE_HELP, buf, 2048);
                 break;
 
             case IDC_CB_DMS:
-				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
                 WASABI_API_LNGSTRINGW_BUF(IDS_FORCE_INTO_DESKTOP_MODE_HELP, buf, 2048);
                 break;
 
@@ -1383,7 +1383,7 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 break;
 #ifdef NON_SKIN_MODE
             case IDC_CB_SKIN:
-				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_CB_SKIN_HELP, buf, 2048);
                 break;
 #endif
@@ -1408,22 +1408,22 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
                 break;
 
             case IDC_DMS_LABEL:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_DMS_LABEL_HELP, buf, 2048);
                 break;
 
             case IDC_FS_LABEL:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_FS_LABEL_HELP, buf, 2048);
                 break;
                 
             case IDC_W_LABEL:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_W_LABEL_HELP, buf, 2048);
                 break;
 #ifdef LEGACY_DESKTOP_MODE
             case ID_DM_MORE:
-                StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
+                StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_DM_MORE_HELP, buf, 2048);
                 break;
 #endif
@@ -1469,10 +1469,10 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
             // Initialize all config panel global variables:
             if (!InitConfig(hwnd))
             {
-				wchar_t title[64] = {0};
+				/*wchar_t title[64] = {0};
                 MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_INITCONFIG_FAILED),
 						    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-						    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+						    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);*/
                 EndConfig();
                 int id=LOWORD(wParam);
                 EndDialog(hwnd,id);
@@ -1531,8 +1531,8 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
 
             // set contents of IDC_SZ_ABOUT
 			wchar_t about[256] = {0};
-			StringCchPrintfW(about, 256, WASABI_API_LNGSTRINGW(IDS_ABOUT_STRING), LONGNAMEW, AUTHOR_NAME, COPYRIGHT);
-            SetDlgItemTextW(hwnd, IDC_SZ_ABOUT, about);
+			StringCchPrintf(about, 256, WASABI_API_LNGSTRINGW(IDS_ABOUT_STRING), LONGNAMEW, AUTHOR_NAME, COPYRIGHT);
+            SetDlgItemText(hwnd, IDC_SZ_ABOUT, about);
 
             // initialize tab control:
             {
@@ -1543,10 +1543,10 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                     !AddButton(2, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_3)) ||
                     !AddButton(3, tabWnd, WASABI_API_LNGSTRINGW(IDS_CONFIG_PANEL_BUTTON_4)))
                 {
-					wchar_t title[64] = {0};
+					/*wchar_t title[64] = {0};
                     MessageBoxW(hwnd, WASABI_API_LNGSTRINGW(IDS_UNABLE_TO_LOAD_TABS),
 							    WASABI_API_LNGSTRINGW_BUF(IDS_MILKDROP_ERROR, title, 64),
-							    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+							    MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);*/
                     EndConfig();
                     int id=LOWORD(wParam);
                     EndDialog(hwnd,id);
@@ -1606,30 +1606,29 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                 {
                     wchar_t szFile[512] = {0};
 					PathCombine(szFile, GetPaths()->winamp_plugin_dir, DOCFILE);
-
-					const intptr_t ret = myOpenURL(0,szFile);
-                    if (ret <= 32)
+					/*const intptr_t ret = */myOpenURL(0,szFile);
+                    /*if (ret <= 32)
                     {
                         wchar_t buf[1024] = {0};
                         switch(ret)
                         {
                         case SE_ERR_FNF:
                         case SE_ERR_PNF:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_DOCUMENTATION_FILE_NOT_FOUND), szFile);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_DOCUMENTATION_FILE_NOT_FOUND), szFile);
                             break;
                         case SE_ERR_ACCESSDENIED:
                         case SE_ERR_SHARE:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED), szFile);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED), szFile);
                             break;
                         case SE_ERR_NOASSOC:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC), szFile);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC), szFile);
                             break;
                         default:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X), szFile, ret);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X), szFile, ret);
                             break;
                         }
                         TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_DOCUMENTATION), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
-                    }
+                    }*/
                 }
                 break;
 #ifdef PLUGIN_WEB_URL
@@ -1643,17 +1642,17 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
                         {
                         case SE_ERR_FNF:
                         case SE_ERR_PNF:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), PLUGIN_WEB_URL);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_URL_COULD_NOT_OPEN), PLUGIN_WEB_URL);
                             break;
                         case SE_ERR_ACCESSDENIED:
                         case SE_ERR_SHARE:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), PLUGIN_WEB_URL);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_WAS_DENIED), PLUGIN_WEB_URL);
                             break;
                         case SE_ERR_NOASSOC:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), PLUGIN_WEB_URL);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_DUE_TO_NO_ASSOC), PLUGIN_WEB_URL);
                             break;
                         default:
-                            StringCchPrintfW(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), PLUGIN_WEB_URL, ret);
+                            StringCchPrintf(buf, ARRAYSIZE(buf), WASABI_API_LNGSTRINGW(IDS_ACCESS_TO_URL_FAILED_CODE_X), PLUGIN_WEB_URL, ret);
                             break;
                         }
                         TimedMessageBox(hwnd, buf, WASABI_API_LNGSTRINGW(IDS_ERROR_OPENING_URL), MB_OK|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL, 2000);
@@ -1693,27 +1692,27 @@ BOOL CPluginShell::PluginShellConfigDialogProc(HWND hwnd,UINT msg,WPARAM wParam,
 					switch(ph->iCtrlId)
 					{
 					case IDOK:
-						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_OK_HELP, buf, 2048);
 						break;
 
 					case IDCANCEL:
-						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_CANCEL_HELP, buf, 2048);
 						break;
 
 					case ID_DEFAULTS:
-						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_RESTORE_DEFAULTS_HELP, buf, 2048);
 						break;
 
 					case ID_DOCS:
-						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_DOCUMENTATION_BUTTON_HELP, buf, 2048);
 						break;
 
 					case ID_WEB:
-						StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
+						StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_BUTTON), ctrl_name);
 						WASABI_API_LNGSTRINGW_BUF(IDS_VIEW_ONLINE_DOCS_HELP, buf, 2048);
 						break;
 

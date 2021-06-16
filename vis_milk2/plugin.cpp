@@ -2836,7 +2836,7 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename, int
 		WIN32_FIND_DATAW ffd = {0};
 
         HANDLE hFindFile = INVALID_HANDLE_VALUE;
-	    if( (hFindFile = FindFirstFileW(szMask, &ffd )) == INVALID_HANDLE_VALUE )		// note: returns filename -without- path
+	    if( (hFindFile = FindFirstFile(szMask, &ffd )) == INVALID_HANDLE_VALUE )		// note: returns filename -without- path
             return false;
 
         // first, count valid texture files
@@ -7011,7 +7011,7 @@ int CALLBACK MyEnumFontsProc(
   LPARAM lpData            // application-defined data
 )
 {
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendMessage( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
 	return 1;
 }
 
@@ -7037,7 +7037,7 @@ void DoColors(HWND hwnd, int *r, int *g, int *b)
 wchar_t* FormImageCacheSizeString(wchar_t* itemStr, UINT sizeID)
 {
 	static wchar_t cacheBuf[128] = {0};
-	StringCchPrintfW(cacheBuf, 128, L"%s %s", itemStr, WASABI_API_LNGSTRINGW(sizeID));
+	StringCchPrintf(cacheBuf, 128, L"%s %s", itemStr, WASABI_API_LNGSTRINGW(sizeID));
 	return cacheBuf;
 }
 
@@ -7154,15 +7154,15 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 					wchar_t bufw[2048] = {0};
 				    int size = (int)pow(2., i+8);
 				    _snwprintf(bufw, ARRAYSIZE(bufw), L" %4d x %4d ", size, size);
-				    nPos = SendMessageW( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)bufw);
+				    nPos = SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)bufw);
 				    SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_SETITEMDATA, nPos, size);
 			    }
 
 			    // throw the "Auto" option in there
-			    nPos = SendMessageW( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_NEAREST_POWER_OF_2));
-			    SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_SETITEMDATA, nPos, -2);
-			    nPos = SendMessageW( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_EXACT_RECOMMENDED));
-			    SendMessage( GetDlgItem( hwnd, IDC_TEXSIZECOMBO ), CB_SETITEMDATA, nPos, -1);
+			    nPos = SendDlgItemMessage( hwnd, IDC_TEXSIZECOMBO, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_NEAREST_POWER_OF_2));
+				SendDlgItemMessage( hwnd, IDC_TEXSIZECOMBO, CB_SETITEMDATA, nPos, -2);
+			    nPos = SendDlgItemMessage( hwnd, IDC_TEXSIZECOMBO, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_EXACT_RECOMMENDED));
+				SendDlgItemMessage( hwnd, IDC_TEXSIZECOMBO, CB_SETITEMDATA, nPos, -1);
 			    
 			    for (i=0; i<5+2; i++)
 			    {
@@ -7298,7 +7298,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopyW(title, ARRAYSIZE(title), ctrl_name);
+                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -7460,11 +7460,11 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    //SetWindowText( GetDlgItem( hwnd, IDC_3DSEP ), buf );
 
 			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fSongTitleAnimDuration);
-			    SetWindowTextW(GetDlgItem( hwnd, IDC_SONGTITLEANIM_DURATION), buf);
+				SetDlgItemText(hwnd, IDC_SONGTITLEANIM_DURATION, buf);
 			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenRandomSongTitles);
-			    SetWindowTextW(GetDlgItem(hwnd, IDC_RAND_TITLE), buf);
+				SetDlgItemText(hwnd, IDC_RAND_TITLE, buf);
 			    _snwprintf(buf, ARRAYSIZE(buf), L" %2.1f", m_fTimeBetweenRandomCustomMsgs);
-			    SetWindowTextW(GetDlgItem(hwnd, IDC_RAND_MSG), buf);
+				SetDlgItemText(hwnd, IDC_RAND_MSG, buf);
 
 			    CheckDlgButton(hwnd, IDC_CB_TITLE_ANIMS, m_bSongTitleAnims);
             }
@@ -7485,12 +7485,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 							wchar_t szFile[512] = {0};
 						    *(p+1) = 0;
 						    PathCombine(szFile, szPath, IMG_INIFILE);
-						    intptr_t ret = (intptr_t)ShellExecuteW(NULL, L"open", szFile, NULL, szPath, SW_SHOWNORMAL);
-						    if (ret <= 32)
-						    {
-								wchar_t* str = WASABI_API_LNGSTRINGW(IDS_ERROR_IN_SHELLEXECUTE);
-								TimedMessageBox(hwnd, str, str, MB_OK | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL, 2000);
-						    }
+						    ShellExecute(NULL, L"open", szFile, NULL, szPath, SW_SHOWNORMAL);
 					    }
 				    }
 				    break;
@@ -7505,12 +7500,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 							wchar_t szFile[512] = {0};
 						    *(p+1) = 0;
 						    PathCombine(szFile, szPath, MSG_INIFILE);
-						    intptr_t ret = (intptr_t)ShellExecuteW(NULL, L"open", szFile, NULL, szPath, SW_SHOWNORMAL);
-						    if (ret <= 32)
-						    {
-								wchar_t* str = WASABI_API_LNGSTRINGW(IDS_ERROR_IN_SHELLEXECUTE);
-								TimedMessageBox(hwnd, str, str, MB_OK | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL, 2000);
-						    }
+						    ShellExecute(NULL, L"open", szFile, NULL, szPath, SW_SHOWNORMAL);
 					    }
 				    }
 				    break;
@@ -7558,7 +7548,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopyW(title, ARRAYSIZE(title), ctrl_name);
+                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -7689,7 +7679,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, sizeof(ctrl_name)/sizeof(*ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopyW(title, ARRAYSIZE(title), ctrl_name);
+                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -8610,7 +8600,7 @@ void ProcessPresetFolder(WIN32_FIND_DATAW *fd, LPCWSTR szPresetDir, int *temp_nD
 			wchar_t szMask[MAX_PATH] = { 0 };
 			_snwprintf(szMask, ARRAYSIZE(szMask), L"%s%s\\*.*", szPresetDir, fd->cFileName);
 
-			if ((_h = FindFirstFileW(szMask, &_fd)) != INVALID_HANDLE_VALUE)
+			if ((_h = FindFirstFile(szMask, &_fd)) != INVALID_HANDLE_VALUE)
 			{
 				wchar_t _szPresetDir[512] = { 0 };
 				PathCombine(_szPresetDir, szPresetDir, fd->cFileName);
@@ -8833,7 +8823,7 @@ retry:
 
 	    // find first .MILK file
 	    //if( (hFile = _findfirst(szMask, &c_file )) != -1L )		// note: returns filename -without- path
-	    if( (h = FindFirstFileW(g_plugin.m_szUpdatePresetMask, &fd )) == INVALID_HANDLE_VALUE )		// note: returns filename -without- path
+	    if( (h = FindFirstFile(g_plugin.m_szUpdatePresetMask, &fd )) == INVALID_HANDLE_VALUE )		// note: returns filename -without- path
         {
             // --> revert back to plugins dir
 			wchar_t buf[1024] = {0};

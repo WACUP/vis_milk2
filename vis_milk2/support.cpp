@@ -297,7 +297,7 @@ void GetWinampSongPosAsText(HWND hWndWinamp, wchar_t *szSongPos, const int nSong
 
 			// this converts to seconds which FormatTimeString
 			// needs otherwise it'll show it's playing days :)
-			FormatTimeString(szSongPos, nSongPos, (ret / 1000));
+			plugin.language->FormattedTimeString(szSongPos, nSongPos, (ret / 1000), 0);
 
 			if (szSongPos[0] && tmp[0])
 			{
@@ -319,7 +319,7 @@ void GetWinampSongLenAsText(HWND hWndWinamp, wchar_t *szSongLen, const int nSong
 		SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT, 250, &ret))
 	{
 		const int nSongLenMS = ret;
-		FormatTimeString(szSongLen, nSongLen, nSongLenMS);
+		plugin.language->FormattedTimeString(szSongLen, nSongLen, nSongLenMS, 0);
 	}
 }
 #endif

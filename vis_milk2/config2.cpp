@@ -44,15 +44,15 @@ int CALLBACK EnumFontsProc(
   LPARAM lpData            // application-defined data
 )
 {
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT1), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT2), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT3), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT4), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT5), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT6), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT7), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT8), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
-	SendMessageW( GetDlgItem( (HWND)lpData, IDC_FONT9), CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT1, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT2, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT3, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT4, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT5, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT6, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT7, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT8, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
+	SendDlgItemMessage( (HWND)lpData, IDC_FONT9, CB_ADDSTRING, 0, (LPARAM)(lplf->lfFaceName));
 	return 1;
 }
 
@@ -63,7 +63,7 @@ void SaveFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
 
 	// font face
 	int t = SendMessage( fontbox, CB_GETCURSEL, 0, 0);
-	SendMessageW( fontbox, CB_GETLBTEXT, t, (LPARAM)fi->szFace);
+	SendMessage( fontbox, CB_GETLBTEXT, t, (LPARAM)fi->szFace);
 
 	// font size
 	t = SendMessage( sizebox, CB_GETCURSEL, 0, 0);
@@ -93,12 +93,12 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
     {
         ShowWindow(namebox, SW_NORMAL);
         wchar_t buf[256] = {0};
-        StringCchPrintfW(buf, ARRAYSIZE(buf), L"%s:", szFontName);
-        SetWindowTextW(GetDlgItem(hwnd,ctrl4), buf);
+        StringCchPrintf(buf, ARRAYSIZE(buf), L"%s:", szFontName);
+		SetDlgItemText(hwnd, ctrl4, buf);
     }
 
 	// set selection
-	int nPos = SendMessageW( fontbox, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)fi->szFace);
+	int nPos = SendMessage( fontbox, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)fi->szFace);
 	if (nPos == CB_ERR)
         nPos = 0;
     SendMessage( fontbox, CB_SETCURSEL, nPos, 0);
@@ -110,8 +110,8 @@ void InitFont2(td_fontinfo *fi, DWORD ctrl1, DWORD ctrl2, DWORD bold_id, DWORD i
     {
         wchar_t buf[256] = {0};
         int s = g_nFontSize[nMax-1 - i];
-        StringCchPrintfW(buf, ARRAYSIZE(buf), L" %2d ", s);
-		SendMessageW(sizebox, CB_ADDSTRING, i, (LPARAM)buf);
+        StringCchPrintf(buf, ARRAYSIZE(buf), L" %2d ", s);
+		SendMessage(sizebox, CB_ADDSTRING, i, (LPARAM)buf);
         if (s == fi->nSize)
             nSel = i;
     }
@@ -286,10 +286,10 @@ BOOL CPluginShell::PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM
             CheckDlgButton(hwnd, IDC_CB_MANUAL_SCOOT, m_desktop_manual_icon_scoot);
 
             HWND ctrl = GetDlgItem(hwnd, IDC_DM_ALPHA_FIX);
-            SendMessageW( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_5_6_5_TEXTURE));
-            SendMessageW( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_5_5_5_TEXTURE));
-            SendMessageW( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_8_8_8_TEXTURE));
-            SendMessageW( ctrl, CB_SETCURSEL, m_desktop_555_fix, 0 );
+            SendMessage( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_5_6_5_TEXTURE));
+            SendMessage( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_5_5_5_TEXTURE));
+            SendMessage( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_8_8_8_TEXTURE));
+            SendMessage( ctrl, CB_SETCURSEL, m_desktop_555_fix, 0 );
 
             EnableStuff(hwnd, m_desktop_show_icons);
         }
@@ -340,7 +340,7 @@ BOOL CPluginShell::PluginShellDesktopOptionsDialogProc(HWND hwnd,UINT msg,WPARAM
 				break;
 
 			case IDC_CB_SHOW_ICONS:
-				StringCchPrintfW(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
+				StringCchPrintf(title, ARRAYSIZE(title), WASABI_API_LNGSTRINGW(IDS_HELP_ON_X_CHECKBOX), ctrl_name);
 				WASABI_API_LNGSTRINGW_BUF(IDS_CB_SHOW_ICONS_HELP, buf, 2048);
 				break;
 
@@ -391,15 +391,15 @@ BOOL CPluginShell::PluginShellDualheadDialogProc(HWND hwnd,UINT msg,WPARAM wPara
     case WM_INITDIALOG:
         { 
             HWND ctrl = GetDlgItem(hwnd, IDC_H_PICK);
-            SendMessageW( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_SPAN_BOTH_SCREENS));
-            SendMessageW( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_LEFT_SCREEN_ONLY));
-            SendMessageW( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_RIGHT_SCREEN_ONLY));
+            SendMessage( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_SPAN_BOTH_SCREENS));
+            SendMessage( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_LEFT_SCREEN_ONLY));
+            SendMessage( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_RIGHT_SCREEN_ONLY));
             SendMessage( ctrl, CB_SETCURSEL, m_dualhead_horz, 0 );
 
             ctrl = GetDlgItem(hwnd, IDC_V_PICK);
-            SendMessageW( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_SPAN_BOTH_SCREENS));
-            SendMessageW( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_TOP_SCREEN_ONLY));
-            SendMessageW( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_BOTTOM_SCREEN_ONLY));
+            SendMessage( ctrl, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRINGW(IDS_SPAN_BOTH_SCREENS));
+            SendMessage( ctrl, CB_ADDSTRING, 1, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_TOP_SCREEN_ONLY));
+            SendMessage( ctrl, CB_ADDSTRING, 2, (LPARAM)WASABI_API_LNGSTRINGW(IDS_USE_BOTTOM_SCREEN_ONLY));
             SendMessage( ctrl, CB_SETCURSEL, m_dualhead_vert, 0 );
         }
         break;

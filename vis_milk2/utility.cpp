@@ -54,7 +54,7 @@ intptr_t myOpenURL(HWND hwnd, LPCWSTR loc)
 											  reinterpret_cast<intptr_t>(loc),
 											  reinterpret_cast<intptr_t>(&override));
 		if (!override)*/
-			return (intptr_t)ShellExecuteW(hwnd, L"open", loc, NULL, NULL, SW_SHOWNORMAL);
+			return (intptr_t)ShellExecute(hwnd, L"open", loc, NULL, NULL, SW_SHOWNORMAL);
 		/*else
 			return 33;*/
 	}

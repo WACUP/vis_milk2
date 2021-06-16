@@ -1125,7 +1125,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_desktop_555_fix       = 2;
 #endif
 	m_dualhead_horz         = 2;
-	m_dualhead_vert         = 1;
+	m_dualhead_vert         = 0;
 	m_save_cpu              = 1;
 #ifdef NON_SKIN_MODE
 	m_skin                  = 1;

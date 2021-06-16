@@ -670,8 +670,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,32,1,0
- PRODUCTVERSION 2,32,1,0
+ FILEVERSION 2,32,2,0
+ PRODUCTVERSION 2,32,2,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -688,12 +688,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualisation Plug-in"
-            VALUE "FileVersion", "2.32.1.0"
+            VALUE "FileVersion", "2.32.2.0"
             VALUE "InternalName", "Milkdrop 2"
             VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2021"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Milkdrop 2"
-            VALUE "ProductVersion", "2.32.1.0"
+            VALUE "ProductVersion", "2.32.2.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -785,12 +785,11 @@ BEGIN
     IDS_80X60_SLOW          " 80 x 60 slow "
     IDS_96X72_SLOW          " 96 x 72 SLOW "
     IDS_128X96_SLOW         "128 x 96 SLOW "
-    IDS_ERROR_IN_SHELLEXECUTE "error in ShellExecute"
+    IDS_MESH_SIZE           "Mesh Size"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MESH_SIZE           "Mesh Size"
     IDS_MESH_SIZE_TEXT      "MilkDrop uses a mesh of polygons to warp the image each frame.\nThis setting determines how finely subdivided that mesh is.\nA larger mesh size will mean finer resolution 'movement' in the\nimage; basically, it will look better.  Watch out, though - \nonly crank this way up if you have a fast CPU."
     IDS_CB_ALWAYS3D         "Enable this to force all presets to be displayed in 3D mode.\n(Note that you need glasses with differently-colored lenses\n to see the effect.)"
     IDS_DISABLE_PRESET_RATING "Disable preset rating"
@@ -809,11 +808,11 @@ BEGIN
     IDS_RAND_TITLE_TEXT     "The mean (average) time, in seconds, between randomly-launched\nsong title animations.  Set to a negative value to disable random\nlaunching."
     IDS_RAND_MSG_TEXT       "The mean (average) time, in seconds, between randomly-launched\ncustom messages (from milk_msg.ini).  Set to a negative value\nto disable random launching."
     IDS_TITLE_ANIMS_TEXT    "Check this to automatically launch song title animations whenever\nthe track changes."
+    IDS_BETWEEN_TIME_TEXT   "The minimum amount of time that elapses between preset changes\n(excluding hard cuts, which take priority).  The old preset will\nbegin to blend or fade into a new preset after this amount of time,\nplus some random amount of time as specified below in the\n'additional random time' box.  Add these two values together to\nget the maximum amount of time that will elapse between preset\nchanges."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_BETWEEN_TIME_TEXT   "The minimum amount of time that elapses between preset changes\n(excluding hard cuts, which take priority).  The old preset will\nbegin to blend or fade into a new preset after this amount of time,\nplus some random amount of time as specified below in the\n'additional random time' box.  Add these two values together to\nget the maximum amount of time that will elapse between preset\nchanges."
     IDS_BETWEEN_TIME_RANDOM_TEXT 
                             "The additional random maximum # of seconds between preset fades\n(aka preset changes) (aka soft cuts)."
     IDS_BLEND_AUTO_TEXT     "The duration, in seconds, of a soft cut (a normal fade from one preset\nto another) that is initiated because some amount of time has passed.\nA value less than 1 will make for a very quick transition, while a value\naround 3 or 4 will allow you to see some interesting behavior during\nthe blend."
@@ -832,11 +831,11 @@ BEGIN
     IDS_POST_PROCESSING_MISC "--post-processing, misc."
     IDS_CUSTOM_WAVE_X       "--custom wave %d"
     IDS_CUSTOM_SHAPE_X      "--custom shape %d"
+    IDS_MENU_EDIT_PRESET_INIT_CODE "[ edit preset initialisation code ]"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_EDIT_PRESET_INIT_CODE "[ edit preset initialisation code ]"
     IDS_MENU_EDIT_PRESET_INIT_CODE_TT 
                             "read-only: zoom, rot, warp, cx, cy, dx, dy, sx, sy; decay, gamma;\n           echo_zoom, echo_scale, echo_orient;\n           ib_{size|r|g|b|a}, ob_{size|r|g|b|a}, mv_{x|y|dx|dy|l|r|g|b|a};\n           wave_{r|g|b|a|x|y|mode|mystery|usedots|thick|additive|brighten};\n           darken_center, wrap; invert, brighten, darken, solarize\n           time, fps, frame, progress; {bass|mid|treb}[_att]\nwrite:     q1-q8, monitor"
     IDS_MENU_EDIT_PER_FRAME_EQUATIONS "[ edit per_frame equations ]"
@@ -855,11 +854,11 @@ BEGIN
     IDS_MENU_POSITION_X_TT  "position of the waveform: 0 = far left edge of screen, 0.5 = center, 1 = far right"
     IDS_MENU_POSITION_Y     "position (Y)"
     IDS_MENU_POSITION_Y_TT  "position of the waveform: 0 = very bottom of screen, 0.5 = center, 1 = top"
+    IDS_MENU_COLOR_RED      "color (red)"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_COLOR_RED      "color (red)"
     IDS_MENU_COLOR_RED_TT   "amount of red color in the wave (0..1)"
     IDS_MENU_COLOR_GREEN    "color (green)"
     IDS_MENU_COLOR_GREEN_TT "amount of green color in the wave (0..1)"
@@ -877,11 +876,11 @@ BEGIN
     IDS_MENU_MODULATION_TRANSPARENT_VOLUME "modulation: transparent volume"
     IDS_MENU_MODULATION_TRANSPARENT_VOLUME_TT 
                             "when the relative volume hits this level, the wave becomes transparent.  1 = normal loudness, 0.5 = extremely quiet, 1.5 = extremely loud"
+    IDS_MENU_MODULATION_OPAQUE_VOLUME "modulation: opaque volume"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_MODULATION_OPAQUE_VOLUME "modulation: opaque volume"
     IDS_MENU_MODULATION_OPAQUE_VOLUME_TT 
                             "when the relative volume hits this level, the wave becomes opaque.  1 = normal loudness, 0.5 = extremely quiet, 1.5 = extremely loud"
     IDS_MENU_ADDITIVE_DRAWING "additive drawing"
@@ -902,11 +901,11 @@ BEGIN
     IDS_MENU_OPACITY_OUTER  " opacity"
     IDS_MENU_OPACITY_OUTER_TT 
                             "opacity of the outer border (0=transparent, 1=opaque)"
+    IDS_MENU_INNER_BORDER_THICKNESS "inner border thickness"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_INNER_BORDER_THICKNESS "inner border thickness"
     IDS_MENU_INNER_BORDER_THICKNESS_TT 
                             "thickness of the inner border drawn at the edges of the screen"
     IDS_MENU_COLOR_RED_INNER_TT "amount of red color in the inner border"
@@ -925,11 +924,11 @@ BEGIN
     IDS_MENU_OFFSET_X_TT    "horizontal placement offset of the motion vectors"
     IDS_MENU_OFFSET_Y       " offset (Y)"
     IDS_MENU_OFFSET_Y_TT    "vertical placement offset of the motion vectors"
+    IDS_MENU_TRAIL_LENGTH   " trail length"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_TRAIL_LENGTH   " trail length"
     IDS_MENU_TRAIL_LENGTH_TT "the length of the motion vectors (1=normal)"
     IDS_MENU_COLOR_RED_MOTION_VECTOR_TT 
                             "amount of red color in the motion vectors"
@@ -948,12 +947,12 @@ BEGIN
     IDS_MENU_WARP_SPEED     " warp speed"
     IDS_MENU_WARP_SPEED_TT  "controls the speed of the warp; 1=normal, less=slower, more=faster"
     IDS_MENU_ROTATION_AMOUNT "rotation amount"
+    IDS_MENU_ROTATION_AMOUNT_TT 
+                            "controls the amount of rotation.  0=none, 0.1=slightly right, -0.1=slightly clockwise, 0.1=CCW"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_ROTATION_AMOUNT_TT 
-                            "controls the amount of rotation.  0=none, 0.1=slightly right, -0.1=slightly clockwise, 0.1=CCW"
     IDS_MENU_ROTATION_CENTER_OF_X " rot., center of (X)"
     IDS_MENU_ROTATION_CENTER_OF_X_TT 
                             "controls where the center of rotation is, horizontally.  0=left, 0.5=center, 1=right"
@@ -974,12 +973,12 @@ BEGIN
     IDS_MENU_SUSTAIN_LEVEL_TT 
                             "controls the eventual fade to black; 1=no fade, 0.9=strong fade; 0.98=recommended."
     IDS_MENU_DARKEN_CENTER  "darken center"
+    IDS_MENU_DARKEN_CENTER_TT 
+                            "when ON, help keeps the image from getting too bright by continually dimming the center point"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_DARKEN_CENTER_TT 
-                            "when ON, help keeps the image from getting too bright by continually dimming the center point"
     IDS_MENU_GAMMA_ADJUSTMENT "gamma adjustment"
     IDS_MENU_GAMMA_ADJUSTMENT_TT 
                             "controls brightness; 1=normal, 2=double, 3=triple, etc."
@@ -1000,12 +999,12 @@ BEGIN
     IDS_MENU_FILTER_INVERT  "filter: invert"
     IDS_MENU_FILTER_INVERT_TT "inverts the colors in the image"
     IDS_MENU_FILTER_BRIGHTEN "filter: brighten"
+    IDS_MENU_FILTER_BRIGHTEN_TT 
+                            "brightens the darker parts of the image (nonlinear; square root filter)"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_FILTER_BRIGHTEN_TT 
-                            "brightens the darker parts of the image (nonlinear; square root filter)"
     IDS_MENU_FILTER_DARKEN  "filter: darken"
     IDS_MENU_FILTER_DARKEN_TT 
                             "darkens the brighter parts of the image (nonlinear; squaring filter)"
@@ -1025,12 +1024,12 @@ BEGIN
     IDS_MENU_OPACITY_WAVE_TT 
                             "opacity of the waveform; 0=transparent, 1=opaque"
     IDS_MENU_USE_SPECTRUM   "use spectrum"
+    IDS_MENU_USE_SPECTRUM_TT 
+                            "if ON, the data in value1 and value2 will constitute a frequency spectrum (instead of waveform values)"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_USE_SPECTRUM_TT 
-                            "if ON, the data in value1 and value2 will constitute a frequency spectrum (instead of waveform values)"
     IDS_MENU_USE_DOTS_WAVE_TT 
                             "if ON, the samples will be overdrawn 4X to make them thicker, bolder, and more visible"
     IDS_MENU_DRAW_THICK_WAVE_TT 
@@ -1054,12 +1053,12 @@ BEGIN
                             "IN: sample [0..1]; value1 [left ch], value2 [right ch], plus all vars for per-frame code / OUT: x,y; r,g,b,a; t1-t8"
     IDS_MENU_ENABLED_SHAPE_TT "enables or disables this shape"
     IDS_MENU_NUMBER_OF_SIDES "number of sides"
+    IDS_MENU_NUMBER_OF_SIDES_TT 
+                            "the default number of sides that make up the polygonal shape"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_NUMBER_OF_SIDES_TT 
-                            "the default number of sides that make up the polygonal shape"
     IDS_MENU_DRAW_THICK_SHAPE_TT 
                             "if ON, the border will be overdrawn 4X to make it thicker, bolder, and more visible"
     IDS_MENU_ADDITIVE_DRAWING_SHAPE_TT 
@@ -1078,12 +1077,12 @@ BEGIN
     IDS_MENU_TEXTURE_ZOOM_TT 
                             "the portion of the previous frame's image to use with the shape"
     IDS_MENU_TEXTURE_ANGLE  "texture angle"
+    IDS_MENU_TEXTURE_ANGLE_TT 
+                            "the angle at which to rotate the previous frame's image before applying it to the shape"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_TEXTURE_ANGLE_TT 
-                            "the angle at which to rotate the previous frame's image before applying it to the shape"
     IDS_MENU_INNER_COLOR_RED "inner color (red)"
     IDS_MENU_INNER_COLOR_RED_TT 
                             "default amount of red color toward the center of the shape (0..1)"
@@ -1106,12 +1105,12 @@ BEGIN
     IDS_MENU_OUTER_COLOR_BLUE_TT 
                             "default amount of blue color toward the outer edge of the shape (0..1)"
     IDS_MENU_OUTER_OPACITY  "outer opacity"
+    IDS_MENU_OUTER_OPACITY_TT 
+                            "default opacity of the outer edge of the shape; 0=transparent, 1=opaque"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MENU_OUTER_OPACITY_TT 
-                            "default opacity of the outer edge of the shape; 0=transparent, 1=opaque"
     IDS_MENU_BORDER_COLOR_RED "border color (red)"
     IDS_MENU_BORDER_COLOR_RED_TT 
                             "default amount of red color in the shape's border (0..1)"
@@ -1134,11 +1133,11 @@ BEGIN
     IDS_PRESET_X_DELETED    "[preset ""%s"" deleted]"
     IDS_ERROR_A_FILE_ALREADY_EXISTS_WITH_THAT_FILENAME 
                             "ERROR: a file already exists with that filename"
+    IDS_ERROR_UNABLE_TO_RENAME_FILE "ERROR: unable to rename the file"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_ERROR_UNABLE_TO_RENAME_FILE "ERROR: unable to rename the file"
     IDS_RENAME_SUCCESSFUL   "[rename successful]"
     IDS_SPRITE_X_WARNING_ERROR_IN_INIT_CODE 
                             "sprite #%d warning: error in initialisation code "
@@ -1163,15 +1162,13 @@ BEGIN
     IDS_CONFIG_PANEL_BUTTON_2 "More Settings"
     IDS_CONFIG_PANEL_BUTTON_3 "Artist Tools"
     IDS_CONFIG_PANEL_BUTTON_4 "Transitions"
+    IDS_EXTRA_FONT_1_NAME   "Tooltips"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_EXTRA_FONT_1_NAME   "Tooltips"
     IDS_EXTRA_FONT_2_NAME   "Animated Songtitles"
     IDS_PRESS_F1_MSG        "Press F1 for Help "
-    IDS_GRAPHICS_SUBSYSTEM_IS_TEMPORARILY_UNSTABLE 
-                            "One or more fullscreen display adapters are behaving strangely and will not\nreport a list of display modes.  It's quite possible that your graphics subsystem\nis temporarily unstable.\n\nSUGGESTED ACTION: If you have modified your multimon setup or Windows,\ndisplay settings, or have updated any display drivers or installed\nany new programs, you should probably REBOOT YOUR COMPUTER before\ntrying to configure (or run) the plug-in again."
     IDS_UNKNOWN             "UNKNOWN"
     IDS_DISABLED_PAGE_TEARING "(disabled/pg. tearing)"
     IDS_NONE                "(none)"
@@ -1184,13 +1181,13 @@ BEGIN
     IDS_MULTI_SAMPLING_HELP "This controls the level of full-scene anti-aliasing (blending)\nthat the display adapter uses.  Only newer video cards will\ntend to support this feature.  Anti-aliasing softens out the\n'jaggies' that you sometimes see at the pixel level, for example,\nat the silhouette of an object, or on a wireframe object.\n\nA level of '2X' would mean that 3D rendering/rasterization is done\ninternally *at double-resolution*, and then downsampled before final\ndisplay to the user.  A level of '3X' would mean that the rendering\nis done at triple-resolution, and so on.\n\nNote that, due to limitations of the DirectX 8 API, the use of multisampling\ngenerally requires that page tearing be allowed; the one exception is 'true'\nfullscreen mode, where you can have the best of both worlds: you can disable\npage tearing and enable multisampling at the same time."
     IDS_MAX_FRAMERATE       "Help on Max Framerate"
     IDS_MAX_FRAMERATE_HELP  "This controls the maximum # of times the image will be updated, per second.\nFramerate is also commonly called ""FPS"", or ""frames per second.""\n\nIf the plug-in is running too quickly for your taste, you can lower the\nmaximum framerate to slow it down.  You might also want to do this if\nthe plug-in is 'hogging the CPU' and slowing down other applications.\n\nTypically, a framerate of 30 looks good; 60 looks great.  The human eye\nhas a hard time processing more than 60 fps, though.\n\nNote that if the animation is rendering below the maximum framerate here,\nyour CPU will likely be in 100%% use, leaving your computer somewhat\nunresponsive.  If this is the case, try lowering the max. framerate\nuntil it takes effect, and then your computer should become more responsive.\n\nAlso keep in mind that it's a good idea to try and set the max. framerate\nto the current refresh rate of your monitor (e.g. 60 Hz, 72 Hz, etc.)\nor an integer factor of that number; for example, at a 72 Hz monitor\nrefresh rate, good max. framerates would be 2, 3, 4, 6, 8, 9, 12, 18,\n24, 36, or 72."
+    IDS_FAKE_FULLSCREEN     "Help on 'fake' fullscreen mode"
+    IDS_FAKE_FULLSCREEN_HELP 
+                            "When this option is enabled, the display mode is never changed by\nthe plug-in; instead, the plug-in 'fakes' fullscreen mode by simply\nthe plug-in; instead, the plug-in 'fakes' fullscreen mode by simply\nthe window on top.\n\nDUALHEAD: Fake fullscreen mode can be especially handy when you have a\ndualhead display adapter that drives two monitors, but really just treats\nthem as one giant display (e.g. **the display mode is something like 2048x768\nor 1024x1536**), where regular fullscreen mode will take over both monitors,\ncreating a very large, stretched image.  HOWEVER, if you use fake\nfullscreen mode, it can (if you want) take over just one monitor, leaving\nyou free to work on the other monitor.  To choose which display to favor\n(or to span both), click the 'DualHead' button and follow the instructions\nthere.\n\nTASKBAR: Note that in fake fullscreen mode, the taskbar will still be visible\n(and usable) if the plug-in does not entirely cover all displays & all monitors.\nIf you don't like it, use 'true' fullscreen mode instead, or move the taskbar\n(...there should be a place to move it to, since the plug-in doesn't cover all\nof your displays).  However, if the plug-in does cover all displays and all\nmonitors, the taskbar should be nicely hidden."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_FAKE_FULLSCREEN     "Help on 'fake' fullscreen mode"
-    IDS_FAKE_FULLSCREEN_HELP 
-                            "When this option is enabled, the display mode is never changed by\nthe plug-in; instead, the plug-in 'fakes' fullscreen mode by simply\nthe plug-in; instead, the plug-in 'fakes' fullscreen mode by simply\nthe window on top.\n\nDUALHEAD: Fake fullscreen mode can be especially handy when you have a\ndualhead display adapter that drives two monitors, but really just treats\nthem as one giant display (e.g. **the display mode is something like 2048x768\nor 1024x1536**), where regular fullscreen mode will take over both monitors,\ncreating a very large, stretched image.  HOWEVER, if you use fake\nfullscreen mode, it can (if you want) take over just one monitor, leaving\nyou free to work on the other monitor.  To choose which display to favor\n(or to span both), click the 'DualHead' button and follow the instructions\nthere.\n\nTASKBAR: Note that in fake fullscreen mode, the taskbar will still be visible\n(and usable) if the plug-in does not entirely cover all displays & all monitors.\nIf you don't like it, use 'true' fullscreen mode instead, or move the taskbar\n(...there should be a place to move it to, since the plug-in doesn't cover all\nof your displays).  However, if the plug-in does cover all displays and all\nmonitors, the taskbar should be nicely hidden."
     IDS_FULLSCREEN_ADAPTER  "Help on fullscreen display adapter selection"
     IDS_FULLSCREEN_ADAPTER_HELP 
                             "This lets you select which display adapter (video card) you'd like to\nrun the plug-in on, when it goes fullscreen.  If you only have one video\ncard and monitor in your system, you will only have one choice here; but\nif you have multiple video cards, or a multi-head video card (one card\nthat drives multiple monitors), there should be two or more choices here.\n\nNote that if you have trouble running in fullscreen mode with multiple\ndisplays, you might want to try the 'fake fullscreen mode' option.\nSee its help screen for more information."
@@ -1212,13 +1209,13 @@ BEGIN
     IDS_SAVE_CPU_CHECKBOX   "Help on 'Save CPU' checkbox"
     IDS_SAVE_CPU_CHECKBOX_HELP 
                             "Check this box to lower the amount of CPU (processor) that the plug-in uses\nto monitor and limit the framerate.\n\nWhen this box is unchecked, the plug-in will extremely accurately limit the\nframerate, resulting in ultra-smooth animation.  However, there is some cost\nin terms of CPU time - usually in the range of 0-20%%.\n\nWhen this box is checked, though, the plug-in uses a more lenient algorithm to\nlimit the framerate, which uses virtually no CPU time.  However, the framerate\nwill not be as accurately limited (it might vary over time), and animation is\nnot guaranteed to be perfectly smooth.\n\nNote that you can further decrease CPU usage by:\n  1) decreasing the maximum framerate (via the 'Max Framerate' options)\n  2) allowing page tearing (via the 'Allow Page Tearing' checkboxes)"
+    IDS_FS_DISPLAY_MODE     "Help on fullscreen display mode selection"
+    IDS_FS_DISPLAY_MODE_HELP 
+                            "This lets you select which display mode you'd like to use when you\nrun the plug-in fullscreen.\n\nThe first parameter is the pixel color format, which decides\nthe total number of possible colors in the rendered image.\nRGB-555 and RGB-565 are 16-bit color formats, which have poor\ncolor resolution but are often fast.  RGB-888 is a 32-bit color\nformat; it often has superior image quality, but is often slower\nand takes up twice the video memory.\n\nThe next two parameters are the width and height of the display mode,\nin pixels, also known as the 'resolution'.  Higher resolutions are\nusually slower and require more video memory, but look better.\n\nThe last parameter is the refresh rate: the rate at which the\n""monitor refreshes the image you see, in Hertz (cycles per second).\nHigher refresh rates tend to be easier on the eyes."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_FS_DISPLAY_MODE     "Help on fullscreen display mode selection"
-    IDS_FS_DISPLAY_MODE_HELP 
-                            "This lets you select which display mode you'd like to use when you\nrun the plug-in fullscreen.\n\nThe first parameter is the pixel color format, which decides\nthe total number of possible colors in the rendered image.\nRGB-555 and RGB-565 are 16-bit color formats, which have poor\ncolor resolution but are often fast.  RGB-888 is a 32-bit color\nformat; it often has superior image quality, but is often slower\nand takes up twice the video memory.\n\nThe next two parameters are the width and height of the display mode,\nin pixels, also known as the 'resolution'.  Higher resolutions are\nusually slower and require more video memory, but look better.\n\nThe last parameter is the refresh rate: the rate at which the\n""monitor refreshes the image you see, in Hertz (cycles per second).\nHigher refresh rates tend to be easier on the eyes."
     IDS_TRY_TO_FIX_SLOW_TEXT "Help on 'Try to fix slow text' checkbox"
     IDS_TRY_TO_FIX_SLOW_TEXT_HELP 
                             "Many video cards - even new ones - are very slow at drawing onscreen text.\nMost application render onscreen text overtop of the final image\n*every frame*, but since MilkDrop has so many menus, this can severely\ndrop the framerate.\n\nA workaround is invoked by checking this box.  Instead of drawing the\ntext every frame, it is instead drawn to a second image buffer, and then\nonly updated when the text changes.  That separate image buffer is then\noverlaid onto the final image for display, each frame.  By not redrawing\nthe same text over and over, MilkDrop maintains a normal framerate.\n\nThis option is good for maintaining speed, but it uses a substantial amount\nof video memory.  You should probably only use it if you have 32 megabytes\n(or more) of graphics memory.  If there is not enough video memory to set\nup the offscreen image buffer for cacheing the text, it will not be created,\nand MilkDrop will behave as if the box was unchecked."
@@ -1229,21 +1226,6 @@ BEGIN
     IDS_FS_LABEL_HELP       "These settings control the behavior of the plug-in when it is running\nin fullscreen mode.  In fullscreen mode, the plug-in changes the display\nmode to whatever you indicate here, and then uses the entire display\nto render the image.\n\nFullscreen mode also gives the plug-in certain privileges within the\ngraphics subsystem (it enters 'exclusive mode'), so performance is\nusually quite improved."
     IDS_W_LABEL_HELP        "These settings control the behavior of the plug-in when it is running\nin a window.  In windowed mode, the plug-in renders right into a window,\njust like any other application you might have running.\n\nWhen the plug-in starts, the default window position will be somewhere\non the monitor for the display adapter you choose here.\nYou *can* drag the window to a different monitor, but it is likely to be,\nVERY slow because the pixels will have to be copied, via Windows, from\none display to the next, each frame.\n\nSo, for best performance in windowed mode, be sure to select the monitor\nyou want it to run on here, in advance, and avoid dragging the window to\nanother monitor at runtime."
     IDS_DM_MORE_HELP        "Click here to bring up a dialog with\nadvanced settings for Desktop Mode."
-    IDS_INITCONFIG_FAILED   "InitConfig() failed!"
-    IDS_UNABLE_TO_LOAD_TABS "Unable to load tabs!"
-    IDS_DOCUMENTATION_FILE_NOT_FOUND 
-                            "the documentation file:\n\n\t%s\n\ncould not be found."
-    IDS_ACCESS_TO_DOCUMENTATION_FILE_DENIED 
-                            "access to the documentation file:\n\n\t%s\n\nwas denied."
-    IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_DUE_TO_NO_ASSOC 
-                            "the documentation file:\n\n\t%s\n\ncould not be accessed because there is no application\nassociated with documents of this type."
-END
-
-STRINGTABLE
-BEGIN
-    IDS_ACCESS_TO_DOCUMENTATION_FILE_FAILED_CODE_X 
-                            "the documentation file:\n\n\t%s\n\ncould not be accessed (error code: %d)"
-    IDS_ERROR_OPENING_DOCUMENTATION "Error Opening Documentation"
     IDS_RESTORE_ALL_DEFAULTS 
                             "Are you sure you want to restore the default settings?\n\nIf you click YES, the config panel will close and the defaults will be restored."
     IDS_RESTORE_ALL_DEFAULTS_TITLE "Restore Default Settings?"
@@ -1255,6 +1237,10 @@ BEGIN
                             "Click this button to view the documentation for this plug-in."
     IDS_VIEW_ONLINE_DOCS_HELP 
                             "Click this button to view the website (homepage) for this plug-in\nusing your default browser."
+END
+
+STRINGTABLE
+BEGIN
     IDS_5_6_5_TEXTURE       "a 5-6-5 texture (no transparency)"
     IDS_5_5_5_TEXTURE       "a 5-5-5 texture (w/1 bit of transparency)"
     IDS_8_8_8_TEXTURE       "an 8-8-8 texture (w/8 bits of transparency)"
@@ -1262,10 +1248,6 @@ BEGIN
     IDS_USE_LEFT_SCREEN_ONLY "use left screen only"
     IDS_USE_RIGHT_SCREEN_ONLY "use right screen only"
     IDS_USE_TOP_SCREEN_ONLY "use top screen only"
-END
-
-STRINGTABLE
-BEGIN
     IDS_USE_BOTTOM_SCREEN_ONLY "use bottom screen only"
     IDS_UNABLE_TO_REGISTER_WINDOW_CLASS 
                             "Unable to register the window class;\nPLEASE RESTART WACUP."
@@ -1279,21 +1261,17 @@ BEGIN
     IDS_TIP                 "Tip"
     IDS_TRYING_TO_ENTER_FS_MODE_WITH_MULTIPLE_DISPLAYS_2 
                             "You are trying to enter fullscreen mode while running\nmultiple displays in a vertical or horizontal span,\nbut the display mode you are entering does not stretch\nover both displays.  As a result, --the image will only\nappear on one display, and the other display will be disabled.--\n\nThere are two alternatives:\n\n1. To make the fullscreen image appear on only ONE display\nAND still be free to operate on the other display,\nplease return to the config panel and enable 'Fake Fullscreen Mode',\nthen click 'DualHead' to select which screen you'd like the\nplug-in to occupy.  (--RECOMMENDED--)\n\n2. To make the fullscreen image stretch across BOTH displays,\nreturn to the config panel and select a display mode that\nspans both displays (such as 2048 x 768, or 1024 x 1536).\n\nHit OK to continue, or Cancel to exit now."
+END
+
+STRINGTABLE
+BEGIN
     IDS_UNABLE_TO_CREATE_DIRECTX_DEVICE 
                             "Unable to create a DirectX device.  (D3DERR_NOTAVAILABLE)\n\nThis could mean that you've chosen a combination of settings that is\nnot available on your video card.  Try resetting the plug-in to its\ndefault settings (via the config panel's 'Default' button), and then\ntry running the plug-in again.\n\nYou might also want to close all other applications, to make sure they're\nnot interfering.\n\nIf you have made any changes to your graphics subsystem since your\nlast reboot (such as updating video drivers, installing new software,\netc.), or have witnessed any strange behaviors, TRY REBOOTING first.\n\n"
-    IDS_OLDER_DISPLAY_ADAPTER_CATENATION 
-                            "NOTE: If you are trying to run the plug-in on an older display adapter\n(such as a Voodoo3 card), try going to the config panel (ALT+K)\nand selecting a fullscreen display mode of a different color depth;\nand selecting a fullscreen display mode of a different color depth;\nsome of these older cards can only do 3D in particular color depths\n(such as 16-bit color, for the Voodoo 3).\n"
-    IDS_OLDER_DISPLAY_ADAPTER_CATENATION_2 
-                            "NOTE: If you are trying to run the plug-in on an older display adapter\n(such as a Voodoo3 card), try changing the color depth that Windows\nis running in; some of these cards can only do 3D in particular color depths\n(such as 16-bit color, for the Voodoo3).\n"
     IDS_DIRECTX_INIT_FAILED_X 
                             "DirectX initialisation failed (CreateDevice; code %d)\n\nOften this means you don't have enough free video memory.\n"
     IDS_WINDOW_RESIZE_FAILED 
                             "Window resize failed.\n\nOften this means the application ran out of video memory;\n    perhaps you tried to make the window too large."
     IDS_OUT_OF_VIDEO_MEMORY "OUT OF VIDEO MEMORY"
-END
-
-STRINGTABLE
-BEGIN
     IDS_ERROR_LOADING_MAIN_MENU "Error loading main menu"
     IDS_ERROR_LOADING_CONTEXT_MENU "Error loading context menu"
     IDS_ERROR_CREATING_DIRECT3D_DEVICE_FOR_VJ_MODE 
@@ -1313,6 +1291,10 @@ BEGIN
                             "FAKE FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3 
                             "FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
+END
+
+STRINGTABLE
+BEGIN
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG 
                             "To free up some memory, please RESTART WACUP, then return\n   to the plug-in's config panel and try setting your\n   "
     IDS_TO_FREE_UP_VIDEO_MEMORY 
@@ -1320,10 +1302,6 @@ BEGIN
     IDS_MILKDROP_SUGGESTION "MILKDROP SUGGESTION"
     IDS_DIRECTX_MISSING_OR_CORRUPT 
                             "Required DirectX Version Missing or Corrupt"
-END
-
-STRINGTABLE
-BEGIN
     IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING 
                             "Milkdrop is already running but may also be in the process of closing. Please wait for it to close before trying again :)"
     IDS_UNABLE_TO_READ_DATA_FILE_X "Unable to read the data file:\n   %s"
@@ -1345,16 +1323,16 @@ BEGIN
                             "Could not compile fallback comp vertex shader"
     IDS_COULD_NOT_COMPILE_FALLBACK_CP_SHADER 
                             "Could not compile fallback comp pixel shader"
+END
+
+STRINGTABLE
+BEGIN
     IDS_COULD_NOT_COMPILE_BLUR1_VERTEX_SHADER 
                             "Could not compile blur1 vertex shader"
     IDS_COULD_NOT_COMPILE_BLUR1_PIXEL_SHADER 
                             "Could not compile blur1 pixel shader"
     IDS_COULD_NOT_COMPILE_BLUR2_VERTEX_SHADER 
                             "Could not compile blur2 vertex shader"
-END
-
-STRINGTABLE
-BEGIN
     IDS_COULD_NOT_COMPILE_BLUR2_PIXEL_SHADER 
                             "Could not compile blur2 pixel shader"
     IDS_COULD_NOT_CREATE_INTERNAL_CANVAS_TEXTURE_SMALLER_DISPLAY 
@@ -1376,14 +1354,14 @@ BEGIN
     IDS_3D_NOISE_TEXTURE_BYTE_LAYOUT_NOT_RECOGNISED 
                             "3D noise texture byte layout not recognized"
     IDS_ERROR_CREATING_SHADER "Error creating shader:\n"
-    IDS_PLEASE_EXIT_VIS_BEFORE_RUNNING_CONFIG_PANEL 
-                            "Please exit the visualizer before running the config panel."
-    IDS_FPS                 "fps"
-    IDS_PF_MONITOR          "pf monitor"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PLEASE_EXIT_VIS_BEFORE_RUNNING_CONFIG_PANEL 
+                            "Please exit the visualizer before running the config panel."
+    IDS_FPS                 "fps"
+    IDS_PF_MONITOR          "pf monitor"
     IDS_PRESS_F9_TO_HIDE_SHADER_QREF 
                             "-- press F9 to hide shader Quick Reference --\n"
     IDS_PRESS_F9_TO_SHOW_SHADER_QREF 
@@ -1409,15 +1387,15 @@ BEGIN
                             " WARNING: do not forget COMPOSITE shader was LOCKED! "
     IDS_PRESET_MASH_UP_TEXT1 
                             "Preset Mash-Up:          use keys 1-5 to change bin;"
+END
+
+STRINGTABLE
+BEGIN
     IDS_PRESET_MASH_UP_TEXT2 
                             "                         up/down/a-z to browse presets for current bin;"
     IDS_PRESET_MASH_UP_TEXT3 
                             "                         h to randomize preset (or H = all bins); "
     IDS_PRESET_MASH_UP_TEXT4 "                         esc exits."
-END
-
-STRINGTABLE
-BEGIN
     IDS_UPGRADE_TO_USE_PS_X "Do you want to upgrade it to use pixel shader %s?  [y/N]"
     IDS_DIRECTORY_OF_X      "Directory of: %s"
     IDS_SHUFFLE_IS_NOW_OFF  "shuffle is now OFF"
@@ -1431,13 +1409,13 @@ BEGIN
     IDS_PS_SHADER_MODEL_2   " Shader Model 2"
     IDS_PS_SHADER_MODEL_3   " Shader Model 3"
     IDS_TX_8_BITS_PER_CHANNEL "  8 bits per channel"
-    IDS_TX_16_BITS_PER_CHANNEL " 16 bits - CAREFUL"
-    IDS_TX_32_BITS_PER_CHANNEL " 32 bits - CAREFUL"
-    IDS_160X120_SLOW        "160 x 120 SLOW "
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TX_16_BITS_PER_CHANNEL " 16 bits - CAREFUL"
+    IDS_TX_32_BITS_PER_CHANNEL " 32 bits - CAREFUL"
+    IDS_160X120_SLOW        "160 x 120 SLOW "
     IDS_192X144_SLOW        "192 x 144 SLOW "
     IDS_NONE_BEST_IMAGE_QUALITY " None (best image quality) "
     IDS_1_25_X              " 1.25 X "
@@ -1451,13 +1429,13 @@ BEGIN
     IDS_EXACT_RECOMMENDED   " Exact (Recommended) "
     IDS_PIXEL_SHADERS       "Pixel Shaders"
     IDS_PIXEL_SHADERS_TEXT  "MilkDrop 1 did not use programmable pixel shaders - instead,\nit used the fixed-function graphics pipeline.  If your graphics chip\nis older and doesn't support pixel shaders, or doesn't support the\nideal pixel shader version (2.0) for MilkDrop 2, then this should be\nauto-detected without a problem, and MilkDrop will simply skip over\nany presets that can't run on your graphics chip.  (These presets will\nalso be hidden from view, in the preset list.)\n\nIf you'd like to force MilkDrop to try and allow higher (or lower)\nversions of pixel shaders, use this option.\n\nFinally, if you want to prevent MilkDrop from running any pixel shader 3,\npresets (because it's too slow for them), you can just set this option\nto version 2.0, and MilkDrop will avoid those presets."
-    IDS_TEXFORMAT           "Texture Format"
-    IDS_TEXFORMAT_TEXT      "This determines the precision of the colors that you see.\nHigher bit depths are better.  A bit depth of 8, for example,\nmeans that in the graphics hardware, the image can have 2^8, or 256,\npossible shades (each) of red, green, and blue.\n\nA bit depth of 8 looks decent, but 16 is much better.\nHOWEVER, only high-end video cards (as of 2007) usually support\nit properly.  Older cards can't do 'bilinear interpolation'\nwith 16-bit render targets, meaning that the image will get\nvery grainy and 'digital' looking, so PLEASE WATCH OUT FOR THIS.\n\n32 bits is excessive and slow, don't ever use it.\n\nNote that your monitor can only show 256 shades of each color;\nhowever, if the internal image (that is repeatedly warped and modified\nfrom frame to frame) has better color precision (~16 bits), then \nthe colors in the image will maintain their fidelity as they slowly\nerode and warp, over time."
-    IDS_CANVAS_SIZE         "Canvas Size"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TEXFORMAT           "Texture Format"
+    IDS_TEXFORMAT_TEXT      "This determines the precision of the colors that you see.\nHigher bit depths are better.  A bit depth of 8, for example,\nmeans that in the graphics hardware, the image can have 2^8, or 256,\npossible shades (each) of red, green, and blue.\n\nA bit depth of 8 looks decent, but 16 is much better.\nHOWEVER, only high-end video cards (as of 2007) usually support\nit properly.  Older cards can't do 'bilinear interpolation'\nwith 16-bit render targets, meaning that the image will get\nvery grainy and 'digital' looking, so PLEASE WATCH OUT FOR THIS.\n\n32 bits is excessive and slow, don't ever use it.\n\nNote that your monitor can only show 256 shades of each color;\nhowever, if the internal image (that is repeatedly warped and modified\nfrom frame to frame) has better color precision (~16 bits), then \nthe colors in the image will maintain their fidelity as they slowly\nerode and warp, over time."
+    IDS_CANVAS_SIZE         "Canvas Size"
     IDS_CANVAS_SIZE_TEXT    "This sets the size of the image that milkdrop uses, internally,\nto drive the visuals.  The bigger the value here, the crisper\nthe image you see.  It's highly recommended that you set this\nto 'auto', which will determine the ideal image (texture) size\nautomatically.  However, if you experience visual problems (such\nas black streaks or missing chunks in the image) due to low\nvideo memory, you might want to set this to a low value (like\n256x256 or 512x512).\n\n'Auto (exact)' means the internal texture size will exactly match\nthe number of pixels on the screen - this is the ideal case.\nIf that doesn't work, try 'Auto (nearest power of 2)' - some older\nvideo cards will have better luck with this option."
     IDS_CANVAS_STRETCH      "Canvas Stretch"
     IDS_CANVAS_STRETCH_TEXT "MilkDrop works with an internal texture, or canvas, to do all of\nits graphics rendering.  The speed (framerate) that MilkDrop runs\nat is inversely proportional to the number of pixels that are in\nthis canvas.  So, to render things internally at a smaller resolution,\nbut stretch them up for display, you can use this option.  It will\nmake the image look a bit softer and less crisp or detailed,\nbut - especially for older graphics hardware - things will run\nmuch faster.\n\nKeep in mind, a stretch factor of 2X, for example, means that there\nwill be half as manypixels to simulate on both the X and Y axes, \nso MilkDrop will actually run FOUR TIMES as fast.  With a stretch\nfactor of 3X, it will run 9X as fast (hypothetically).  And so on."
@@ -1475,14 +1453,14 @@ BEGIN
     IDS_MENU_BLUR2_MIN_COLOR_VALUE "blur2: min color value"
     IDS_MENU_BLUR2_MIN_MAX_COLOR_VALUE_TT 
                             "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1 RANGE."
-    IDS_MENU_BLUR2_MAX_COLOR_VALUE "blur2: max color value"
-    IDS_MENU_BLUR3_MIN_COLOR_VALUE "blur3: min color value"
-    IDS_MENU_BLUR3_MIN_MAX_COLOR_VALUE_TT 
-                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1, BLUR2 RANGES."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MENU_BLUR2_MAX_COLOR_VALUE "blur2: max color value"
+    IDS_MENU_BLUR3_MIN_COLOR_VALUE "blur3: min color value"
+    IDS_MENU_BLUR3_MIN_MAX_COLOR_VALUE_TT 
+                            "narrowing these to just the color range you need will greatly increase color fidelity in the blurred images.  MUST BE SUBSET OF BLUR1, BLUR2 RANGES."
     IDS_MENU_BLUR3_MAX_COLOR_VALUE "blur3: max color value"
     IDS_MENU_EDIT_PER_VERTEX_EQUATIONS "[ edit per_vertex equations ]"
     IDS_MENU_EDIT_PER_VERTEX_EQUATIONS_TT 
@@ -1505,15 +1483,15 @@ BEGIN
                             "IN: time, frame, fps, progress; q1-q8 (from preset init); x,y,rad,ang; r,g,b,a; r2,g2,b2,a2; border_{r|g|b|a}; sides, thick, additive, textured\nOUT: t1-t8; x,y,rad,ang; r,g,b,a; r2,g2,b2,a2; border_{r|g|b|a}; sides, thick, additive, textured"
     IDS_MENU_EDIT_PER_FRAME_INSTANCE_CODE 
                             "[ edit per-frame(/per-instance) code ]"
+END
+
+STRINGTABLE
+BEGIN
     IDS_MENU_EDIT_PER_FRAME_INSTANCE_CODE_TT 
                             "IN: instance, num_inst, time, frame, fps, progress; q1-q8 (from preset init); x,y,rad,ang; r,g,b,a; r2,g2,b2,a2; border_{r|g|b|a}; sides, thick, additive, textured\nOUT: t1-t8; x,y,rad,ang; r,g,b,a; r2,g2,b2,a2; border_{r|g|b|a}; sides, thick, additive, textured"
     IDS_ERROR_PRESET_NOT_FOUND_X "ERROR: preset not found: %s"
     IDS_ERROR_NO_PRESET_FILES_OR_DIRS_FOUND_IN_X 
                             "ERROR: No preset files OR directories found in %s*.milk"
-END
-
-STRINGTABLE
-BEGIN
     IDS_SCANNING_PRESETS    " scanning presets... "
     IDS_SPRITE_X_ERROR_COULD_NOT_FIND_IMG_OR_NOT_DEFINED 
                             "sprite #%d error: could not find 'img=' setting, or sprite is not defined"
@@ -1533,13 +1511,13 @@ BEGIN
     IDS_RAND_TITLE          "Time between random song title animation"
     IDS_RAND_MSG            "Time between random custom messages"
     IDS_MAX_IMAGES_BYTES    "Image cache settings"
-    IDS_PAGE_X              " Page %d "
-    IDS_MB                  "MB"
-    IDS_GB                  "GB"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PAGE_X              " Page %d "
+    IDS_MB                  "MB"
+    IDS_GB                  "GB"
     IDS_MASHUP_GENERAL_POSTPROC " 1. general, postproc: "
     IDS_MASHUP_MOTION_EQUATIONS " 2. motion, equations: "
     IDS_MASHUP_WAVEFORMS_SHAPES " 3. waveforms, shapes: "
@@ -1553,13 +1531,13 @@ BEGIN
     IDS_STRING620           "           tex2D(sampler_billy, uv)  //sample pixel from billy.jpg (must be loaded)"
     IDS_STRING621           "           GetBlur1(uv)              //sample blurred prior-frame pixel (also 2,3)"
     IDS_STRING622           " inputs:   float2 uv;        //warped UV coordinates [0..1]"
-    IDS_STRING623           "           float2 uv_orig;   //original UV coordinates [0..1]"
-    IDS_STRING624           "           float  rad;       //radius [0..1]"
-    IDS_STRING625           "           float  ang;       //angle [0..PI*2]"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_STRING623           "           float2 uv_orig;   //original UV coordinates [0..1]"
+    IDS_STRING624           "           float  rad;       //radius [0..1]"
+    IDS_STRING625           "           float  ang;       //angle [0..PI*2]"
     IDS_STRING626           "           // + texsize, aspect, time, fps, rand_frame, rand_preset,"
     IDS_STRING627           "           //   q1-q32/_qa-_qh, bass, treb_att, vol... - see docs"
     IDS_STRING628           " output:   float3 ret;       //the new pixel color (r,g,b)"
@@ -1574,14 +1552,14 @@ BEGIN
                             "Do you want to upgrade all shaders to use (at least) pixel shader %s?  [y/N]"
     IDS_PRESS_ESC_TO_RETURN "Press ESC to return."
     IDS_COULD_NOT_LOAD_TEXTURE_X "Could not load texture: %s.%s"
-    IDS_ERROR_COMPILING_X_X_SHADER "Error compiling %hs %hs shader:\n"
-    IDS_ERROR_PARSING_X_X_SHADER "Error parsing %hs %hs shader.\n"
-    IDS_UNABLE_TO_RESOLVE_TEXSIZE_FOR_A_TEXTURE_NOT_IN_USE 
-                            "Unable to resolve texsize for a texture that is not in use!  (%hs)"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_ERROR_COMPILING_X_X_SHADER "Error compiling %hs %hs shader:\n"
+    IDS_ERROR_PARSING_X_X_SHADER "Error parsing %hs %hs shader.\n"
+    IDS_UNABLE_TO_RESOLVE_TEXSIZE_FOR_A_TEXTURE_NOT_IN_USE 
+                            "Unable to resolve texsize for a texture that is not in use!  (%hs)"
     IDS_KEY_MAPPINGS        "yYYyYzZ"
     IDS_DIRECTX_INSTALL_ISSUE "DirectX 9.0c Installation Issue"
     IDS_DIRECTX_INSTALL_FAILED 

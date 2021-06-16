@@ -85,7 +85,7 @@ void	FindDesktopWindows(HWND *desktop_progman, HWND *desktopview_wnd);
 
 // handy functions for populating Combo Boxes:
 inline void AddItem(HWND ctrl, const wchar_t* text, DWORD itemdata) {
-	LRESULT nPos = SendMessageW( ctrl, CB_ADDSTRING, 0, (LPARAM)text);
+	LRESULT nPos = SendMessage( ctrl, CB_ADDSTRING, 0, (LPARAM)text);
 	SendMessage( ctrl, CB_SETITEMDATA, nPos, itemdata);
 }    
 inline void SelectItemByPos(HWND ctrl, int pos) {
