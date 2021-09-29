@@ -1097,7 +1097,7 @@ void CPlugin::MyPreInitialize()
 	g_bDumpFileCleared	= false;
 
     //_snwprintf(m_szMilkdrop2Path, ARRAYSIZE(m_szMilkdrop2Path), L"%s%s", GetPluginsDirPath(), SUBDIR);
-	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\Plugins\\%spresets\\", GetPaths()->settings_dir, SUBDIR);
+	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\%spresets\\", GetPaths()->settings_sub_dir, SUBDIR);
 
     // note that the config dir can be under Program Files or Application Data!!
     wchar_t szConfigDir[MAX_PATH] = {0};
@@ -2831,7 +2831,7 @@ bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename, int
         texfiles.clear();
 
 		wchar_t szMask[MAX_PATH] = {0};
-		_snwprintf(szMask, ARRAYSIZE(szMask), L"%s\\Plugins\\%stextures\\*.*", GetPaths()->settings_dir, SUBDIR);
+		_snwprintf(szMask, ARRAYSIZE(szMask), L"%s\\%stextures\\*.*", GetPaths()->settings_sub_dir, SUBDIR);
 
 		WIN32_FIND_DATAW ffd = {0};
 
@@ -3126,8 +3126,8 @@ void CShaderParams::CacheParams(LPD3DXCONSTANTTABLE pCT, bool bHardErrors)
                     wchar_t szFilename[MAX_PATH] = {0};
                     for (int z = 0; z < ARRAYSIZE(texture_exts); z++) 
                     {
-						_snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s\\Plugins\\%stextures\\%s.%s",
-								   GetPaths()->settings_dir, SUBDIR, szRootName, texture_exts[z].c_str());
+						_snwprintf(szFilename, ARRAYSIZE(szFilename), L"%s\\%stextures\\%s.%s",
+								   GetPaths()->settings_sub_dir, SUBDIR, szRootName, texture_exts[z].c_str());
                         if (GetFileAttributesW(szFilename) == 0xFFFFFFFF)
                         {
                             // try again, but in presets dir
@@ -5042,7 +5042,7 @@ void CPlugin::MyRenderUI(
 					    bool bIsDir = (m_presets[i].szFilename.c_str()[0] == '*');
 					    bool bIsRunning = false;
 					    bool bIsSelected = (i == m_nMashPreset[m_nMashSlot]);
-						wchar_t str[512] = {0}, str2[512] = {0};
+						wchar_t str2[512] = {0};
 
 					    if (bIsDir)
 					    {
@@ -5056,6 +5056,7 @@ void CPlugin::MyRenderUI(
 					    else
 					    {
 						    // preset file
+							wchar_t str[512] = {0};
 						    wcsncpy(str, m_presets[i].szFilename.c_str(), ARRAYSIZE(str));
 						    RemoveExtension(str);
 						    _snwprintf(str2, ARRAYSIZE(str2), L" %s ", str);
@@ -7298,7 +7299,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
+                (void)StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -7548,7 +7549,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, ARRAYSIZE(ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
+                (void)StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -7679,7 +7680,7 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
                 GetWindowTextW(GetDlgItem(hwnd, ph->iCtrlId), ctrl_name, sizeof(ctrl_name)/sizeof(*ctrl_name));
                 RemoveSingleAmpersands(ctrl_name);
 
-                StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
+                (void)StringCchCopy(title, ARRAYSIZE(title), ctrl_name);
             
                 switch(ph->iCtrlId)
                 {
@@ -8402,11 +8403,11 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         
         m_pState->Import(m_szCurrentPresetFile, GetTime(), m_pOldState, ApplyFlags);
         
-	    if (fBlendTime >= 0.001f) 
+	    /*if (fBlendTime >= 0.001f) 
         {
             RandomizeBlendPattern();
 		    m_pState->StartBlendFrom(m_pOldState, GetTime(), fBlendTime);
-        }
+        }*/
 
 	    m_fPresetStartTime = GetTime();
 	    m_fNextPresetTime = -1.0f;		// flags UpdateTime() to recompute this
@@ -8534,7 +8535,7 @@ void CPlugin::SeekToPreset(/*wchar_t cStartChar*/)
 
 void CPlugin::FindValidPresetDir()
 {
-	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\Plugins\\%spresets\\", GetPaths()->settings_dir, SUBDIR);
+	_snwprintf(m_szPresetDir, ARRAYSIZE(m_szPresetDir), L"%s\\%spresets\\", GetPaths()->settings_sub_dir, SUBDIR);
     if (GetFileAttributesW(m_szPresetDir) != -1)
         return;
     /*wcsncpy(m_szPresetDir, m_szMilkdrop2Path, ARRAYSIZE(m_szPresetDir));
@@ -8576,7 +8577,7 @@ char* NextLine(char* p)
 
 void ProcessPresetFolder(WIN32_FIND_DATAW *fd, LPCWSTR szPresetDir, int *temp_nDirs,
 						 int *temp_nPresets, PresetList &temp_presets,
-						 int *temp_nHiddenPresets, const int level)
+						 int *temp_nHiddenPresets, const int level, const bool bRecurse)
 {
 	bool bSkip = false;
 	bool bIsDir = (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
@@ -8592,7 +8593,7 @@ void ProcessPresetFolder(WIN32_FIND_DATAW *fd, LPCWSTR szPresetDir, int *temp_nD
 		else
 			_snwprintf(szFilename, ARRAYSIZE(szFilename), L"*%s", fd->cFileName);
 
-		if (!bSkip && wcscmp(fd->cFileName, L".."))
+		if (!bSkip && wcscmp(fd->cFileName, L"..") && bRecurse)
 		{
 			HANDLE _h = INVALID_HANDLE_VALUE;
 			WIN32_FIND_DATAW _fd = {0};
@@ -8609,8 +8610,8 @@ void ProcessPresetFolder(WIN32_FIND_DATAW *fd, LPCWSTR szPresetDir, int *temp_nD
 				// check if there's a sub-directory and attempt to parse it
 				while (!g_bThreadShouldQuit && _h != INVALID_HANDLE_VALUE)
 				{
-					ProcessPresetFolder(&_fd, _szPresetDir, temp_nDirs, temp_nPresets,
-										temp_presets, temp_nHiddenPresets, level + 1);
+					ProcessPresetFolder(&_fd, _szPresetDir, temp_nDirs, temp_nPresets, temp_presets,
+										temp_nHiddenPresets, level + 1, bRecurse);
 
     				if (!FindNextFileW(_h, &_fd))
 					{
@@ -8867,12 +8868,14 @@ retry:
     int temp_nPresets = 0;
 	int temp_nHiddenPresets = 0;
 
+	bool bRecurse = GetPrivateProfileBoolW(L"settings", L"bRecurse", true, g_plugin.GetConfigIniFile());
+
     // scan for the desired # of presets, this call...
     while (!g_bThreadShouldQuit && h != INVALID_HANDLE_VALUE)
     {
 		ProcessPresetFolder(&fd, szPresetDir, &temp_nDirs,
 							&temp_nPresets, temp_presets,
-							&temp_nHiddenPresets, 0);
+							&temp_nHiddenPresets, 0, bRecurse);
 
     	if (!FindNextFileW(h, &fd))
         {
@@ -9856,7 +9859,7 @@ bool CPlugin::LaunchSprite(int nSpriteNum, int nSlot)
 		// it's not in the form "x:\blah\billy.jpg" so prepend the plugin settings dir path.
 		wchar_t temp[512] = {0};
 		wcsncpy(temp, img, ARRAYSIZE(temp));
-		_snwprintf(img, ARRAYSIZE(img), L"%s\\Plugins\\%s%s", GetPaths()->settings_dir, SUBDIR, temp);
+		_snwprintf(img, ARRAYSIZE(img), L"%s\\%s%s", GetPaths()->settings_sub_dir, SUBDIR, temp);
 	}
 
 	// 2. get color key

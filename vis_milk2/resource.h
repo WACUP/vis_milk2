@@ -763,6 +763,8 @@
 #define IDC_HS_ANIM_SPEED               1032
 #define IDC_BETWEEN_TIME_LABEL          1032
 #define IDC_FONTSIZE7                   1032
+#define IDC_CB_FIXSLOWTEXT2             1032
+#define IDC_CB_RECURSE                  1032
 #define IDC_FS_MULTISAMPLING_CAPTION    1033
 #define IDC_BETWEEN_TIME_RANDOM_LABEL   1033
 #define IDC_HS_ANIM_SPEED_CAPTION       1034
@@ -879,7 +881,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40011
 #define _APS_NEXT_CONTROL_VALUE         1062
 #define _APS_NEXT_SYMED_VALUE           101

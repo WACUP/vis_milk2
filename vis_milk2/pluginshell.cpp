@@ -1263,10 +1263,10 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	{
 		// load settings as well as coping with moving old settings to a contained folder
 		wchar_t m_szOldConfigIniFile[MAX_PATH] = {0}, temp[MAX_PATH] = {0}, temp2[MAX_PATH] = {0};
-		_snwprintf(m_szOldConfigIniFile, ARRAYSIZE(m_szOldConfigIniFile), L"%s\\Plugins\\%s", GetPaths()->settings_dir, INIFILE);
-		_snwprintf(m_szConfigIniFile, ARRAYSIZE(m_szConfigIniFile), L"%s\\Plugins\\%s%s", GetPaths()->settings_dir, SUBDIR, INIFILE);
-		_snwprintf(temp, ARRAYSIZE(temp), L"%s\\Plugins\\%s", GetPaths()->settings_dir, SUBDIR);
-		_snwprintf(temp2, ARRAYSIZE(temp2), L"%s\\Plugins\\", GetPaths()->settings_dir);
+		_snwprintf(m_szOldConfigIniFile, ARRAYSIZE(m_szOldConfigIniFile), L"%s\\%s", GetPaths()->settings_sub_dir, INIFILE);
+		_snwprintf(m_szConfigIniFile, ARRAYSIZE(m_szConfigIniFile), L"%s\\%s%s", GetPaths()->settings_sub_dir, SUBDIR, INIFILE);
+		_snwprintf(temp, ARRAYSIZE(temp), L"%s\\%s", GetPaths()->settings_sub_dir, SUBDIR);
+		_snwprintf(temp2, ARRAYSIZE(temp2), L"%s\\", GetPaths()->settings_sub_dir);
 		CreateDirectoryW(temp, NULL);
 
 		if (PathFileExistsW(m_szOldConfigIniFile) && !PathFileExistsW(m_szConfigIniFile))

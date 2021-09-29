@@ -73,7 +73,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 	m_truly_exiting = 0;
 	m_bpp = 0;
 	m_frame_delay = 0;
-	StringCchCopy(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
+	(void)StringCchCopy(m_szIniFile, ARRAYSIZE(m_szIniFile), szIniFile);
 	memset(&myWindowState,0,sizeof(myWindowState));
 	memset(&initialRect,0,sizeof(initialRect));
 	m_szDriver[0] = 0;
@@ -120,7 +120,7 @@ DXContext::DXContext(HWND hWndWinamp,HINSTANCE hInstance,LPCWSTR szClassName,LPC
 		return;
 	}
 
-	StringCchCopy(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
+	(void)StringCchCopy(m_szWindowCaption, ARRAYSIZE(m_szWindowCaption), szWindowCaption);
 	m_hInstance = hInstance;
 	m_uWindowLong = uWindowLong;
 }
@@ -522,8 +522,8 @@ BOOL DXContext::Internal_Init(DXCONTEXT_PARAMS *pParams, BOOL bFirstInit)
 
 		if (m_lpD3D->GetAdapterIdentifier(m_ordinal_adapter, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &temp) == D3D_OK)
 		{
-			StringCchCopyA(m_szDriver, ARRAYSIZE(m_szDriver), temp.Driver);
-			StringCchCopyA(m_szDesc, ARRAYSIZE(m_szDesc), temp.Description);
+			(void)StringCchCopyA(m_szDriver, ARRAYSIZE(m_szDriver), temp.Driver);
+			(void)StringCchCopyA(m_szDesc, ARRAYSIZE(m_szDesc), temp.Description);
 		}
 
 		int caps_ok = 0;

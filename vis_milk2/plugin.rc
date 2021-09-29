@@ -161,15 +161,17 @@ BEGIN
     CONTROL         "&Fullscreen",IDC_CB_FS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,203,70,10
     CONTROL         "&Desktop Mode",IDC_CB_DMS,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,12,215,70,10
     CONTROL         "Sa&ve CPU by loosely enforcing Max Framerate",IDC_CB_SAVE_CPU,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,185,169,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,183,205,10
     CONTROL         "Show '&Press F1 for Help' message at startup",IDC_CB_PRESS_F1_MSG,
-                    "Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,97,196,163,10
+                    "Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,97,194,205,10
     CONTROL         "&Minimize WACUP when going fullscreen",IDC_CB_MIN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,207,148,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,205,205,10
+    CONTROL         "Recursively load sub-folders of the current preset folder",IDC_CB_RECURSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,216,205,10
     CONTROL         "Try to fix slow menus/text (uses more video memory)",IDC_CB_FIXSLOWTEXT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,218,194,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,227,205,10
     CONTROL         "V&J MODE - show text, menus in a second window",IDC_CB_VJMODE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,229,182,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,238,205,10
     PUSHBUTTON      "Dual&Head",ID_DUALHEAD,308,185,60,15
     PUSHBUTTON      "&Select Fonts",ID_FONTS,308,203,60,15
 END
@@ -670,8 +672,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,32,2,0
- PRODUCTVERSION 2,32,2,0
+ FILEVERSION 2,32,3,0
+ PRODUCTVERSION 2,32,3,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -688,12 +690,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualisation Plug-in"
-            VALUE "FileVersion", "2.32.2.0"
+            VALUE "FileVersion", "2.32.3.0"
             VALUE "InternalName", "Milkdrop 2"
             VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2021"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Milkdrop 2"
-            VALUE "ProductVersion", "2.32.2.0"
+            VALUE "ProductVersion", "2.32.3.0"
         END
     END
     BLOCK "VarFileInfo"

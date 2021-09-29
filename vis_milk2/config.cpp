@@ -202,7 +202,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_FS);
 			pGUID = &m_adapter_guid_fullscreen;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+			(void)StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
 						   m_adapter_devicename_fullscreen);
 			break;
 		}
@@ -210,7 +210,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_W);
 			pGUID = &m_adapter_guid_windowed;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+			(void)StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
 						   m_adapter_devicename_windowed);
 			break;
 		}
@@ -225,7 +225,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		{
 			ctrl = GetDlgItem(g_subwnd, IDC_ADAPTER_DMS);
 			pGUID = &m_adapter_guid_desktop;
-			StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
+			(void)StringCchCopyA(deviceName, ARRAYSIZE(deviceName),
 						   m_adapter_devicename_desktop);
 			break;
 		}
@@ -269,7 +269,7 @@ void CPluginShell::UpdateAdapters(const int screenmode)
 		int nDispAdapters = 0;
 #ifdef _DEBUG
 		wchar_t szDebugFile[MAX_PATH] = {0};
-		StringCchCopy(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
+		(void)StringCchCopy(szDebugFile, ARRAYSIZE(szDebugFile), m_szConfigIniFile);
 		wchar_t* p = wcsrchr(szDebugFile, L'\\');
 		if (p)
 		{
@@ -937,7 +937,7 @@ void CPluginShell::SaveAdapter(const int screenmode)
 					{
 						--n;
 						m_adapter_guid_fullscreen = g_disp_adapter_fs[n].DeviceIdentifier;
-						StringCchCopyA(m_adapter_devicename_fullscreen,
+						(void)StringCchCopyA(m_adapter_devicename_fullscreen,
 									   ARRAYSIZE(m_adapter_devicename_fullscreen),
 									   g_disp_adapter_fs[n].DeviceName);
 						//strcpy(m_adapter_desc_fullscreen, g_disp_adapter_fs[n].Description);
@@ -955,7 +955,7 @@ void CPluginShell::SaveAdapter(const int screenmode)
 					{
 						--n;
 						m_adapter_guid_windowed = g_disp_adapter_w[n].DeviceIdentifier;
-						StringCchCopyA(m_adapter_devicename_windowed,
+						(void)StringCchCopyA(m_adapter_devicename_windowed,
 									   ARRAYSIZE(m_adapter_devicename_windowed),
 									   g_disp_adapter_fs[n].DeviceName);
 						//strcpy(m_adapter_desc_windowed, g_disp_adapter_fs[n].Description);
@@ -979,7 +979,7 @@ void CPluginShell::SaveAdapter(const int screenmode)
 					{
 						--n;
 						m_adapter_guid_desktop = g_disp_adapter_dm[n].DeviceIdentifier;
-						StringCchCopyA(m_adapter_devicename_desktop,
+						(void)StringCchCopyA(m_adapter_devicename_desktop,
 									   ARRAYSIZE(m_adapter_devicename_desktop),
 									   g_disp_adapter_fs[n].DeviceName);
 						//strcpy(m_adapter_desc_desktop, g_disp_adapter_fs[n].Description);
@@ -1107,6 +1107,8 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
 			CheckDlgButton(hwnd, IDC_CB_FIXSLOWTEXT, m_fix_slow_text);
             CheckDlgButton(hwnd, IDC_CB_VJMODE, m_vj_mode);
 
+			CheckDlgButton(hwnd, IDC_CB_RECURSE, GetPrivateProfileBoolW(L"settings", L"bRecurse", true, m_szConfigIniFile));
+
             // Enumerate available adapters.
             UpdateAdapters(0);    // fullscreen
               //-calls UpdateFSAdapterDispModes()
@@ -1153,6 +1155,10 @@ BOOL CPluginShell::PluginShellConfigTab1Proc(HWND hwnd,UINT msg,WPARAM wParam,LP
             m_save_cpu             = DlgItemIsChecked(hwnd, IDC_CB_SAVE_CPU );
             m_fix_slow_text        = DlgItemIsChecked(hwnd, IDC_CB_FIXSLOWTEXT);
             m_vj_mode              = DlgItemIsChecked(hwnd, IDC_CB_VJMODE);
+
+			WritePrivateProfileIntW(!!DlgItemIsChecked(hwnd, IDC_CB_RECURSE), true, L"bRecurse",
+													   m_szConfigIniFile, L"settings");
+
 #ifdef NON_SKIN_MODE
 #if 0
             if (mod1.hwndParent && SendMessage(mod1.hwndParent,WM_WA_IPC,0,0) >= 0x2900)
