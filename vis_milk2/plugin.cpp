@@ -488,6 +488,47 @@ Order of Function Calls
                                         auto-minimize thing in that case.
 
 
+#ifdef SPOUT_SUPPORT
+========================================================================================================
+SPOUT NOTES :
+	
+	Credit to psilocin@openmailbox.org for the original idea to convert MilkDrop for Spout output
+
+	22.10.14 - changed from Ctrl-Z on and off to default Spout output when the plugin starts
+			   and Ctrl-Z to disable and enable while it is running. Otherwise Spout has to be re-enabled
+			   every time another track is selected.
+	30.10.14 - changed from Glut to pixelformat and OpenGL context creation
+	31.10.14 - changed initialization section to renderframe to ensure correct frame size
+			 - added Ctrl-D user selection of DirectX mode
+			 - flag bUseDX11 to select either DirectX 9 or DirectX 11
+			 - saved DX mode flag in configuration file
+	05.11.14 - Included Spout options in the Visualization configuration control panel
+				Options -> Visualizatiosn -> Configure Plugin
+				MORE SETTINGS tab
+					Enable Spout output
+					Enable Spout DirectX 11 mode
+				Settings are saved with OK
+			 - retained Ctrl-Z for spout on / off while the Visualizer is running
+			 - included Ctrl-D to change from DirectX 9 to DirectX 11 
+			   (this might be removed in a future release if it gives trouble)
+			   The selected settings are saved when the Visualizer is stopped.
+	25.04.15 - Changed Spout SDK from graphics auto detection to set DirectX mode to optional installer
+			 - Recompile for dual DX option installer
+	17.06.15 - User observation that custom messages do not work.
+			   This is isolated to "RenderStringToTitleTexture" and seems to be related to
+			   generating the fonts from GDI to DX9. Not sure of the reason. Could be DX9 libraries.
+			   As a a workaround, custom message rendering is replaced with the same as used for 
+			   title animation which works OK. The limitation is that this gives a fixed font,
+			   but the colour should come out the same as in the custom message setup file.
+	07.07.15 - Recompile for 2.004 release
+	15.09.15 - Recompile for 2.005 release - revised memoryshare SDK
+	08.11.15 - removed directX9/directX11 option for 2.005
+			 - OpenSender and milkdropfs.cpp - removed XRGB format option
+	02.06.16 - Rebuild for Spout 2.005
+	22.01.17 - Create sender with default ARGB format
+			 - Clear alpha to white in milkdropfs.cpp
+			 - Rebuild for Spout 2.006
+#endif
 
 */
 
@@ -905,6 +946,20 @@ void CPlugin::MyPreInitialize()
     // (If you want to change the default values for settings that are part of
     //   the plugin shell (framework), do so from OverrideDefaults() above.)
 
+#ifdef SPOUT_SUPPORT
+	// =========================================================
+	// SPOUT variable initialisation
+	//
+	bInitialized = false;
+	bSpoutOut = /*true/*/false/**/; // User on/off toggle
+	bUseDX11 = /*true/*/false/**/; // Set true to use DirectX11 - DX9 by default - picked up from config file
+
+	// DirectX 11 mode uses a format that is incompatible with DirectX 9 receivers
+	// DirectX9 mode can fail with some drivers. Noted on Intel/NVIDIA laptop.
+	g_hdc = NULL;
+	// =========================================================
+#endif
+
     // seed the system's random number generator w/the current system time:
     //srand((unsigned)time(NULL));  -don't - let winamp do it
 
@@ -1129,6 +1184,13 @@ void CPlugin::MyReadConfig()
 
     wchar_t *pIni = GetConfigIniFile();
 
+#ifdef SPOUT_SUPPORT
+	// ======================================
+	// SPOUT - save whether in DirectX11 (false) or DirectX 9 (true) mode, default false
+	bSpoutOut = GetPrivateProfileBoolW(L"settings", L"bSpoutOut", bSpoutOut, pIni);
+	bUseDX11 = GetPrivateProfileBoolW(L"settings", L"bUseDX11", bUseDX11, pIni);
+	// ======================================
+#endif
 	m_bEnableRating = GetPrivateProfileBoolW(L"settings",L"bEnableRating",m_bEnableRating,pIni);
     //m_bInstaScan    = GetPrivateProfileBool("settings","bInstaScan",m_bInstaScan,pIni);
 	m_bHardCutsDisabled = GetPrivateProfileBoolW(L"settings",L"bHardCutsDisabled",m_bHardCutsDisabled,pIni);
@@ -1235,6 +1297,11 @@ void CPlugin::MyWriteConfig()
 
 	// constants:
 	//note: m_szPresetDir is not written here; it is written manually, whenever it changes.
+
+#ifdef SPOUT_SUPPORT
+	WritePrivateProfileIntW(bSpoutOut,			  0,		L"bSpoutOut",			pIni, L"settings");
+	WritePrivateProfileIntW(bUseDX11,			  0,		L"bUseDX11",			pIni, L"settings");
+#endif
 
 	WritePrivateProfileIntW(m_bSongTitleAnims,    1,		L"bSongTitleAnims",		pIni, L"settings");
 	WritePrivateProfileIntW(m_bHardCutsDisabled,  1,	    L"bHardCutsDisabled",	pIni, L"settings");
@@ -1434,6 +1501,25 @@ void CPlugin::CleanUpMyNonDx9Stuff()
     // This gets called only once, when your plugin exits.
     // Be sure to clean up any objects here that were 
     //   created/initialized in AllocateMyNonDx9Stuff.
+    
+#ifdef SPOUT_SUPPORT
+	// =========================================================
+	// SPOUT cleanup on exit
+	//
+	if(bInitialized) {
+		spoutsender.ReleaseSender();
+		bInitialized = false;
+	}
+
+	HGLRC ctx = wglGetCurrentContext();
+	if(ctx != NULL) {
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(ctx);
+		ReleaseDC(GetWinampWindow(), g_hdc);
+	}
+
+	// =========================================================
+#endif
     
     //sound.Finish();
 
@@ -1699,8 +1785,6 @@ int CPlugin::AllocateMyDX9Stuff()
         MessageBox(GetPluginWindow(), msg, "WARNING", MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
         //return false;
     }*/
-
-    // Note: this code used to be in OnResizeGraphicsWindow().
 
     // SHADERS
     //-------------------------------------
@@ -6561,6 +6645,42 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			}
 			return 0;
 
+#ifdef SPOUT_SUPPORT
+		// start or stop spout output
+		case 'Z':
+			if (bCtrlHeldDown && !bShiftHeldDown)
+			{
+				bSpoutOut = !bSpoutOut;
+				LaunchSongTitleAnim(WASABI_API_LNGSTRINGW((bSpoutOut ? IDS_SPOUT_ON : IDS_SPOUT_OFF)));
+				WritePrivateProfileIntW(bSpoutOut, 0, L"bSpoutOut",
+										GetConfigIniFile(), L"settings");
+
+				if (bInitialized) {
+					spoutsender.ReleaseSender();
+					bInitialized = false; // Initialized next render frame
+				}
+				return 0;
+			}
+			break;
+
+		// change DirectX mode
+		case 'D':
+			if (bCtrlHeldDown && !bShiftHeldDown)
+			{
+				bUseDX11 = !bUseDX11;
+				LaunchSongTitleAnim(WASABI_API_LNGSTRINGW((bUseDX11 ? IDS_SPOUT_DX11 : IDS_SPOUT_DX9)));
+				WritePrivateProfileIntW(bUseDX11, 0, L"bUseDX11",
+										GetConfigIniFile(), L"settings");
+
+				if(bInitialized) {
+					spoutsender.ReleaseSender();
+					bInitialized = false; // Initialized next render frame
+				}
+				return 0;
+			}
+			break;
+#endif
+
         case 'T':
             if (bCtrlHeldDown)
             {
@@ -7210,6 +7330,11 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 			    CheckDlgButton(hwnd, IDC_CB_NORATING, !m_bEnableRating);
 			    CheckDlgButton(hwnd, IDC_CB_AUTOGAMMA, m_bAutoGamma);
 
+#ifdef SPOUT_SUPPORT
+				CheckDlgButton(hwnd, IDC_CB_SPOUTOUT, bSpoutOut);
+				CheckDlgButton(hwnd, IDC_CB_SPOUTDX11, bUseDX11);
+#endif
+
                 RefreshTab2(hwnd);
             }
             break;  // case WM_INITDIALOG
@@ -7288,6 +7413,10 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				m_bEnableRating = !DlgItemIsChecked(hwnd, IDC_CB_NORATING);
 				m_bAutoGamma = DlgItemIsChecked(hwnd, IDC_CB_AUTOGAMMA);
                 
+#ifdef SPOUT_SUPPORT
+				bSpoutOut = DlgItemIsChecked(hwnd, IDC_CB_SPOUTOUT);
+				bUseDX11 = DlgItemIsChecked(hwnd, IDC_CB_SPOUTDX11);
+#endif
             }
             break;  // case WM_DESTROY
 
@@ -7468,6 +7597,11 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				SetDlgItemText(hwnd, IDC_RAND_MSG, buf);
 
 			    CheckDlgButton(hwnd, IDC_CB_TITLE_ANIMS, m_bSongTitleAnims);
+
+#ifdef SPOUT_SUPPORT
+				CheckDlgButton(hwnd, IDC_CB_SPOUTOUT, bSpoutOut);
+				CheckDlgButton(hwnd, IDC_CB_SPOUTDX11, bUseDX11);
+#endif
             }
             break;
         case WM_COMMAND:
@@ -7539,6 +7673,11 @@ BOOL CPlugin::MyConfigTabProc(int nPage, HWND hwnd,UINT msg,WPARAM wParam,LPARAM
 				}
 
 				m_bSongTitleAnims = DlgItemIsChecked(hwnd, IDC_CB_TITLE_ANIMS);
+
+#ifdef SPOUT_SUPPORT
+				bSpoutOut = DlgItemIsChecked(hwnd, IDC_CB_SPOUTOUT);
+				bUseDX11 = DlgItemIsChecked(hwnd, IDC_CB_SPOUTDX11);
+#endif
             }
             break;
         case WM_HELP:   // give help box for controls here
@@ -9815,11 +9954,11 @@ void CPlugin::LaunchCustomMessage(int nMsgNum)
 	m_supertext.fStartTime = GetTime(); 
 }
 
-void CPlugin::LaunchSongTitleAnim()
+void CPlugin::LaunchSongTitleAnim(const wchar_t *custom)
 {
 	m_supertext.bRedrawSuperText = true;
 	m_supertext.bIsSongTitle = true;
-	wcsncpy(m_supertext.szTextW, m_szSongTitle, ARRAYSIZE(m_supertext.szTextW) - 1);
+	wcsncpy(m_supertext.szTextW, (custom && *custom ? custom : m_szSongTitle), ARRAYSIZE(m_supertext.szTextW) - 1);
 	wcsncpy(m_supertext.nFontFace, m_fontinfo[SONGTITLE_FONT].szFace, ARRAYSIZE(m_supertext.nFontFace) - 1);
 	m_supertext.fFontSize   = (float)m_fontinfo[SONGTITLE_FONT].nSize;
 	m_supertext.bBold       = m_fontinfo[SONGTITLE_FONT].bBold;
@@ -10165,3 +10304,61 @@ void CPlugin::GenCompPShaderText(char *szShaderText, int szShaderTextLen,
     p += sprintf(p, "}");
 #endif
 }
+
+#ifdef SPOUT_SUPPORT
+// =========================================================
+// SPOUT initialization function
+// Initializes OpenGL and a Spout sender using DX9 or DX11
+//
+bool CPlugin::OpenSender(const unsigned int width, const unsigned int height)
+{
+	// We only need an OpenGL context with no window
+	// Once created it seems stable and retained
+	// So this is only done once otherwise the toggle
+	// will fail despite things being correctly setup.
+	if (wglGetCurrentContext() == NULL) {
+		g_hdc = GetDC(GetWinampWindow());
+		if (g_hdc) {
+			PIXELFORMATDESCRIPTOR pfd = { 0 };
+			pfd.nSize = sizeof(pfd);
+			pfd.nVersion = 1;
+			pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+			pfd.iPixelType = PFD_TYPE_RGBA;
+			pfd.cColorBits = 32;
+			pfd.cDepthBits = 16;
+			pfd.iLayerType = PFD_MAIN_PLANE;
+
+			const int iFormat = ChoosePixelFormat(g_hdc, &pfd);
+			if (iFormat) {
+				if (SetPixelFormat(g_hdc, iFormat, &pfd)) {
+					HGLRC hRC = wglCreateContext(g_hdc);
+					if (hRC) {
+						wglMakeCurrent(g_hdc, hRC);
+						if (wglGetCurrentContext() == NULL) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (bInitialized) {
+		spoutsender.ReleaseSender();
+		bInitialized = false;
+	}
+
+	spoutsender.SetDX9(!bUseDX11);
+
+	// DX11 - We have to set the shared texture format as DXGI_FORMAT_B8G8R8X8_UNORM
+	// so that receivers know it because the default is DXGI_FORMAT_B8G8R8A8_UNORM
+	//
+	// DX9 - We have to set the shared texture format as D3DFMT_X8R8G8B8 so that receivers
+	// know it because the default format argument is zero and that assumes D3DFMT_A8R8G8B8
+	bInitialized = spoutsender.CreateSender("WACUPSpoutSender", width, height,
+					(DWORD)(bUseDX11 ? DXGI_FORMAT_B8G8R8X8_UNORM : D3DFMT_X8R8G8B8));
+	return bInitialized;
+} // end OpenSender
+
+// =========================================================
+#endif

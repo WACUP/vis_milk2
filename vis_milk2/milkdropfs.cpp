@@ -207,7 +207,7 @@ int GetNumToSpawn(float fTime, float fDeltaT, float fRate, float fRegularity, in
 	return true;
 }*/
 
-void CPlugin::ClearGraphicsWindow()
+/*void CPlugin::ClearGraphicsWindow()
 {
 	// clear the window contents, to avoid a 1-pixel-thick border of noise that sometimes sticks around
     /*
@@ -218,15 +218,7 @@ void CPlugin::ClearGraphicsWindow()
 	FillRect(hdc, &rect, m_hBlackBrush);
 	ReleaseDC(GetPluginWindow(), hdc);
     */
-}
-
-/*
-bool CPlugin::OnResizeGraphicsWindow()
-{
-    // NO LONGER NEEDED, SINCE PLUGIN SHELL CREATES A NEW DIRECTX
-    // OBJECT WHENEVER WINDOW IS RESIZED.
-}
-*/
+/*}*/
 
 bool CPlugin::RenderStringToTitleTexture()	// m_szSongMessage
 {
@@ -1221,6 +1213,86 @@ void CPlugin::RenderFrame(const int bRedraw)
     }
     fOldTime = fNewTime;
     */
+
+#ifdef SPOUT_SUPPORT
+	// =========================================================
+	// SPOUT output
+	//
+	// Adapted from : https://gist.github.com/karlgluck/8467971
+	//
+	if (bSpoutOut) { // Spout is started or stopped with CTRL-Z
+		// Grab the backbuffer from the Direct3D device
+		LPDIRECT3DSURFACE9 back_buffer = NULL;
+		HRESULT hr = lpDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &back_buffer);
+		if (SUCCEEDED(hr)) {
+			// Get the buffer's description and make an offscreen surface in system memory.
+			// We need to do this because the backbuffer is in video memory and can't be locked
+			// unless the device was created with a special flag (D3DPRESENTFLAG_LOCKABLE_BACKBUFFER).
+			// Unfortunately, a video-memory buffer CAN be locked with LockRect. The effect is
+			 // that it crashes your app when you try to read or write to it.
+			D3DSURFACE_DESC desc = { 0 };
+			back_buffer->GetDesc(&desc);
+
+			// Check backbuffer size against sender initialized size
+			// which should correctly detect render size changes so
+			// unlike the original patch it won't need to store the
+			// prior window size & using that to determine a change.
+			if (bInitialized == false || m_nFramesSinceResize == 0) {
+				// If initialized already, update the sender to the new size
+				// There is no shared texture in this app but there will be in the 
+				// spoutsender object when we create a sender and we can send pixels to it
+				if (bInitialized) {
+					spoutsender.UpdateSender("WACUPSpoutSender", desc.Width, desc.Height);
+				}
+				else {
+					bInitialized = OpenSender(desc.Width, desc.Height);
+				}
+				back_buffer->Release();
+				return;
+			}
+
+			if (!bInitialized) {
+				back_buffer->Release();
+				return; // safety
+			}
+
+			LPDIRECT3DSURFACE9 offscreen_surface = NULL;
+			hr = lpDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
+													   D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
+			if (SUCCEEDED(hr)) {
+				// Copy from video memory to system memory
+				hr = lpDevice->GetRenderTargetData(back_buffer, offscreen_surface);
+				if (SUCCEEDED(hr)) {
+					// Lock the surface using some flags for optimization
+					D3DLOCKED_RECT d3dlr = { 0 };
+					hr = offscreen_surface->LockRect(&d3dlr, NULL, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY);
+					if (SUCCEEDED(hr)) {
+						// Can find the backbuffer format here, but a variable format
+						// isn't implemented so the user has to set up for X8R8G8B8.
+						// Clear alpha to white so that rgba can be used in Processing
+						unsigned char *src = (unsigned char *)d3dlr.pBits;
+						for (unsigned int i = 0; i < desc.Height; i++) {
+							for (unsigned int j = 0; j < desc.Width * 4; j += 4) {
+								src += 3;
+								*src++ = 255;
+							}
+						}
+						// Pass the pixels to spout
+						spoutsender.SendImage((const unsigned char *)d3dlr.pBits, desc.Width, desc.Height, GL_BGRA_EXT);
+					}
+				}
+
+				offscreen_surface->UnlockRect();
+				offscreen_surface->Release();
+			}
+
+			// Release all of our references
+			back_buffer->Release();
+		}
+		//
+		// ======================================================================
+	}
+#endif
 }
 
 void CPlugin::DrawMotionVectors() const

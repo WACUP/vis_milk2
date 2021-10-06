@@ -40,6 +40,17 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ns-eel2/ns-eel.h"
 #include <string>
 
+#ifdef SPOUT_SUPPORT
+// =========================================================
+// SPOUT support
+//
+// Include the entire SDK in the project because we initialize
+// OpenGL in this app and use the OpenGL functions of Spout
+// adjust for your path containing the Sppout SDK files
+#include "..\..\Spout2\SpoutSDK\SpoutGL\SpoutSender.h"
+// =========================================================
+#endif
+
 extern "C" int (*warand)(void);
 
 typedef enum { TEX_DISK, TEX_VS, TEX_BLUR0, TEX_BLUR1, TEX_BLUR2, TEX_BLUR3, TEX_BLUR4, TEX_BLUR5, TEX_BLUR6, TEX_BLUR_LAST } tex_code;
@@ -295,6 +306,20 @@ public:
     
     //====[ 1. members added to create this specific example plugin: ]================================================
 
+#ifdef SPOUT_SUPPORT
+        // =========================================================
+        SpoutSender spoutsender; // MilkDrop is a sender
+        bool OpenSender(const unsigned int width, const unsigned int height);
+
+		bool bInitialized; // did it work ?
+
+        // User controlled
+        bool bSpoutOut; // Spout output on or off
+        bool bUseDX11; // Spout DirectX mode
+
+        HDC g_hdc;
+        // =========================================================
+#endif
         /// CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
         bool        m_bSequentialPresetOrder;
         bool		m_bHardCutsDisabled;
@@ -627,17 +652,16 @@ public:
 	    void		SeekToPreset(/*wchar_t cStartChar*/);
 	    bool		ReversePropagatePoint(float fx, float fy, float *fx2, float *fy2) const;
 	    int 		HandleRegularKey(WPARAM wParam);
-	    /*bool		OnResizeGraphicsWindow();
-	    bool		OnResizeTextWindow();*/
+	    /*bool		OnResizeTextWindow();*/
 	    //bool		InitFont();
 	    //void		ToggleControlWindow();	// for Desktop Mode only
 	    //void		DrawUI();
-	    static void		ClearGraphicsWindow();	// for windowed mode only
+	    //static void		ClearGraphicsWindow();	// for windowed mode only
         //bool    Update_Overlay();
 	    //void		UpdatePlaylist();
 	    void		LaunchCustomMessage(int nMsgNum);
 	    void		ReadCustomMessages();
-	    void		LaunchSongTitleAnim();
+	    void		LaunchSongTitleAnim(const wchar_t *custom = NULL);
 
 	    bool		RenderStringToTitleTexture();
 	    void		ShowSongTitleAnim(/*IDirect3DTexture9* lpRenderTarget,*/ int w, int h, float fProgress);

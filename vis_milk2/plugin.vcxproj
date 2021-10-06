@@ -69,7 +69,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../../;../../sdk;../../sdk/Wasabi;dx9sdk_summer04/include;C:\Program Files (x86)\Microsoft DirectX SDK\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;USE_VIS_HDR_HWND;STRSAFE_NO_DEPRECATE;NSEEL_REENTRANT_EXECUTION;_CRT_NON_CONFORMING_SWPRINTFS;STRSAFE_NO_CB_FUNCTIONS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;STRSAFE_USE_SECURE_CRT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;USE_VIS_HDR_HWND;STRSAFE_NO_DEPRECATE;NSEEL_REENTRANT_EXECUTION;_CRT_NON_CONFORMING_SWPRINTFS;STRSAFE_NO_CB_FUNCTIONS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;STRSAFE_USE_SECURE_CRT;SPOUT_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>

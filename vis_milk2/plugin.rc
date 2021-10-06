@@ -76,12 +76,12 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,335,305,50,13
 END
 
-IDD_PROPPAGE_2 DIALOGEX 0, 0, 376, 240
+IDD_PROPPAGE_2 DIALOGEX 0, 0, 376, 253
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "",IDC_FS_BOX,3,0,369,236
+    GROUPBOX        "",IDC_FS_BOX,3,0,369,250
     RTEXT           "Canvas Stretch:",IDC_STRETCH_CAPTION,8,12,56,10
     COMBOBOX        IDC_STRETCH,70,9,99,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "<-- use if your graphics chip (GPU) is slow !!",IDC_STATIC,172,12,194,8
@@ -117,6 +117,11 @@ BEGIN
     CTEXT           "1",IDC_T2,105,156,8,10
     COMBOBOX        IDC_TEXFORMAT,227,146,99,87,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Texture Format:",IDC_TEXFORMAT_CAPTION,223,147,55,10,NOT WS_VISIBLE | WS_DISABLED
+    GROUPBOX        "Spout Sender Support",IDC_STATIC,9,184,357,46
+    CONTROL         "Enable Spout (see https://spout.zeal.co/ for more information about this feature)",IDC_CB_SPOUTOUT,
+                    "Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,15,196,344,10
+    CONTROL         "Use DirectX 11 mode (this is not related to Milkdrop using DirectX 9 for its rendering && may require installing an appropriate DirectX 11 update for your OS so this mode will work)",IDC_CB_SPOUTDX11,
+                    "Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,25,208,335,17
 END
 
 #if defined(APSTUDIO_INVOKED) || \
@@ -541,6 +546,7 @@ BEGIN
     IDD_PROPPAGE_2, DIALOG
     BEGIN
         RIGHTMARGIN, 320
+        BOTTOMMARGIN, 240
     END
 
     IDD_PROPPAGE_1, DIALOG
@@ -672,8 +678,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,32,3,0
- PRODUCTVERSION 2,32,3,0
+ FILEVERSION 2,33,0,0
+ PRODUCTVERSION 2,33,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -690,12 +696,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualisation Plug-in"
-            VALUE "FileVersion", "2.32.3.0"
+            VALUE "FileVersion", "2.33.0.0"
             VALUE "InternalName", "Milkdrop 2"
             VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2021"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Milkdrop 2"
-            VALUE "ProductVersion", "2.32.3.0"
+            VALUE "ProductVersion", "2.33.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1568,6 +1574,10 @@ BEGIN
                             "The DirectX 9.0c setup reported an error (code: %d).\n\nPlease try running Milkdrop again to re-try this process.\n\nAlternatively you can try to manual run the installer from\nhttps://www.microsoft.com/download/details.aspx?id=35"
     IDS_DIRECTX_INSTALL_SUCCEEDED 
                             "The DirectX 9.0c setup reported success. Please try running Milkdrop again & you should now see some pretties :)"
+    IDS_SPOUT_DX11          "Spout DirectX 11 mode"
+    IDS_SPOUT_DX9           "Spout DirectX 9 mode"
+    IDS_SPOUT_ON            "Spout output enabled"
+    IDS_SPOUT_OFF           "Spout output disabled"
 END
 
 #endif    // English (United Kingdom) resources

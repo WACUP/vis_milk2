@@ -630,6 +630,10 @@
 #define IDS_DIRECTX_INSTALL_ISSUE       532
 #define IDS_DIRECTX_INSTALL_FAILED      533
 #define IDS_DIRECTX_INSTALL_SUCCEEDED   534
+#define IDS_SPOUT_DX11                  535
+#define IDS_SPOUT_DX9                   536
+#define IDS_SPOUT_ON                    537
+#define IDS_SPOUT_OFF                   538
 #define IDS_UPGRADE_SHADERS_TO_USE_PS2X 581
 #define IDC_CB_FOG                      1000
 #define IDC_CB_SUPERTEX                 1001
@@ -871,6 +875,8 @@
 #define IDC_FONTAA9                     1092
 #define IDC_FONT1b                      1093
 #define IDC_FONT1                       1093
+#define IDC_CB_SPOUTOUT                 1094
+#define IDC_CB_SPOUTDX11                1095
 #define ID_QUIT                         40006
 #define ID_GO_FS                        40007
 #define ID_SHOWHELP                     40008
