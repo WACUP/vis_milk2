@@ -3209,8 +3209,17 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			EnableMenuItem(m_context_menu, ID_DESKTOP_MODE, MF_BYCOMMAND |
 						   (m_desktop_supported ? MF_ENABLED : MF_GRAYED));
 
-			TrackPopup(m_context_menu, TPM_VERTICAL | TPM_NONOTIFY,
-					   LOWORD(lParam), HIWORD(lParam), hWnd, FALSE);
+			int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
+			if ((x == -1) || (y == -1)) // x and y are -1 if the user invoked a shift-f10 popup menu
+			{
+				RECT itemRect = { 0 };
+				GetWindowRect(hWnd, &itemRect);
+				x = itemRect.left;
+				y = itemRect.top;
+			}
+
+			TrackPopup(m_context_menu, TPM_VERTICAL |
+					   TPM_NONOTIFY, x, y, hWnd);
 			return 0;
 		}
 		break;

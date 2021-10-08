@@ -31,6 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __NULLSOFT_DX9_PLUGIN_SHELL_UTILITY_H__ 1
 
 #include <windows.h>
+#include <windowsx.h>
 #include <crtdefs.h>
 #include <d3d9.h>
 #include <d3dx9.h>
