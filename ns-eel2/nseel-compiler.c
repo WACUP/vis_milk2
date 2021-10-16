@@ -471,7 +471,7 @@ static EEL_F onepointfive=1.5f;
 static EEL_F g_closefact = NSEEL_CLOSEFACTOR;
 static const EEL_F eel_zero=0.0, eel_one=1.0;
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && _MSC_VER < 1929
 static double __floor(double a) { return floor(a); }
 static double __ceil(double a) { return ceil(a); }
 #endif
@@ -569,12 +569,16 @@ static functionType fnTable1[] = {
 #endif
 	 { "rand",   nseel_asm_1pp,nseel_asm_1pp_end,  1, {&nseel_int_rand}, } ,
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && _MSC_VER < 1929
    { "floor",  nseel_asm_1pdd,nseel_asm_1pdd_end, 1, {&__floor} },
 #else
    { "floor",  nseel_asm_1pdd,nseel_asm_1pdd_end, 1, {&floor} },
 #endif
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && _MSC_VER < 1929
    { "ceil",   nseel_asm_1pdd,nseel_asm_1pdd_end,  1, {&__ceil} },
+#else
+   { "ceil",   nseel_asm_1pdd,nseel_asm_1pdd_end,  1, {&ceil} },
+#endif
 #ifdef __ppc__
    { "invsqrt",   nseel_asm_invsqrt,nseel_asm_invsqrt_end,  1,  },
 #else
