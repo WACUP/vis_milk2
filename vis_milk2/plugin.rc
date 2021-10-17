@@ -678,8 +678,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,33,1,0
- PRODUCTVERSION 2,33,1,0
+ FILEVERSION 2,33,2,0
+ PRODUCTVERSION 2,33,2,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -696,12 +696,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "WACUP (WinAmp Community Update Project)"
             VALUE "FileDescription", "Winamp Visualisation Plug-in"
-            VALUE "FileVersion", "2.33.1.0"
+            VALUE "FileVersion", "2.33.2.0"
             VALUE "InternalName", "Milkdrop 2"
             VALUE "LegalCopyright", "Copyright © 2001-2013 Nullsoft, Inc. Modifications by Darren Owen aka DrO © 2017-2021"
             VALUE "OriginalFilename", "vis_milk2.dll"
             VALUE "ProductName", "Milkdrop 2"
-            VALUE "ProductVersion", "2.33.1.0"
+            VALUE "ProductVersion", "2.33.2.0"
         END
     END
     BLOCK "VarFileInfo"

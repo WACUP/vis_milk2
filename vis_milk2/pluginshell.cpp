@@ -586,7 +586,7 @@ int CPluginShell::AllocateFonts(IDirect3DDevice9* pDevice)
 		// note: the song title font needs to be left alone as it
 		//       works out the font needed based on the screen so
 		//       we won't attempt to up-scale it for high-dpi etc
-		m_fontinfo[i].nSize = m_fontinfo[i].nOriginalSize;
+		m_fontinfo[i].nSize = m_fontinfo[i].nSizeRead;
 		const int width = m_fontinfo[i].nSize * 4 / 10;
 		if (pCreateFontW(pDevice,
 		                 (i != SONGTITLE_FONT ? WASABI_API_APP->getScaleX(m_fontinfo[i].nSize) : m_fontinfo[i].nSize),
@@ -1456,22 +1456,25 @@ static wchar_t temp[64];
 
 void CPluginShell::READ_FONT(const int n){
 	GetPrivateProfileStringW(L"settings",BuildSettingName(L"szFontFace",n),m_fontinfo[n].szFace,m_fontinfo[n].szFace,ARRAYSIZE(m_fontinfo[n].szFace), m_szConfigIniFile);
-	m_fontinfo[n].nSize   = GetPrivateProfileIntW(L"settings",BuildSettingName(L"nFontSize",n),m_fontinfo[n].nSize  ,m_szConfigIniFile);
-	m_fontinfo[n].bBold   = GetPrivateProfileIntW(L"settings",BuildSettingName(L"bFontBold",n),m_fontinfo[n].bBold  ,m_szConfigIniFile);
-	m_fontinfo[n].bItalic = GetPrivateProfileIntW(L"settings",BuildSettingName(L"bFontItalic",n),m_fontinfo[n].bItalic,m_szConfigIniFile);
-	m_fontinfo[n].bAntiAliased = GetPrivateProfileIntW(L"settings",BuildSettingName(L"bFontAA",n),m_fontinfo[n].bAntiAliased,m_szConfigIniFile);
+	// since we're doing some scaling of the fonts when they're rendered
+	// keeping a copy of the read in value is needed to avoid the fonts
+	// just going up in size when there's no reason for it for the user
+	m_fontinfo[n].nSizeRead = m_fontinfo[n].nSize   = GetPrivateProfileIntW(L"settings",BuildSettingName(L"nFontSize",n),m_fontinfo[n].nSize  ,m_szConfigIniFile);
+	m_fontinfo[n].bBold   = GetPrivateProfileBoolW(L"settings",BuildSettingName(L"bFontBold",n),m_fontinfo[n].bBold  ,m_szConfigIniFile);
+	m_fontinfo[n].bItalic = GetPrivateProfileBoolW(L"settings",BuildSettingName(L"bFontItalic",n),m_fontinfo[n].bItalic,m_szConfigIniFile);
+	m_fontinfo[n].bAntiAliased = GetPrivateProfileBoolW(L"settings",BuildSettingName(L"bFontAA",n),m_fontinfo[n].bAntiAliased,m_szConfigIniFile);
 }
 
 void CPluginShell::ReadConfig()
 {
-	int old_ver    = GetPrivateProfileIntW(L"settings",L"version"   ,-1,m_szConfigIniFile);
+	/*int old_ver = GetPrivateProfileIntW(L"settings", L"version", -1, m_szConfigIniFile);
 	int old_subver = GetPrivateProfileIntW(L"settings",L"subversion",-1,m_szConfigIniFile);
 
 	// nuke old settings from prev. version:
 	if (old_ver < INT_VERSION)
 		return;
 	else if (old_subver < INT_SUBVERSION)
-		return;
+		return;*/
 
 	//D3DMULTISAMPLE_TYPE m_multisample_fullscreen;
 	//D3DMULTISAMPLE_TYPE m_multisample_desktop;
@@ -1712,8 +1715,8 @@ void CPluginShell::WriteConfig()
 	WritePrivateProfileIntW(m_disp_mode_fs.RefreshRate,60,L"disp_mode_fs_r",m_szConfigIniFile,L"settings");
 	WritePrivateProfileIntW(m_disp_mode_fs.Format,D3DFMT_X8R8G8B8,L"disp_mode_fs_f",m_szConfigIniFile,L"settings");
 
-	WritePrivateProfileIntW(INT_VERSION,-1,L"version",m_szConfigIniFile,L"settings");
-	WritePrivateProfileIntW(INT_SUBVERSION,-1,L"subversion",m_szConfigIniFile,L"settings");
+	/*WritePrivateProfileIntW(INT_VERSION, -1, L"version", m_szConfigIniFile, L"settings");
+	WritePrivateProfileIntW(INT_SUBVERSION,-1,L"subversion",m_szConfigIniFile,L"settings");*/
 
 	// finally, save the plugin's unique settings:
 	MyWriteConfig();
@@ -3189,8 +3192,8 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 			break;
 		}
 		break;
-
-	case WM_CONTEXTMENU:
+	case WM_USER + 0x98:
+	//case WM_CONTEXTMENU:
 #ifdef LEGACY_DESKTOP_MODE
 		// launch popup context menu.  see handler for WM_COMMAND also.
 		if (m_screenmode == DESKTOP)

@@ -47,9 +47,10 @@ typedef struct
     wchar_t szFace[256];
 	int nOriginalSize;  // value for nSize to initially use before it's re-sized, etc
     int nSize;  // size requested @ font creation time
-    int bBold;
-    int bItalic;
-    int bAntiAliased;
+    int nSizeRead;      // size read in on loading the fonts
+    bool bBold;
+    bool bItalic;
+    bool bAntiAliased;
 } td_fontinfo;
 
 typedef struct
